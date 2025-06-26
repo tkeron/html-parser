@@ -20,7 +20,6 @@ export function parseHTML(html: string): DOMDocument {
     return astToDOM(ast);
 }
 
-// Export types for users who need them
 export {
   type DOMDocument,
   type DOMElement,

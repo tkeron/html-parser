@@ -73,7 +73,7 @@ export function createElement(tagName: string, attributes: Record<string, string
     nodeType: NodeType.ELEMENT_NODE,
     nodeName: tagName.toUpperCase(),
     nodeValue: null,
-    tagName: tagName.toUpperCase(), // Cambiar a mayúsculas para ser consistente con DOM estándar
+    tagName: tagName.toUpperCase(),
     attributes: { ...attributes },
     childNodes: [],
     children: [],
@@ -91,7 +91,6 @@ export function createElement(tagName: string, attributes: Record<string, string
     nextElementSibling: null,
     previousElementSibling: null,
     
-    // Implementar métodos directamente en el objeto
     appendChild(child: DOMNode): DOMNode {
       appendChild(element, child);
       return child;
@@ -103,10 +102,8 @@ export function createElement(tagName: string, attributes: Record<string, string
         throw new Error('Child not found');
       }
       
-      // Remover de childNodes
       element.childNodes.splice(index, 1);
       
-      // Actualizar relaciones de hermanos
       if (child.previousSibling) {
         child.previousSibling.nextSibling = child.nextSibling;
       }
@@ -114,7 +111,6 @@ export function createElement(tagName: string, attributes: Record<string, string
         child.nextSibling.previousSibling = child.previousSibling;
       }
       
-      // Actualizar firstChild y lastChild
       if (element.firstChild === child) {
         element.firstChild = child.nextSibling;
       }
@@ -122,14 +118,12 @@ export function createElement(tagName: string, attributes: Record<string, string
         element.lastChild = child.previousSibling;
       }
       
-      // Si es un elemento, actualizar también children
       if (child.nodeType === NodeType.ELEMENT_NODE) {
         const childElement = child as DOMElement;
         const elemIndex = element.children.indexOf(childElement);
         if (elemIndex !== -1) {
           element.children.splice(elemIndex, 1);
           
-          // Actualizar relaciones de elementos hermanos
           if (childElement.previousElementSibling) {
             childElement.previousElementSibling.nextElementSibling = childElement.nextElementSibling;
           }
@@ -137,7 +131,6 @@ export function createElement(tagName: string, attributes: Record<string, string
             childElement.nextElementSibling.previousElementSibling = childElement.previousElementSibling;
           }
           
-          // Actualizar firstElementChild y lastElementChild
           if (element.firstElementChild === childElement) {
             element.firstElementChild = childElement.nextElementSibling;
           }
@@ -147,7 +140,6 @@ export function createElement(tagName: string, attributes: Record<string, string
         }
       }
       
-      // Limpiar referencias del hijo
       child.parentNode = null;
       if (child.nodeType === NodeType.ELEMENT_NODE) {
         (child as DOMElement).parentElement = null;
@@ -238,7 +230,6 @@ export function createDocument(): DOMDocument {
     body: null,
     head: null,
     
-    // Implementar métodos directamente en el objeto
     createElement(tagName: string): DOMElement {
       return createElement(tagName, {});
     },
