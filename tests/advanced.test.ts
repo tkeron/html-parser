@@ -427,4 +427,64 @@ describe('HTML Parser & Tokenizer - Advanced Tests', () => {
       expect(nodeCounts[ASTNodeType.CDATA]).toBeGreaterThan(0);
     });
   });
+
+  describe('Security and Template Edge Cases', () => {
+    test('should treat javascript: urls as regular attribute values', () => {
+      const html = `<a href="javascript:alert('XSS')">Click me</a>`;
+      const tokens = tokenize(html);
+      const ast = parse(tokens);
+      const aElement = ast.children!.find(child => child.tagName === 'a')!;
+      expect(aElement).toBeDefined();
+      expect(aElement.attributes!.href).toBe("javascript:alert('XSS')");
+    });
+
+    test('should correctly parse event handler attributes like onerror', () => {
+      const html = `<img src="invalid" onerror="alert('XSS')">`;
+      const tokens = tokenize(html);
+      const ast = parse(tokens);
+      const imgElement = ast.children!.find(child => child.tagName === 'img')!;
+      expect(imgElement).toBeDefined();
+      expect(imgElement.attributes!.onerror).toBe("alert('XSS')");
+    });
+
+    test('should treat template engine syntax as plain text', () => {
+      const html = `<div>{{ user.name }}</div><p>Hola, &lt;%= name %&gt;</p>`;
+      const tokens = tokenize(html);
+      const ast = parse(tokens);
+
+      const divElement = ast.children!.find(child => child.tagName === 'div')!;
+      expect(divElement).toBeDefined();
+      const divText = divElement.children!.find(child => child.type === ASTNodeType.TEXT)!;
+      expect(divText.content).toBe('{{ user.name }}');
+
+      const pElement = ast.children!.find(child => child.tagName === 'p')!;
+      expect(pElement).toBeDefined();
+      const pText = pElement.children!.find(child => child.type === ASTNodeType.TEXT)!;
+      expect(pText.content).toBe('Hola, <%= name %>');
+    });
+
+    test('should handle null characters in content gracefully', () => {
+        const html = '<div>Hello\0World</div>';
+        const tokens = tokenize(html);
+        const ast = parse(tokens);
+        const divElement = ast.children!.find(child => child.tagName === 'div')!;
+        const textNode = divElement.children!.find(child => child.type === ASTNodeType.TEXT)!;
+        // According to HTML5 spec, null characters should be replaced with Unicode replacement character
+        expect(textNode.content).toBe('Hello\uFFFDWorld');
+    });
+
+    test('should handle control characters in content', () => {
+        // Test various control characters that should be preserved or handled appropriately
+        const html = '<div>Line1\x08\x09Line2\x0BLine3\x0CLine4\x0DLine5</div>';
+        const tokens = tokenize(html);
+        const ast = parse(tokens);
+        const divElement = ast.children!.find(child => child.tagName === 'div')!;
+        const textNode = divElement.children!.find(child => child.type === ASTNodeType.TEXT)!;
+        // Most control characters should be preserved as-is (except null which we handle above)
+        expect(textNode.content).toContain('\x09'); // Tab should be preserved
+        expect(textNode.content).toContain('\x0D'); // Carriage return should be preserved
+        expect(textNode.content).toContain('Line1');
+        expect(textNode.content).toContain('Line5');
+    });
+  });
 });
