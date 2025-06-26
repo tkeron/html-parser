@@ -1,8 +1,3 @@
-/**
- * HTML Tokenizer - Advanced tokenization for HTML, XML, SVG and other markup languages
- * Handles all standard tokens: tags, attributes, text, comments, CDATA, DOCTYPE, processing instructions
- */
-
 export interface Token {
   type: TokenType;
   value: string;
@@ -20,14 +15,14 @@ export interface Position {
 }
 
 export enum TokenType {
-  TAG_OPEN = 'TAG_OPEN',           // <div>, <img/>  
-  TAG_CLOSE = 'TAG_CLOSE',         // </div>
-  TEXT = 'TEXT',                   // plain text content
-  COMMENT = 'COMMENT',             // <!-- comment -->
-  CDATA = 'CDATA',                 // <![CDATA[...]]>
-  DOCTYPE = 'DOCTYPE',             // <!DOCTYPE html>
-  PROCESSING_INSTRUCTION = 'PI',   // <?xml version="1.0"?>
-  EOF = 'EOF'                      // End of file
+  TAG_OPEN = 'TAG_OPEN',
+  TAG_CLOSE = 'TAG_CLOSE',
+  TEXT = 'TEXT',
+  COMMENT = 'COMMENT',
+  CDATA = 'CDATA',
+  DOCTYPE = 'DOCTYPE',
+  PROCESSING_INSTRUCTION = 'PI',
+  EOF = 'EOF'
 }
 
 export interface TokenizerState {
@@ -38,9 +33,6 @@ export interface TokenizerState {
   length: number;
 }
 
-/**
- * HTML Entity mappings for decoding
- */
 const HTML_ENTITIES: Record<string, string> = {
   'amp': '&',
   'lt': '<',
@@ -51,12 +43,8 @@ const HTML_ENTITIES: Record<string, string> = {
   'copy': '©',
   'reg': '®',
   'trade': '™',
-  // Add more as needed
 };
 
-/**
- * Create initial tokenizer state
- */
 export function createTokenizerState(input: string): TokenizerState {
   return {
     input,
@@ -67,9 +55,6 @@ export function createTokenizerState(input: string): TokenizerState {
   };
 }
 
-/**
- * Main tokenizer function - converts HTML string to array of tokens
- */
 export function tokenize(html: string): Token[] {
   const state = createTokenizerState(html);
   const tokens: Token[] = [];
@@ -81,7 +66,6 @@ export function tokenize(html: string): Token[] {
     }
   }
 
-  // Add EOF token
   tokens.push({
     type: TokenType.EOF,
     value: '',
@@ -91,29 +75,20 @@ export function tokenize(html: string): Token[] {
   return tokens;
 }
 
-/**
- * Get the next token from the input stream
- */
 function getNextToken(state: TokenizerState): Token | null {
-  // Skip whitespace but preserve it in text nodes
   if (isAtEndOfInput(state)) {
     return null;
   }
 
   const char = getCurrentChar(state);
 
-  // Handle different token types based on current character
   if (char === '<') {
     return parseMarkup(state);
   } else {
-    // All other characters (including &) are considered text
     return parseText(state);
   }
 }
 
-/**
- * Parse markup tokens (tags, comments, DOCTYPE, CDATA, processing instructions)
- */
 function parseMarkup(state: TokenizerState): Token | null {
   const start = state.position;
   
@@ -136,18 +111,12 @@ function parseMarkup(state: TokenizerState): Token | null {
   return null;
 }
 
-/**
- * Parse opening tag: <div class="test" id="example">
- */
 function parseOpeningTag(state: TokenizerState): Token {
   const start = state.position;
-  advance(state); // Skip '<'
-
-  // Parse tag name
+  advance(state);
   const tagName = parseTagName(state);
   const attributes = parseAttributes(state);
   
-  // Check for self-closing
   let isSelfClosing = false;
   skipWhitespace(state);
   if (getCurrentChar(state) === '/') {
@@ -155,7 +124,6 @@ function parseOpeningTag(state: TokenizerState): Token {
     advance(state);
   }
 
-  // Expect closing '>'
   skipWhitespace(state);
   if (getCurrentChar(state) === '>') {
     advance(state);
@@ -170,14 +138,10 @@ function parseOpeningTag(state: TokenizerState): Token {
   };
 }
 
-/**
- * Parse closing tag: </div>
- */
 function parseClosingTag(state: TokenizerState): Token {
   const start = state.position;
-  advance(state); // Skip '<'
-  advance(state); // Skip '/'
-
+  advance(state);
+  advance(state);
   const tagName = parseTagName(state);
   
   skipWhitespace(state);
@@ -193,9 +157,6 @@ function parseClosingTag(state: TokenizerState): Token {
   };
 }
 
-/**
- * Parse tag name (alphanumeric + hyphens + colons for namespaces)
- */
 function parseTagName(state: TokenizerState): string {
   let tagName = '';
   
@@ -209,12 +170,9 @@ function parseTagName(state: TokenizerState): string {
     }
   }
 
-  return tagName.toLowerCase(); // HTML is case-insensitive
+  return tagName.toLowerCase();
 }
 
-/**
- * Parse attributes: class="value" id='value' disabled data-test=unquoted
- */
 function parseAttributes(state: TokenizerState): Record<string, string> {
   const attributes: Record<string, string> = {};
   
@@ -226,20 +184,17 @@ function parseAttributes(state: TokenizerState): Record<string, string> {
       break;
     }
 
-    // Parse attribute name
     const attrName = parseAttributeName(state);
     if (!attrName) break;
 
     skipWhitespace(state);
     
-    // Check for '=' and value
     if (getCurrentChar(state) === '=') {
-      advance(state); // Skip '='
+      advance(state);
       skipWhitespace(state);
       const attrValue = parseAttributeValue(state);
       attributes[attrName.toLowerCase()] = attrValue;
     } else {
-      // Boolean attribute (no value)
       attributes[attrName.toLowerCase()] = '';
     }
   }
@@ -247,9 +202,6 @@ function parseAttributes(state: TokenizerState): Record<string, string> {
   return attributes;
 }
 
-/**
- * Parse attribute name
- */
 function parseAttributeName(state: TokenizerState): string {
   let name = '';
   
@@ -266,9 +218,6 @@ function parseAttributeName(state: TokenizerState): string {
   return name;
 }
 
-/**
- * Parse attribute value (quoted or unquoted)
- */
 function parseAttributeValue(state: TokenizerState): string {
   const char = getCurrentChar(state);
   
@@ -281,20 +230,16 @@ function parseAttributeValue(state: TokenizerState): string {
   }
 }
 
-/**
- * Parse quoted attribute value
- */
 function parseQuotedValue(state: TokenizerState, quote: string): string {
-  advance(state); // Skip opening quote
+  advance(state);
   let value = '';
   
   while (!isAtEndOfInput(state)) {
     const char = getCurrentChar(state);
     if (char === quote) {
-      advance(state); // Skip closing quote
+      advance(state);
       break;
     } else if (char === '&') {
-      // Handle entities in attribute values
       const entity = parseEntityInline(state);
       value += entity;
     } else {
@@ -306,9 +251,6 @@ function parseQuotedValue(state: TokenizerState, quote: string): string {
   return value;
 }
 
-/**
- * Parse unquoted attribute value
- */
 function parseUnquotedValue(state: TokenizerState): string {
   let value = '';
   
@@ -328,17 +270,14 @@ function parseUnquotedValue(state: TokenizerState): string {
   return value;
 }
 
-/**
- * Parse HTML comment: <!-- comment -->
- */
 function parseComment(state: TokenizerState): Token {
   const start = state.position;
-  advance(state, 4); // Skip '<!--'
+  advance(state, 4);
   
   let content = '';
   while (!isAtEndOfInput(state)) {
     if (matchString(state, '-->')) {
-      advance(state, 3); // Skip '-->'
+      advance(state, 3);
       break;
     }
     content += getCurrentChar(state);
@@ -352,17 +291,14 @@ function parseComment(state: TokenizerState): Token {
   };
 }
 
-/**
- * Parse CDATA section: <![CDATA[content]]>
- */
 function parseCDATA(state: TokenizerState): Token {
   const start = state.position;
-  advance(state, 9); // Skip '<![CDATA['
+  advance(state, 9);
   
   let content = '';
   while (!isAtEndOfInput(state)) {
     if (matchString(state, ']]>')) {
-      advance(state, 3); // Skip ']]>'
+      advance(state, 3);
       break;
     }
     content += getCurrentChar(state);
@@ -376,9 +312,6 @@ function parseCDATA(state: TokenizerState): Token {
   };
 }
 
-/**
- * Parse DOCTYPE declaration: <!DOCTYPE html>
- */
 function parseDoctype(state: TokenizerState): Token {
   const start = state.position;
   
@@ -400,16 +333,13 @@ function parseDoctype(state: TokenizerState): Token {
   };
 }
 
-/**
- * Parse processing instruction: <?xml version="1.0"?>
- */
 function parseProcessingInstruction(state: TokenizerState): Token {
   const start = state.position;
   
   let content = '';
   while (!isAtEndOfInput(state)) {
     if (matchString(state, '?>')) {
-      advance(state, 2); // Skip '?>'
+      advance(state, 2);
       break;
     }
     content += getCurrentChar(state);
@@ -423,9 +353,6 @@ function parseProcessingInstruction(state: TokenizerState): Token {
   };
 }
 
-/**
- * Parse text content between tags
- */
 function parseText(state: TokenizerState): Token {
   const start = state.position;
   let content = '';
@@ -450,11 +377,8 @@ function parseText(state: TokenizerState): Token {
   };
 }
 
-/**
- * Parse entity inline (used within text and attributes)
- */
 function parseEntityInline(state: TokenizerState): string {
-  advance(state); // Skip '&'
+  advance(state);
   
   let entityName = '';
   while (!isAtEndOfInput(state) && getCurrentChar(state) !== ';') {
@@ -463,28 +387,21 @@ function parseEntityInline(state: TokenizerState): string {
   }
   
   if (getCurrentChar(state) === ';') {
-    advance(state); // Skip ';'
+    advance(state);
   }
 
-  // Decode entity
   if (entityName.startsWith('#')) {
-    // Numeric entity
     if (entityName.startsWith('#x') || entityName.startsWith('#X')) {
-      // Hexadecimal
       const code = parseInt(entityName.slice(2), 16);
       return String.fromCharCode(code);
     } else {
-      // Decimal
       const code = parseInt(entityName.slice(1), 10);
       return String.fromCharCode(code);
     }
   } else {
-    // Named entity
     return HTML_ENTITIES[entityName] || `&${entityName};`;
   }
 }
-
-// Utility functions
 
 function getCurrentChar(state: TokenizerState): string {
   return state.input[state.position] || '';
