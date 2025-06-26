@@ -157,9 +157,6 @@ function parseToken(state: ParserState, token: Token): void {
     case TokenType.PROCESSING_INSTRUCTION:
       parseProcessingInstruction(state, token);
       break;
-    case TokenType.ENTITY:
-      parseEntity(state, token);
-      break;
   }
 }
 
@@ -168,10 +165,12 @@ function parseToken(state: ParserState, token: Token): void {
  */
 function parseOpenTag(state: ParserState, token: Token): void {
   const tagName = token.value.toLowerCase();
-  const currentParent = getCurrentParent(state);
 
   // Handle auto-closing tags
   handleAutoClosing(state, tagName);
+
+  // Get parent AFTER auto-closing (it might have changed)
+  const currentParent = getCurrentParent(state);
 
   // Create element node
   const element: ASTNode = {
@@ -204,7 +203,7 @@ function parseCloseTag(state: ParserState, token: Token): void {
   // Find matching opening tag in stack
   let found = false;
   for (let i = state.stack.length - 1; i >= 0; i--) {
-    const element = state.stack[i];
+    const element = state.stack[i]!;
     if (element.tagName === tagName) {
       // Close all tags up to this one
       while (state.stack.length > i + 1) {
@@ -319,14 +318,6 @@ function parseProcessingInstruction(state: ParserState, token: Token): void {
 }
 
 /**
- * Parse entity (treat as text)
- */
-function parseEntity(state: ParserState, token: Token): void {
-  // Entities are already decoded in tokenizer, treat as text
-  parseText(state, { ...token, type: TokenType.TEXT });
-}
-
-/**
  * Handle auto-closing tags based on HTML rules
  */
 function handleAutoClosing(state: ParserState, tagName: string): void {
@@ -335,7 +326,8 @@ function handleAutoClosing(state: ParserState, tagName: string): void {
 
   // Check if current element should be auto-closed
   const currentElement = getCurrentElement(state);
-  if (currentElement && autoCloseList.includes(currentElement.tagName!)) {
+  if (currentElement && currentElement.tagName && autoCloseList.includes(currentElement.tagName)) {
+    // Auto-close the current element
     state.stack.pop();
   }
 }
@@ -344,7 +336,7 @@ function handleAutoClosing(state: ParserState, tagName: string): void {
  * Get current parent element from stack
  */
 function getCurrentParent(state: ParserState): ASTNode {
-  return state.stack[state.stack.length - 1];
+  return state.stack[state.stack.length - 1]!;
 }
 
 /**
@@ -352,7 +344,7 @@ function getCurrentParent(state: ParserState): ASTNode {
  */
 function getCurrentElement(state: ParserState): ASTNode | null {
   for (let i = state.stack.length - 1; i >= 0; i--) {
-    const element = state.stack[i];
+    const element = state.stack[i]!;
     if (element.type === ASTNodeType.ELEMENT) {
       return element;
     }
