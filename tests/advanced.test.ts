@@ -469,20 +469,17 @@ describe('HTML Parser & Tokenizer - Advanced Tests', () => {
         const ast = parse(tokens);
         const divElement = ast.children!.find(child => child.tagName === 'div')!;
         const textNode = divElement.children!.find(child => child.type === ASTNodeType.TEXT)!;
-        // According to HTML5 spec, null characters should be replaced with Unicode replacement character
         expect(textNode.content).toBe('Hello\uFFFDWorld');
     });
 
     test('should handle control characters in content', () => {
-        // Test various control characters that should be preserved or handled appropriately
         const html = '<div>Line1\x08\x09Line2\x0BLine3\x0CLine4\x0DLine5</div>';
         const tokens = tokenize(html);
         const ast = parse(tokens);
         const divElement = ast.children!.find(child => child.tagName === 'div')!;
         const textNode = divElement.children!.find(child => child.type === ASTNodeType.TEXT)!;
-        // Most control characters should be preserved as-is (except null which we handle above)
-        expect(textNode.content).toContain('\x09'); // Tab should be preserved
-        expect(textNode.content).toContain('\x0D'); // Carriage return should be preserved
+        expect(textNode.content).toContain('\x09');
+        expect(textNode.content).toContain('\x0D');
         expect(textNode.content).toContain('Line1');
         expect(textNode.content).toContain('Line5');
     });

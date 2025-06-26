@@ -243,7 +243,6 @@ function parseQuotedValue(state: TokenizerState, quote: string): string {
       const entity = parseEntityInline(state);
       value += entity;
     } else if (char === '\0') {
-      // HTML5 spec: Replace null characters with Unicode replacement character
       value += '\uFFFD';
       advance(state);
     } else {
@@ -266,7 +265,6 @@ function parseUnquotedValue(state: TokenizerState): string {
       const entity = parseEntityInline(state);
       value += entity;
     } else if (char === '\0') {
-      // HTML5 spec: Replace null characters with Unicode replacement character
       value += '\uFFFD';
       advance(state);
     } else {
@@ -373,7 +371,6 @@ function parseText(state: TokenizerState): Token {
       const entity = parseEntityInline(state);
       content += entity;
     } else if (char === '\0') {
-      // HTML5 spec: Replace null characters with Unicode replacement character
       content += '\uFFFD';
       advance(state);
     } else {

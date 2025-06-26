@@ -1,4 +1,4 @@
-import type { Element, Node } from './dom-simulator';
+import type { DOMElement, DOMNode } from './dom-simulator';
 
 interface SelectorToken {
     type: 'tag' | 'class' | 'id';
@@ -16,7 +16,7 @@ function parseSelector(selector: string): SelectorToken[] {
     }
 }
 
-function matchesToken(element: Element, token: SelectorToken): boolean {
+function matchesToken(element: DOMElement, token: SelectorToken): boolean {
     switch (token.type) {
         case 'tag':
             return element.tagName.toLowerCase() === token.value;
@@ -31,13 +31,13 @@ function matchesToken(element: Element, token: SelectorToken): boolean {
     }
 }
 
-function matchesSelector(element: Element, tokens: SelectorToken[]): boolean {
+function matchesSelector(element: DOMElement, tokens: SelectorToken[]): boolean {
     return tokens.every(token => matchesToken(element, token));
 }
 
-function findElements(node: Node, tokens: SelectorToken[], results: Element[]): void {
+function findElements(node: DOMNode, tokens: SelectorToken[], results: DOMElement[]): void {
     if (node.nodeType === 1) {
-        const element = node as Element;
+        const element = node as DOMElement;
         if (matchesSelector(element, tokens)) {
             results.push(element);
         }
@@ -47,14 +47,14 @@ function findElements(node: Node, tokens: SelectorToken[], results: Element[]): 
     }
 }
 
-export function querySelectorAll(root: Node, selector: string): Element[] {
+export function querySelectorAll(root: DOMNode, selector: string): DOMElement[] {
     const tokens = parseSelector(selector);
-    const results: Element[] = [];
+    const results: DOMElement[] = [];
     findElements(root, tokens, results);
     return results;
 }
 
-export function querySelector(root: Node, selector: string): Element | null {
+export function querySelector(root: DOMNode, selector: string): DOMElement | null {
     const results = querySelectorAll(root, selector);
     return results[0] || null;
 }

@@ -1,4 +1,5 @@
 import type { ASTNode, ASTNodeType } from './parser.js';
+import { querySelector as querySelectorFunction, querySelectorAll as querySelectorAllFunction } from './css-selector.js';
 
 export const enum NodeType {
   ELEMENT_NODE = 1,
@@ -10,62 +11,190 @@ export const enum NodeType {
   CDATA_SECTION_NODE = 4
 }
 
-export interface Node {
+export interface DOMNode {
   nodeType: NodeType;
   nodeName: string;
   nodeValue: string | null;
-  childNodes: Node[];
-  parentNode: Node | null;
-  firstChild: Node | null;
-  lastChild: Node | null;
-  nextSibling: Node | null;
-  previousSibling: Node | null;
-}
-
-export interface Element extends Node {
-  tagName: string;
-  attributes: { [key: string]: string };
-  children: Element[];
-}
-
-export interface Text extends Node {
   textContent: string;
+  childNodes: DOMNode[];
+  parentNode: DOMNode | null;
+  firstChild: DOMNode | null;
+  lastChild: DOMNode | null;
+  nextSibling: DOMNode | null;
+  previousSibling: DOMNode | null;
 }
 
-export interface Comment extends Node {
+export interface DOMElement extends DOMNode {
+  tagName: string;
+  attributes: Record<string, string>;
+  children: DOMElement[];
+  innerHTML: string;
+  outerHTML: string;
+  parentElement: DOMElement | null;
+  firstElementChild: DOMElement | null;
+  lastElementChild: DOMElement | null;
+  nextElementSibling: DOMElement | null;
+  previousElementSibling: DOMElement | null;
+  appendChild(child: DOMNode): DOMNode;
+  removeChild(child: DOMNode): DOMNode;
+  setAttribute(name: string, value: string): void;
+  getAttribute(name: string): string | null;
+  hasAttribute(name: string): boolean;
+  removeAttribute(name: string): void;
+  querySelector(selector: string): DOMElement | null;
+  querySelectorAll(selector: string): DOMElement[];
+}
+
+export interface DOMText extends DOMNode {
   data: string;
 }
 
-export interface Document extends Node {
-  documentElement: Element | null;
-  body: Element | null;
-  head: Element | null;
+export interface DOMComment extends DOMNode {
+  data: string;
 }
 
-export function createElement(tagName: string, attributes: { [key: string]: string } = {}): Element {
-  const element: Element = {
+export interface DOMDocument extends DOMNode {
+  documentElement: DOMElement | null;
+  body: DOMElement | null;
+  head: DOMElement | null;
+  createElement(tagName: string): DOMElement;
+  createTextNode(data: string): DOMText;
+  querySelector(selector: string): DOMElement | null;
+  querySelectorAll(selector: string): DOMElement[];
+}
+
+export function createElement(tagName: string, attributes: Record<string, string> = {}): DOMElement {
+  const innerHTML = '';
+  const tagNameLower = tagName.toLowerCase();
+  const outerHTML = `<${tagNameLower}${Object.entries(attributes).map(([k, v]) => ` ${k}="${v}"`).join('')}></${tagNameLower}>`;
+  const textContent = '';
+  
+  const element: DOMElement = {
     nodeType: NodeType.ELEMENT_NODE,
     nodeName: tagName.toUpperCase(),
     nodeValue: null,
-    tagName: tagName.toLowerCase(),
+    tagName: tagName.toUpperCase(), // Cambiar a mayúsculas para ser consistente con DOM estándar
     attributes: { ...attributes },
     childNodes: [],
     children: [],
+    textContent,
+    innerHTML,
+    outerHTML,
     parentNode: null,
+    parentElement: null,
     firstChild: null,
     lastChild: null,
     nextSibling: null,
-    previousSibling: null
+    previousSibling: null,
+    firstElementChild: null,
+    lastElementChild: null,
+    nextElementSibling: null,
+    previousElementSibling: null,
+    
+    // Implementar métodos directamente en el objeto
+    appendChild(child: DOMNode): DOMNode {
+      appendChild(element, child);
+      return child;
+    },
+    
+    removeChild(child: DOMNode): DOMNode {
+      const index = element.childNodes.indexOf(child);
+      if (index === -1) {
+        throw new Error('Child not found');
+      }
+      
+      // Remover de childNodes
+      element.childNodes.splice(index, 1);
+      
+      // Actualizar relaciones de hermanos
+      if (child.previousSibling) {
+        child.previousSibling.nextSibling = child.nextSibling;
+      }
+      if (child.nextSibling) {
+        child.nextSibling.previousSibling = child.previousSibling;
+      }
+      
+      // Actualizar firstChild y lastChild
+      if (element.firstChild === child) {
+        element.firstChild = child.nextSibling;
+      }
+      if (element.lastChild === child) {
+        element.lastChild = child.previousSibling;
+      }
+      
+      // Si es un elemento, actualizar también children
+      if (child.nodeType === NodeType.ELEMENT_NODE) {
+        const childElement = child as DOMElement;
+        const elemIndex = element.children.indexOf(childElement);
+        if (elemIndex !== -1) {
+          element.children.splice(elemIndex, 1);
+          
+          // Actualizar relaciones de elementos hermanos
+          if (childElement.previousElementSibling) {
+            childElement.previousElementSibling.nextElementSibling = childElement.nextElementSibling;
+          }
+          if (childElement.nextElementSibling) {
+            childElement.nextElementSibling.previousElementSibling = childElement.previousElementSibling;
+          }
+          
+          // Actualizar firstElementChild y lastElementChild
+          if (element.firstElementChild === childElement) {
+            element.firstElementChild = childElement.nextElementSibling;
+          }
+          if (element.lastElementChild === childElement) {
+            element.lastElementChild = childElement.previousElementSibling;
+          }
+        }
+      }
+      
+      // Limpiar referencias del hijo
+      child.parentNode = null;
+      if (child.nodeType === NodeType.ELEMENT_NODE) {
+        (child as DOMElement).parentElement = null;
+      }
+      child.previousSibling = null;
+      child.nextSibling = null;
+      
+      updateElementContent(element);
+      return child;
+    },
+    
+    setAttribute(name: string, value: string): void {
+      element.attributes[name] = value;
+      updateElementContent(element);
+    },
+    
+    getAttribute(name: string): string | null {
+      return element.attributes[name] || null;
+    },
+    
+    hasAttribute(name: string): boolean {
+      return name in element.attributes;
+    },
+    
+    removeAttribute(name: string): void {
+      delete element.attributes[name];
+      updateElementContent(element);
+    },
+    
+    querySelector(selector: string): DOMElement | null {
+      return querySelectorFunction(element, selector);
+    },
+    
+    querySelectorAll(selector: string): DOMElement[] {
+      return querySelectorAllFunction(element, selector);
+    }
   };
   return element;
 }
 
-export function createTextNode(content: string): Text {
-  const textNode: Text = {
+export function createTextNode(content: string): DOMText {
+  const textNode: DOMText = {
     nodeType: NodeType.TEXT_NODE,
     nodeName: '#text',
     nodeValue: content,
     textContent: content,
+    data: content,
     childNodes: [],
     parentNode: null,
     firstChild: null,
@@ -76,11 +205,12 @@ export function createTextNode(content: string): Text {
   return textNode;
 }
 
-export function createComment(content: string): Comment {
-  const commentNode: Comment = {
+export function createComment(content: string): DOMComment {
+  const commentNode: DOMComment = {
     nodeType: NodeType.COMMENT_NODE,
     nodeName: '#comment',
     nodeValue: content,
+    textContent: '',
     data: content,
     childNodes: [],
     parentNode: null,
@@ -92,11 +222,12 @@ export function createComment(content: string): Comment {
   return commentNode;
 }
 
-export function createDocument(): Document {
-  const document: Document = {
+export function createDocument(): DOMDocument {
+  const document: DOMDocument = {
     nodeType: NodeType.DOCUMENT_NODE,
     nodeName: '#document',
     nodeValue: null,
+    textContent: '',
     childNodes: [],
     parentNode: null,
     firstChild: null,
@@ -105,12 +236,29 @@ export function createDocument(): Document {
     previousSibling: null,
     documentElement: null,
     body: null,
-    head: null
+    head: null,
+    
+    // Implementar métodos directamente en el objeto
+    createElement(tagName: string): DOMElement {
+      return createElement(tagName, {});
+    },
+    
+    createTextNode(data: string): DOMText {
+      return createTextNode(data);
+    },
+    
+    querySelector(selector: string): DOMElement | null {
+      return querySelectorFunction(document, selector);
+    },
+    
+    querySelectorAll(selector: string): DOMElement[] {
+      return querySelectorAllFunction(document, selector);
+    }
   };
   return document;
 }
 
-export function astToDOM(ast: ASTNode): Document {
+export function astToDOM(ast: ASTNode): DOMDocument {
   const document = createDocument();
   if (ast.children) {
     for (const child of ast.children) {
@@ -118,13 +266,13 @@ export function astToDOM(ast: ASTNode): Document {
       if (domNode) {
         appendChild(document, domNode);
         if (domNode.nodeType === NodeType.ELEMENT_NODE) {
-          const element = domNode as Element;
-          if (element.tagName === 'html') {
+          const element = domNode as DOMElement;
+          if (element.tagName === 'HTML') {
             document.documentElement = element;
             findSpecialElements(document, element);
-          } else if (element.tagName === 'body') {
+          } else if (element.tagName === 'BODY') {
             document.body = element;
-          } else if (element.tagName === 'head') {
+          } else if (element.tagName === 'HEAD') {
             document.head = element;
           }
         }
@@ -134,23 +282,25 @@ export function astToDOM(ast: ASTNode): Document {
   return document;
 }
 
-function findSpecialElements(document: Document, htmlElement: Element): void {
+function findSpecialElements(document: DOMDocument, htmlElement: DOMElement): void {
   for (const child of htmlElement.childNodes) {
     if (child.nodeType === NodeType.ELEMENT_NODE) {
-      const element = child as Element;
-      if (element.tagName === 'body') {
+      const element = child as DOMElement;
+      if (element.tagName === 'BODY') {
         document.body = element;
-      } else if (element.tagName === 'head') {
+      } else if (element.tagName === 'HEAD') {
         document.head = element;
       }
     }
   }
 }
 
-function convertASTNodeToDOM(astNode: ASTNode): Node | null {
+function convertASTNodeToDOM(astNode: ASTNode): DOMNode | null {
   switch (astNode.type) {
     case 'ELEMENT':
-      const element = createElement(astNode.tagName || 'div', astNode.attributes || {});
+      const tagName = astNode.tagName || 'div';
+      const element = createElement(tagName, astNode.attributes || {});
+      
       if (astNode.children) {
         for (const child of astNode.children) {
           const domChild = convertASTNodeToDOM(child);
@@ -159,6 +309,8 @@ function convertASTNodeToDOM(astNode: ASTNode): Node | null {
           }
         }
       }
+      
+      updateElementContent(element);
       return element;
     case 'TEXT':
       return createTextNode(astNode.content || '');
@@ -174,9 +326,10 @@ function convertASTNodeToDOM(astNode: ASTNode): Node | null {
   }
 }
 
-function appendChild(parent: Node, child: Node): void {
+function appendChild(parent: DOMNode, child: DOMNode): void {
   child.parentNode = parent;
   parent.childNodes.push(child);
+  
   if (parent.childNodes.length > 1) {
     const previousSibling = parent.childNodes[parent.childNodes.length - 2];
     if (previousSibling) {
@@ -184,18 +337,58 @@ function appendChild(parent: Node, child: Node): void {
       child.previousSibling = previousSibling;
     }
   }
+  
   if (parent.childNodes.length === 1) {
     parent.firstChild = child;
   }
   parent.lastChild = child;
+  
   if (parent.nodeType === NodeType.ELEMENT_NODE && child.nodeType === NodeType.ELEMENT_NODE) {
-    (parent as Element).children.push(child as Element);
+    const parentElement = parent as DOMElement;
+    const childElement = child as DOMElement;
+    
+    childElement.parentElement = parentElement;
+    parentElement.children.push(childElement);
+    
+    if (parentElement.children.length === 1) {
+      parentElement.firstElementChild = childElement;
+    }
+    parentElement.lastElementChild = childElement;
+    
+    if (parentElement.children.length > 1) {
+      const previousElementSibling = parentElement.children[parentElement.children.length - 2];
+      if (previousElementSibling) {
+        previousElementSibling.nextElementSibling = childElement;
+        childElement.previousElementSibling = previousElementSibling;
+      }
+    }
   }
 }
 
-export function getTextContent(node: Node): string {
+function updateElementContent(element: DOMElement): void {
+  element.innerHTML = element.childNodes.map(child => {
+    if (child.nodeType === NodeType.TEXT_NODE) {
+      return child.textContent;
+    } else if (child.nodeType === NodeType.ELEMENT_NODE) {
+      return (child as DOMElement).outerHTML;
+    } else if (child.nodeType === NodeType.COMMENT_NODE) {
+      return `<!--${(child as DOMComment).data}-->`;
+    }
+    return '';
+  }).join('');
+  
+  const attrs = Object.entries(element.attributes)
+    .map(([k, v]) => ` ${k}="${v}"`)
+    .join('');
+  const tagNameLower = element.tagName.toLowerCase();
+  element.outerHTML = `<${tagNameLower}${attrs}>${element.innerHTML}</${tagNameLower}>`;
+  
+  element.textContent = getTextContent(element);
+}
+
+export function getTextContent(node: DOMNode): string {
   if (node.nodeType === NodeType.TEXT_NODE) {
-    return (node as Text).textContent;
+    return node.textContent;
   }
   if (node.nodeType !== NodeType.ELEMENT_NODE && node.nodeType !== NodeType.DOCUMENT_NODE) {
     return '';
@@ -207,20 +400,38 @@ export function getTextContent(node: Node): string {
   return textContent;
 }
 
-export function getAttribute(element: Element, name: string): string | null {
+export function getAttribute(element: DOMElement, name: string): string | null {
   return element.attributes[name] || null;
 }
 
-export function hasAttribute(element: Element, name: string): boolean {
+export function hasAttribute(element: DOMElement, name: string): boolean {
   return name in element.attributes;
 }
 
-export function setAttribute(element: Element, name: string, value: string): void {
+export function setAttribute(element: DOMElement, name: string, value: string): void {
   element.attributes[name] = value;
+  updateElementContent(element);
 }
 
-export function removeAttribute(element: Element, name: string): void {
+export function removeAttribute(element: DOMElement, name: string): void {
   delete element.attributes[name];
+  updateElementContent(element);
+}
+
+export function setInnerHTML(element: DOMElement, html: string): void {
+  element.innerHTML = html;
+  element.childNodes = [];
+  element.children = [];
+  element.firstChild = null;
+  element.lastChild = null;
+  element.firstElementChild = null;
+  element.lastElementChild = null;
+  element.textContent = html.replace(/<[^>]*>/g, '');
+  const attrs = Object.entries(element.attributes)
+    .map(([k, v]) => ` ${k}="${v}"`)
+    .join('');
+  const tagNameLower = element.tagName.toLowerCase();
+  element.outerHTML = `<${tagNameLower}${attrs}>${element.innerHTML}</${tagNameLower}>`;
 }
 
 export { querySelector, querySelectorAll } from './css-selector.js';

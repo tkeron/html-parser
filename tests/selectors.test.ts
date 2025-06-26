@@ -36,7 +36,7 @@ describe('CSS Selectors', () => {
         it('should find all elements by class name', () => {
             const second = querySelectorAll(doc, '.second');
             expect(second.length).toBe(1);
-            expect(second[0]!.tagName).toBe('p');
+            expect(second[0]!.tagName).toBe('P');
         });
     });
 
@@ -54,7 +54,7 @@ describe('CSS Selectors', () => {
         it('should find an element by ID', () => {
             const intro = querySelector(doc, '#intro');
             expect(intro).not.toBeNull();
-            expect(intro?.tagName).toBe('p');
+            expect(intro?.tagName).toBe('P');
         });
 
         it('should return null if no element is found', () => {
