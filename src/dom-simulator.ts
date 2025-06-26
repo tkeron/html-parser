@@ -235,3 +235,72 @@ function appendChild(parent: Node, child: Node): void {
     (parent as Element).children.push(child as Element);
   }
 }
+
+// =============================================================================
+// PHASE 2: Navigation and Attribute API Functions
+// =============================================================================
+
+/**
+ * Gets the text content of a node and all its descendants.
+ * This function recursively traverses the DOM tree to collect all text.
+ * @param node The node to get text content from
+ * @returns The concatenated text content
+ */
+export function getTextContent(node: Node): string {
+  // If it's a text node, return its content directly
+  if (node.nodeType === NodeType.TEXT_NODE) {
+    return (node as Text).textContent;
+  }
+  
+  // If it's a comment or other non-element node, return empty string
+  if (node.nodeType !== NodeType.ELEMENT_NODE && node.nodeType !== NodeType.DOCUMENT_NODE) {
+    return '';
+  }
+  
+  // For elements and documents, collect text from all children
+  let textContent = '';
+  for (const child of node.childNodes) {
+    textContent += getTextContent(child);
+  }
+  
+  return textContent;
+}
+
+/**
+ * Gets an attribute value from an element.
+ * @param element The element to get the attribute from
+ * @param name The name of the attribute
+ * @returns The attribute value, or null if the attribute doesn't exist
+ */
+export function getAttribute(element: Element, name: string): string | null {
+  return element.attributes[name] || null;
+}
+
+/**
+ * Checks if an element has a specific attribute.
+ * @param element The element to check
+ * @param name The name of the attribute
+ * @returns True if the attribute exists, false otherwise
+ */
+export function hasAttribute(element: Element, name: string): boolean {
+  return name in element.attributes;
+}
+
+/**
+ * Sets an attribute on an element.
+ * @param element The element to set the attribute on
+ * @param name The name of the attribute
+ * @param value The value to set
+ */
+export function setAttribute(element: Element, name: string, value: string): void {
+  element.attributes[name] = value;
+}
+
+/**
+ * Removes an attribute from an element.
+ * @param element The element to remove the attribute from
+ * @param name The name of the attribute to remove
+ */
+export function removeAttribute(element: Element, name: string): void {
+  delete element.attributes[name];
+}

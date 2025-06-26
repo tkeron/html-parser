@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'bun:test';
 import { parseHTML } from '../index';
-import { NodeType } from '../src/dom-simulator';
+import { NodeType, getTextContent, getAttribute, hasAttribute, setAttribute, removeAttribute } from '../src/dom-simulator';
 
 describe('DOM Simulator - Phase 1: Structure and Conversion', () => {
     describe('parseHTML basic functionality', () => {
@@ -136,6 +136,137 @@ describe('DOM Simulator - Phase 1: Structure and Conversion', () => {
             
             expect(doc.head).toBeTruthy();
             expect((doc.head as any)?.tagName).toBe('head');
+        });
+    });
+});
+
+describe('DOM Simulator - Phase 2: Navigation and Attributes', () => {
+    describe('getTextContent', () => {
+        it('should get text content from a simple text node', () => {
+            const doc = parseHTML('<p>Hello World</p>');
+            const p = doc.childNodes[0]!;
+            const textNode = p.childNodes[0]!;
+            
+            expect(getTextContent(textNode)).toBe('Hello World');
+        });
+
+        it('should get text content from an element with text', () => {
+            const doc = parseHTML('<p>Hello World</p>');
+            const p = doc.childNodes[0]!;
+            
+            expect(getTextContent(p)).toBe('Hello World');
+        });
+
+        it('should get concatenated text from nested elements', () => {
+            const doc = parseHTML('<div>Hello <span>beautiful</span> world</div>');
+            const div = doc.childNodes[0]!;
+            
+            expect(getTextContent(div)).toBe('Hello beautiful world');
+        });
+
+        it('should get text from deeply nested elements', () => {
+            const doc = parseHTML('<div>Start <p>Middle <em>Deep <strong>Deeper</strong></em></p> End</div>');
+            const div = doc.childNodes[0]!;
+            
+            expect(getTextContent(div)).toBe('Start Middle Deep Deeper End');
+        });
+
+        it('should return empty string for elements with no text', () => {
+            const doc = parseHTML('<div></div>');
+            const div = doc.childNodes[0]!;
+            
+            expect(getTextContent(div)).toBe('');
+        });
+
+        it('should ignore comments when getting text content', () => {
+            const doc = parseHTML('<div>Before<!-- comment -->After</div>');
+            const div = doc.childNodes[0]!;
+            
+            expect(getTextContent(div)).toBe('BeforeAfter');
+        });
+
+        it('should handle mixed content with self-closing elements', () => {
+            const doc = parseHTML('<p>Before<br/>After</p>');
+            const p = doc.childNodes[0]!;
+            
+            expect(getTextContent(p)).toBe('BeforeAfter');
+        });
+    });
+
+    describe('Attribute functions', () => {
+        it('should get existing attributes', () => {
+            const doc = parseHTML('<div id="test" class="highlight" data-value="123">Content</div>');
+            const div = doc.childNodes[0]! as any;
+            
+            expect(getAttribute(div, 'id')).toBe('test');
+            expect(getAttribute(div, 'class')).toBe('highlight');
+            expect(getAttribute(div, 'data-value')).toBe('123');
+        });
+
+        it('should return null for non-existing attributes', () => {
+            const doc = parseHTML('<div id="test">Content</div>');
+            const div = doc.childNodes[0]! as any;
+            
+            expect(getAttribute(div, 'nonexistent')).toBeNull();
+            expect(getAttribute(div, 'class')).toBeNull();
+        });
+
+        it('should check if attributes exist', () => {
+            const doc = parseHTML('<div id="test" class="highlight">Content</div>');
+            const div = doc.childNodes[0]! as any;
+            
+            expect(hasAttribute(div, 'id')).toBe(true);
+            expect(hasAttribute(div, 'class')).toBe(true);
+            expect(hasAttribute(div, 'nonexistent')).toBe(false);
+        });
+
+        it('should set new attributes', () => {
+            const doc = parseHTML('<div>Content</div>');
+            const div = doc.childNodes[0]! as any;
+            
+            setAttribute(div, 'id', 'new-id');
+            setAttribute(div, 'class', 'new-class');
+            
+            expect(getAttribute(div, 'id')).toBe('new-id');
+            expect(getAttribute(div, 'class')).toBe('new-class');
+            expect(hasAttribute(div, 'id')).toBe(true);
+            expect(hasAttribute(div, 'class')).toBe(true);
+        });
+
+        it('should update existing attributes', () => {
+            const doc = parseHTML('<div id="old-id" class="old-class">Content</div>');
+            const div = doc.childNodes[0]! as any;
+            
+            setAttribute(div, 'id', 'new-id');
+            setAttribute(div, 'class', 'new-class');
+            
+            expect(getAttribute(div, 'id')).toBe('new-id');
+            expect(getAttribute(div, 'class')).toBe('new-class');
+        });
+
+        it('should remove attributes', () => {
+            const doc = parseHTML('<div id="test" class="highlight" data-value="123">Content</div>');
+            const div = doc.childNodes[0]! as any;
+            
+            removeAttribute(div, 'class');
+            removeAttribute(div, 'data-value');
+            
+            expect(getAttribute(div, 'id')).toBe('test'); // Should still exist
+            expect(getAttribute(div, 'class')).toBeNull(); // Should be removed
+            expect(getAttribute(div, 'data-value')).toBeNull(); // Should be removed
+            expect(hasAttribute(div, 'class')).toBe(false);
+            expect(hasAttribute(div, 'data-value')).toBe(false);
+        });
+
+        it('should handle removing non-existing attributes gracefully', () => {
+            const doc = parseHTML('<div id="test">Content</div>');
+            const div = doc.childNodes[0]! as any;
+            
+            // Should not throw error
+            removeAttribute(div, 'nonexistent');
+            
+            // Original attribute should still exist
+            expect(getAttribute(div, 'id')).toBe('test');
         });
     });
 });
