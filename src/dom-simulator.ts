@@ -40,12 +40,12 @@ export function createElement(tagName: string, attributes: Record<string, string
     nextElementSibling: null,
     previousElementSibling: null,
 
-    appendChild(child: DOMNode): DOMNode {
+    appendChild(child: Node): Node {
       appendChild(element, child);
       return child;
     },
 
-    removeChild(child: DOMNode): DOMNode {
+    removeChild(child: Node): Node {
       const index = element.childNodes.indexOf(child);
       if (index === -1) {
         throw new Error('Child not found');
@@ -175,8 +175,8 @@ export function createComment(content: string): DOMComment {
   return commentNode;
 }
 
-export function createDocument(): DOMDocument {
-  const document: DOMDocument = {
+export function createDocument(): Document {
+  const document: Document = {
     nodeType: NodeType.DOCUMENT_NODE,
     nodeName: '#document',
     nodeValue: null,
@@ -210,15 +210,15 @@ export function createDocument(): DOMDocument {
   return document;
 }
 
-export function astToDOM(ast: ASTNode): DOMDocument {
+export function astToDOM(ast: ASTNode): Document {
   const document = createDocument();
   if (ast.children) {
     for (const child of ast.children) {
-      const domNode = convertASTNodeToDOM(child);
-      if (domNode) {
-        appendChild(document, domNode);
-        if (domNode.nodeType === NodeType.ELEMENT_NODE) {
-          const element = domNode as HTMLElement;
+      const Node = convertASTNodeToDOM(child);
+      if (Node) {
+        appendChild(document, Node);
+        if (Node.nodeType === NodeType.ELEMENT_NODE) {
+          const element = Node as HTMLElement;
           if (element.tagName === 'HTML') {
             document.documentElement = element;
             findSpecialElements(document, element);
@@ -234,7 +234,7 @@ export function astToDOM(ast: ASTNode): DOMDocument {
   return document;
 }
 
-function findSpecialElements(document: DOMDocument, htmlElement: HTMLElement): void {
+function findSpecialElements(document: Document, htmlElement: HTMLElement): void {
   for (const child of htmlElement.childNodes) {
     if (child.nodeType === NodeType.ELEMENT_NODE) {
       const element = child as HTMLElement;
@@ -247,7 +247,7 @@ function findSpecialElements(document: DOMDocument, htmlElement: HTMLElement): v
   }
 }
 
-function convertASTNodeToDOM(astNode: ASTNode): DOMNode | null {
+function convertASTNodeToDOM(astNode: ASTNode): Node | null {
   switch (astNode.type) {
     case 'ELEMENT':
       const tagName = astNode.tagName || 'div';
@@ -278,7 +278,7 @@ function convertASTNodeToDOM(astNode: ASTNode): DOMNode | null {
   }
 }
 
-function appendChild(parent: DOMNode, child: DOMNode): void {
+function appendChild(parent: Node, child: Node): void {
   child.parentNode = parent;
   parent.childNodes.push(child);
 
@@ -348,7 +348,7 @@ function updateElementContent(element: HTMLElement): void {
   });
 }
 
-export function getTextContent(node: DOMNode): string {
+export function getTextContent(node: Node): string {
   if (node.nodeType === NodeType.TEXT_NODE) {
     return node.textContent;
   }
