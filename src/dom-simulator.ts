@@ -177,6 +177,18 @@ export function createElement(tagName: string, attributes: Record<string, string
       return querySelectorAllFunction(element, selector);
     }
   };
+  
+  Object.defineProperty(element, 'textContent', {
+    get() {
+      return (element as any)._internalTextContent || getTextContent(element);
+    },
+    set(value: string) {
+      setTextContent(element, value);
+    },
+    enumerable: true,
+    configurable: true
+  });
+  
   return element;
 }
 
@@ -354,6 +366,10 @@ function appendChild(parent: DOMNode, child: DOMNode): void {
       }
     }
   }
+  
+  if (parent.nodeType === NodeType.ELEMENT_NODE) {
+    updateElementContent(parent as DOMElement);
+  }
 }
 
 function updateElementContent(element: DOMElement): void {
@@ -374,7 +390,13 @@ function updateElementContent(element: DOMElement): void {
   const tagNameLower = element.tagName.toLowerCase();
   element.outerHTML = `<${tagNameLower}${attrs}>${element.innerHTML}</${tagNameLower}>`;
   
-  element.textContent = getTextContent(element);
+  const computedTextContent = getTextContent(element);
+  Object.defineProperty(element, '_internalTextContent', {
+    value: computedTextContent,
+    writable: true,
+    enumerable: false,
+    configurable: true 
+  });
 }
 
 export function getTextContent(node: DOMNode): string {
@@ -417,12 +439,51 @@ export function setInnerHTML(element: DOMElement, html: string): void {
   element.lastChild = null;
   element.firstElementChild = null;
   element.lastElementChild = null;
-  element.textContent = html.replace(/<[^>]*>/g, '');
+  
+  const textContent = html.replace(/<[^>]*>/g, '');
+  Object.defineProperty(element, '_internalTextContent', {
+    value: textContent,
+    writable: true,
+    enumerable: false,
+    configurable: true 
+  });
+  
   const attrs = Object.entries(element.attributes)
     .map(([k, v]) => ` ${k}="${v}"`)
     .join('');
   const tagNameLower = element.tagName.toLowerCase();
   element.outerHTML = `<${tagNameLower}${attrs}>${element.innerHTML}</${tagNameLower}>`;
+}
+
+function setTextContent(element: DOMElement, text: string): void {
+  element.childNodes = [];
+  element.children = [];
+  element.firstChild = null;
+  element.lastChild = null;
+  element.firstElementChild = null;
+  element.lastElementChild = null;
+  
+  if (text) {
+    const textNode: DOMText = {
+      nodeType: NodeType.TEXT_NODE,
+      nodeName: '#text',
+      nodeValue: text,
+      textContent: text,
+      data: text,
+      childNodes: [],
+      parentNode: element,
+      firstChild: null,
+      lastChild: null,
+      nextSibling: null,
+      previousSibling: null
+    };
+    
+    element.childNodes.push(textNode);
+    element.firstChild = textNode;
+    element.lastChild = textNode;
+  }
+  
+  updateElementContent(element);
 }
 
 export { querySelector, querySelectorAll } from './css-selector.js';
