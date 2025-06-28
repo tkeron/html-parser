@@ -12,7 +12,7 @@ import {
 export function parseHTML(html: string = ""): Document {
   const tokens = tokenize(html);
   const ast = parse(tokens);
-  return <Document><unknown>astToDOM(ast);
+  return astToDOM(ast);
 }
 
 

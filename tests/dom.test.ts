@@ -286,6 +286,32 @@ describe("DOM Simulator - Phase 2: Navigation and Attributes", () => {
 });
 
 describe("DOM extra tests", () => {
+  const smallDocument = `
+    <!DOCTYPE html>
+    <html lang="en">
+      <head>
+        <title>Sample Page</title>
+        <meta charset="UTF-8">
+      </head>
+      <body>
+        <header id="main-header" class="site-header">
+          <h1>Welcome</h1>
+        </header>
+        <main>
+          <section>
+            <p>First paragraph.</p>
+            <p>Second <strong>paragraph</strong> with <em>formatting</em>.</p>
+          </section>
+          <img src="image.jpg" alt="Sample Image">
+          <!-- Footer note -->
+        </main>
+        <footer>
+          <p>Contact: <a href="mailto:test@example.com">Email us</a></p>
+        </footer>
+      </body>
+    </html>
+  `;
+
   it("should parse a simple HTML document and perform common DOM operations", () => {
     const doc = parseHTML(`<!DOCTYPE html>
 <html>
@@ -327,5 +353,87 @@ describe("DOM extra tests", () => {
     expect(doc.nodeType).toBe(NodeType.DOCUMENT_NODE);
     expect(doc.nodeName).toBe("#document");
     expect(doc.childNodes.length).toBe(0);
+  });
+
+  it("should parse document structure and identify main elements", () => {
+    const doc = parseHTML(smallDocument);
+
+    expect(doc.nodeType).toBe(NodeType.DOCUMENT_NODE);
+    expect(doc.documentElement?.nodeName).toBe("HTML");
+    expect(doc.head?.nodeName).toBe("HEAD");
+    expect(doc.body?.nodeName).toBe("BODY");
+
+    expect(doc.head?.querySelector("title")?.textContent).toBe("Sample Page");
+    expect(doc.head?.querySelector("meta")?.getAttribute("charset")).toBe(
+      "UTF-8"
+    );
+  });
+
+  it("should query and navigate DOM elements correctly", () => {
+    const doc = parseHTML(smallDocument);
+
+    const header = doc.body?.querySelector("#main-header")!;
+    expect(header.nodeName).toBe("HEADER");
+    expect(header.getAttribute("class")).toBe("site-header");
+    expect(header.querySelector("h1")?.textContent).toBe("Welcome");
+
+    const section = doc.body?.querySelector("section")!;
+    const paragraphs = section.querySelectorAll("p");
+    expect(paragraphs.length).toBe(2);
+    expect(paragraphs[0]?.textContent).toBe("First paragraph.");
+    expect(paragraphs[1]?.textContent).toBe(
+      "Second paragraph with formatting."
+    );
+
+    const strong = section.querySelector("strong")!;
+    expect(strong.textContent).toBe("paragraph");
+    expect(strong.parentNode?.nodeName).toBe("P");
+
+    const em = section.querySelector("em")!;
+    expect(em.textContent).toBe("formatting");
+  });
+
+  it("should handle different node types and attributes", () => {
+    const doc = parseHTML(smallDocument);
+
+    const img = doc.body?.querySelector("img")!;
+    expect(img.nodeName).toBe("IMG");
+    expect(img.getAttribute("src")).toBe("image.jpg");
+    expect(img.getAttribute("alt")).toBe("Sample Image");
+
+    const main = doc.body?.querySelector("main")!;
+    const commentNode = main.childNodes.find(
+      (n: any) => n.nodeType === NodeType.COMMENT_NODE
+    );
+    expect(commentNode).toBeTruthy();
+    expect(commentNode?.nodeValue?.trim()).toBe("Footer note");
+
+    const footerLink = doc.body?.querySelector("footer a")!;
+    expect(footerLink.getAttribute("href")).toBe("mailto:test@example.com");
+    expect(footerLink.textContent).toBe("Email us");
+  });
+
+  it("should support DOM manipulation and traversal operations", () => {
+    const doc = parseHTML(smallDocument);
+    const section = doc.body?.querySelector("section")!;
+    const paragraphs = section.querySelectorAll("p");
+    const header = doc.body?.querySelector("#main-header")!;
+
+    const clonedFooter = (doc.body?.querySelector("footer") as any).cloneNode(
+      true
+    );
+    expect(clonedFooter.nodeName).toBe("FOOTER");
+    expect(clonedFooter.querySelector("a")?.textContent).toBe("Email us");
+
+    const bodyText = getTextContent(doc.body!);
+    expect(bodyText.includes("Welcome")).toBe(true);
+    expect(bodyText.includes("First paragraph.")).toBe(true);
+    expect(bodyText.includes("Second paragraph with formatting")).toBe(true);
+    expect(bodyText.includes("Email us")).toBe(true);
+
+    header.setAttribute("data-role", "banner");
+    expect(header.getAttribute("data-role")).toBe("banner");
+    header.removeAttribute("class");
+    expect(header.hasAttribute("class")).toBe(false);
   });
 });
