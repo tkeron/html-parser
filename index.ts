@@ -7,7 +7,7 @@ import {
 /**
  * Parse HTML string into DOM Document object
  * @param html The HTML string to parse
- * @returns A DOM Document object
+ * @returns A Document object
  */
 export function parseHTML(html: string): Document {
   const tokens = tokenize(html);
