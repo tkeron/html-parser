@@ -220,28 +220,44 @@ export function astToDOM(ast: ASTNode): Document {
         if (Node.nodeType === NodeType.ELEMENT_NODE) {
           const element = Node as HTMLElement;
           if (element.tagName === 'HTML') {
-            document.documentElement = element;
+            (document as any).documentElement = element;
             findSpecialElements(document, element);
           } else if (element.tagName === 'BODY') {
-            document.body = element;
+            (document as any).body = element;
           } else if (element.tagName === 'HEAD') {
-            document.head = element;
+            (document as any).head = element;
           }
         }
       }
     }
   }
+  
+  // If there's no explicit body element, create one that acts as a container
+  // for querySelector functionality, but don't change the document structure
+  if (!document.body) {
+    const bodyElement = createElement('body');
+    (document as any).body = bodyElement;
+    
+    // Make the body element's querySelector search the entire document
+    (bodyElement as any).querySelector = function(selector: string) {
+      return querySelectorFunction(document, selector);
+    };
+    (bodyElement as any).querySelectorAll = function(selector: string) {
+      return querySelectorAllFunction(document, selector);
+    };
+  }
+  
   return document;
 }
 
 function findSpecialElements(document: Document, htmlElement: HTMLElement): void {
-  for (const child of htmlElement.childNodes) {
+  for (const child of (htmlElement as any).childNodes) {
     if (child.nodeType === NodeType.ELEMENT_NODE) {
       const element = child as HTMLElement;
       if (element.tagName === 'BODY') {
-        document.body = element;
+        (document as any).body = element;
       } else if (element.tagName === 'HEAD') {
-        document.head = element;
+        (document as any).head = element;
       }
     }
   }
@@ -279,39 +295,39 @@ function convertASTNodeToDOM(astNode: ASTNode): Node | null {
 }
 
 function appendChild(parent: Node, child: Node): void {
-  child.parentNode = parent;
-  parent.childNodes.push(child);
+  (child as any).parentNode = parent;
+  (parent as any).childNodes.push(child);
 
-  if (parent.childNodes.length > 1) {
-    const previousSibling = parent.childNodes[parent.childNodes.length - 2];
+  if ((parent as any).childNodes.length > 1) {
+    const previousSibling = (parent as any).childNodes[(parent as any).childNodes.length - 2];
     if (previousSibling) {
-      previousSibling.nextSibling = child;
-      child.previousSibling = previousSibling;
+      (previousSibling as any).nextSibling = child;
+      (child as any).previousSibling = previousSibling;
     }
   }
 
-  if (parent.childNodes.length === 1) {
-    parent.firstChild = child;
+  if ((parent as any).childNodes.length === 1) {
+    (parent as any).firstChild = child;
   }
-  parent.lastChild = child;
+  (parent as any).lastChild = child;
 
   if (parent.nodeType === NodeType.ELEMENT_NODE && child.nodeType === NodeType.ELEMENT_NODE) {
     const parentElement = parent as HTMLElement;
     const childElement = child as HTMLElement;
 
-    childElement.parentElement = parentElement;
-    parentElement.children.push(childElement);
+    (childElement as any).parentElement = parentElement;
+    (parentElement as any).children.push(childElement);
 
-    if (parentElement.children.length === 1) {
-      parentElement.firstElementChild = childElement;
+    if ((parentElement as any).children.length === 1) {
+      (parentElement as any).firstElementChild = childElement;
     }
-    parentElement.lastElementChild = childElement;
+    (parentElement as any).lastElementChild = childElement;
 
-    if (parentElement.children.length > 1) {
-      const previousElementSibling = parentElement.children[parentElement.children.length - 2];
+    if ((parentElement as any).children.length > 1) {
+      const previousElementSibling = (parentElement as any).children[(parentElement as any).children.length - 2];
       if (previousElementSibling) {
-        previousElementSibling.nextElementSibling = childElement;
-        childElement.previousElementSibling = previousElementSibling;
+        (previousElementSibling as any).nextElementSibling = childElement;
+        (childElement as any).previousElementSibling = previousElementSibling;
       }
     }
   }
@@ -322,22 +338,22 @@ function appendChild(parent: Node, child: Node): void {
 }
 
 function updateElementContent(element: HTMLElement): void {
-  element.innerHTML = element.childNodes.map(child => {
+  (element as any).innerHTML = (element as any).childNodes.map((child: any) => {
     if (child.nodeType === NodeType.TEXT_NODE) {
       return child.textContent;
     } else if (child.nodeType === NodeType.ELEMENT_NODE) {
       return (child as HTMLElement).outerHTML;
     } else if (child.nodeType === NodeType.COMMENT_NODE) {
-      return `<!--${(child as DOMComment).data}-->`;
+      return `<!--${(child as any).data}-->`;
     }
     return '';
   }).join('');
 
-  const attrs = Object.entries(element.attributes)
+  const attrs = Object.entries((element as any).attributes)
     .map(([k, v]) => ` ${k}="${v}"`)
     .join('');
   const tagNameLower = element.tagName.toLowerCase();
-  element.outerHTML = `<${tagNameLower}${attrs}>${element.innerHTML}</${tagNameLower}>`;
+  (element as any).outerHTML = `<${tagNameLower}${attrs}>${(element as any).innerHTML}</${tagNameLower}>`;
 
   const computedTextContent = getTextContent(element);
   Object.defineProperty(element, '_internalTextContent', {
@@ -350,44 +366,44 @@ function updateElementContent(element: HTMLElement): void {
 
 export function getTextContent(node: Node): string {
   if (node.nodeType === NodeType.TEXT_NODE) {
-    return node.textContent;
+    return node.textContent || '';
   }
   if (node.nodeType !== NodeType.ELEMENT_NODE && node.nodeType !== NodeType.DOCUMENT_NODE) {
     return '';
   }
   let textContent = '';
-  for (const child of node.childNodes) {
+  for (const child of (node as any).childNodes) {
     textContent += getTextContent(child);
   }
   return textContent;
 }
 
 export function getAttribute(element: HTMLElement, name: string): string | null {
-  return element.attributes[name] || null;
+  return (element as any).attributes[name] || null;
 }
 
 export function hasAttribute(element: HTMLElement, name: string): boolean {
-  return name in element.attributes;
+  return name in (element as any).attributes;
 }
 
 export function setAttribute(element: HTMLElement, name: string, value: string): void {
-  element.attributes[name] = value;
+  (element as any).attributes[name] = value;
   updateElementContent(element);
 }
 
 export function removeAttribute(element: HTMLElement, name: string): void {
-  delete element.attributes[name];
+  delete (element as any).attributes[name];
   updateElementContent(element);
 }
 
 export function setInnerHTML(element: HTMLElement, html: string): void {
-  element.innerHTML = html;
-  element.childNodes = [];
-  element.children = [];
-  element.firstChild = null;
-  element.lastChild = null;
-  element.firstElementChild = null;
-  element.lastElementChild = null;
+  (element as any).innerHTML = html;
+  (element as any).childNodes = [];
+  (element as any).children = [];
+  (element as any).firstChild = null;
+  (element as any).lastChild = null;
+  (element as any).firstElementChild = null;
+  (element as any).lastElementChild = null;
 
   const textContent = html.replace(/<[^>]*>/g, '');
   Object.defineProperty(element, '_internalTextContent', {
@@ -397,23 +413,23 @@ export function setInnerHTML(element: HTMLElement, html: string): void {
     configurable: true
   });
 
-  const attrs = Object.entries(element.attributes)
+  const attrs = Object.entries((element as any).attributes)
     .map(([k, v]) => ` ${k}="${v}"`)
     .join('');
   const tagNameLower = element.tagName.toLowerCase();
-  element.outerHTML = `<${tagNameLower}${attrs}>${element.innerHTML}</${tagNameLower}>`;
+  (element as any).outerHTML = `<${tagNameLower}${attrs}>${(element as any).innerHTML}</${tagNameLower}>`;
 }
 
 function setTextContent(element: HTMLElement, text: string): void {
-  element.childNodes = [];
-  element.children = [];
-  element.firstChild = null;
-  element.lastChild = null;
-  element.firstElementChild = null;
-  element.lastElementChild = null;
+  (element as any).childNodes = [];
+  (element as any).children = [];
+  (element as any).firstChild = null;
+  (element as any).lastChild = null;
+  (element as any).firstElementChild = null;
+  (element as any).lastElementChild = null;
 
   if (text) {
-    const textNode: DOMText = {
+    const textNode: any = {
       nodeType: NodeType.TEXT_NODE,
       nodeName: '#text',
       nodeValue: text,
@@ -427,9 +443,9 @@ function setTextContent(element: HTMLElement, text: string): void {
       previousSibling: null
     };
 
-    element.childNodes.push(textNode);
-    element.firstChild = textNode;
-    element.lastChild = textNode;
+    (element as any).childNodes.push(textNode);
+    (element as any).firstChild = textNode;
+    (element as any).lastChild = textNode;
   }
 
   updateElementContent(element);

@@ -293,4 +293,19 @@ describe("DOM extra tests", () => {
         expect(h1?.innerHTML).toBe('Welcome to the Test Document');
 
     });
+
+
+    it("should correctly parse nested elements and maintain DOM structure", () => {
+        const doc = parseHTML(`<div><p><span>Hello</span> World</p></div>`);
+        const div = doc.body?.querySelector('div');
+        const p = div?.querySelector('p');
+        const span = p?.querySelector('span');
+
+        expect(div).toBeTruthy();
+        expect(p).toBeTruthy();
+        expect(span).toBeTruthy();
+        expect(span?.textContent).toBe('Hello');
+        expect(p?.textContent).toBe('Hello World'); 
+    });
+
 });
