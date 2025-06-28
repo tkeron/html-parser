@@ -9,7 +9,7 @@ import {
  * @param html The HTML string to parse
  * @returns A Document object
  */
-export function parseHTML(html: string): Document {
+export function parseHTML(html: string = ""): Document {
   const tokens = tokenize(html);
   const ast = parse(tokens);
   return <Document><unknown>astToDOM(ast);
