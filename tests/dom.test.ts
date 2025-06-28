@@ -431,9 +431,36 @@ describe("DOM extra tests", () => {
     expect(bodyText.includes("Second paragraph with formatting")).toBe(true);
     expect(bodyText.includes("Email us")).toBe(true);
 
+    // Attribute manipulation
     header.setAttribute("data-role", "banner");
     expect(header.getAttribute("data-role")).toBe("banner");
     header.removeAttribute("class");
     expect(header.hasAttribute("class")).toBe(false);
+
+    // Sibling relationships - handling whitespace text nodes between elements
+    const firstP = paragraphs[0]!;
+    const secondP = paragraphs[1]!;
+    
+    // nextSibling/previousSibling include text nodes (whitespace), 
+    // so we need to check nextElementSibling/previousElementSibling instead
+    expect(firstP.nextElementSibling === secondP).toBe(true);
+    expect(secondP.previousElementSibling === firstP).toBe(true);
+
+    // Verify that there are indeed text nodes between the paragraphs
+    expect(firstP.nextSibling?.nodeType).toBe(NodeType.TEXT_NODE);
+    expect(secondP.previousSibling?.nodeType).toBe(NodeType.TEXT_NODE);
+
+    // Alternative: Compare by key properties for more robust checking
+    const compareNodes = (node1: any, node2: any) => {
+      if (!node1 || !node2) return node1 === node2;
+      return (
+        node1.nodeName === node2.nodeName &&
+        node1.nodeType === node2.nodeType &&
+        node1.textContent === node2.textContent
+      );
+    };
+
+    expect(compareNodes(firstP.nextElementSibling, secondP)).toBe(true);
+    expect(compareNodes(secondP.previousElementSibling, firstP)).toBe(true);
   });
 });
