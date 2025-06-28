@@ -5,7 +5,7 @@ import {
 } from './src/dom-simulator.js';
 
 /**
- * Parse HTML string into DOM Document object
+ * Parse HTML string into Document object
  * @param html The HTML string to parse
  * @returns A Document object
  */

@@ -34,7 +34,7 @@ function matchesSelector(element: HTMLElement, tokens: SelectorToken[]): boolean
     return tokens.every(token => matchesToken(element, token));
 }
 
-function findElements(node: DOMNode, tokens: SelectorToken[], results: HTMLElement[]): void {
+function findElements(node: Node, tokens: SelectorToken[], results: HTMLElement[]): void {
     if (node.nodeType === 1) {
         const element = node as HTMLElement;
         if (matchesSelector(element, tokens)) {
@@ -46,14 +46,14 @@ function findElements(node: DOMNode, tokens: SelectorToken[], results: HTMLEleme
     }
 }
 
-export function querySelectorAll(root: DOMNode, selector: string): HTMLElement[] {
+export function querySelectorAll(root: Node, selector: string): HTMLElement[] {
     const tokens = parseSelector(selector);
     const results: HTMLElement[] = [];
     findElements(root, tokens, results);
     return results;
 }
 
-export function querySelector(root: DOMNode, selector: string): HTMLElement | null {
+export function querySelector(root: Node, selector: string): HTMLElement | null {
     const results = querySelectorAll(root, selector);
     return results[0] || null;
 }
