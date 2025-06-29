@@ -117,7 +117,9 @@ describe('DOM Extended Functionality', () => {
 
       expect(div.innerHTML).toBe('New content');
       expect(div.children.length).toBe(0);
-      expect(div.childNodes.length).toBe(0);
+      expect(div.childNodes.length).toBe(1);
+      expect(div.childNodes[0]?.nodeType).toBe(3);
+      expect(div.childNodes[0]?.textContent).toBe('New content');
     });
   });
 

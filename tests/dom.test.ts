@@ -402,6 +402,7 @@ describe("DOM extra tests", () => {
     expect(img.getAttribute("alt")).toBe("Sample Image");
 
     const main = doc.body?.querySelector("main")!;
+    //@ts-ignore
     const commentNode = main.childNodes.find(
       (n: any) => n.nodeType === NodeType.COMMENT_NODE
     );
@@ -431,26 +432,20 @@ describe("DOM extra tests", () => {
     expect(bodyText.includes("Second paragraph with formatting")).toBe(true);
     expect(bodyText.includes("Email us")).toBe(true);
 
-    // Attribute manipulation
     header.setAttribute("data-role", "banner");
     expect(header.getAttribute("data-role")).toBe("banner");
     header.removeAttribute("class");
     expect(header.hasAttribute("class")).toBe(false);
 
-    // Sibling relationships - handling whitespace text nodes between elements
     const firstP = paragraphs[0]!;
     const secondP = paragraphs[1]!;
-    
-    // nextSibling/previousSibling include text nodes (whitespace), 
-    // so we need to check nextElementSibling/previousElementSibling instead
+
     expect(firstP.nextElementSibling === secondP).toBe(true);
     expect(secondP.previousElementSibling === firstP).toBe(true);
 
-    // Verify that there are indeed text nodes between the paragraphs
     expect(firstP.nextSibling?.nodeType).toBe(NodeType.TEXT_NODE);
     expect(secondP.previousSibling?.nodeType).toBe(NodeType.TEXT_NODE);
 
-    // Alternative: Compare by key properties for more robust checking
     const compareNodes = (node1: any, node2: any) => {
       if (!node1 || !node2) return node1 === node2;
       return (
@@ -462,5 +457,27 @@ describe("DOM extra tests", () => {
 
     expect(compareNodes(firstP.nextElementSibling, secondP)).toBe(true);
     expect(compareNodes(secondP.previousElementSibling, firstP)).toBe(true);
+  });
+
+  it("should support dynamic HTML injection and DOM manipulation workflows", () => {
+    const doc = parseHTML("<div id='container'></div>");
+    const container = doc.getElementById("container")!;
+
+    expect(container).toBeTruthy();
+
+    container.innerHTML = `
+      <h2>Dynamic Content</h2>
+      <p>This is a dynamically added paragraph.</p>
+      <ul>
+        <li>Item 1</li>
+        <li>Item 2</li>
+      </ul>
+    `;
+
+    expect(container.querySelector("h2")?.textContent).toBe("Dynamic Content");
+    expect(container.querySelector("p")?.textContent).toBe(
+      "This is a dynamically added paragraph."
+    );
+    expect(container.querySelectorAll("li").length).toBe(2);
   });
 });

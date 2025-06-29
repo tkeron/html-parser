@@ -1,4 +1,6 @@
 import type { ASTNode, ASTNodeType } from "./parser.js";
+import { parse } from "./parser.js";
+import { tokenize } from "./tokenizer.js";
 import {
   querySelector as querySelectorFunction,
   querySelectorAll as querySelectorAllFunction,
@@ -151,6 +153,17 @@ export function createElement(
     configurable: true,
   });
 
+  Object.defineProperty(element, "innerHTML", {
+    get() {
+      return (element as any)._internalInnerHTML || getInnerHTML(element);
+    },
+    set(value: string) {
+      setInnerHTML(element, value);
+    },
+    enumerable: true,
+    configurable: true,
+  });
+
   return element;
 }
 
@@ -219,12 +232,16 @@ export function createDocument(): any {
     querySelectorAll(selector: string): any[] {
       return querySelectorAllFunction(document, selector);
     },
+
+    getElementById(id: string): any {
+      return querySelectorFunction(document, `#${id}`);
+    },
   };
   return document;
 }
 
 export function astToDOM(ast: ASTNode): Document {
-  const document = <Document>createDocument();
+  const document = createDocument();
   if (ast.children) {
     for (const child of ast.children) {
       const Node = convertASTNodeToDOM(child);
@@ -352,7 +369,7 @@ function appendChild(parent: any, child: any): void {
 }
 
 function updateElementContent(element: any): void {
-  element.innerHTML = element.childNodes
+  const innerHTML = element.childNodes
     .map((child: any) => {
       if (child.nodeType === NodeType.TEXT_NODE) {
         return child.textContent;
@@ -365,11 +382,18 @@ function updateElementContent(element: any): void {
     })
     .join("");
 
+  Object.defineProperty(element, "_internalInnerHTML", {
+    value: innerHTML,
+    writable: true,
+    enumerable: false,
+    configurable: true,
+  });
+
   const attrs = Object.entries(element.attributes)
     .map(([k, v]) => ` ${k}="${v}"`)
     .join("");
   const tagNameLower = element.tagName.toLowerCase();
-  element.outerHTML = `<${tagNameLower}${attrs}>${element.innerHTML}</${tagNameLower}>`;
+  element.outerHTML = `<${tagNameLower}${attrs}>${innerHTML}</${tagNameLower}>`;
 
   const computedTextContent = getTextContent(element);
   Object.defineProperty(element, "_internalTextContent", {
@@ -416,7 +440,6 @@ export function removeAttribute(element: any, name: string): void {
 }
 
 export function setInnerHTML(element: any, html: string): void {
-  element.innerHTML = html;
   element.childNodes = [];
   element.children = [];
   element.firstChild = null;
@@ -424,7 +447,28 @@ export function setInnerHTML(element: any, html: string): void {
   element.firstElementChild = null;
   element.lastElementChild = null;
 
-  const textContent = html.replace(/<[^>]*>/g, "");
+  if (html.trim()) {
+    const tokens = tokenize(html);
+    const ast = parse(tokens);
+    if (ast.children) {
+      for (const child of ast.children) {
+        const domChild = convertASTNodeToDOM(child);
+        if (domChild) {
+          appendChild(element, domChild);
+        }
+      }
+    }
+  }
+
+  const actualInnerHTML = getInnerHTML(element);
+  Object.defineProperty(element, "_internalInnerHTML", {
+    value: actualInnerHTML,
+    writable: true,
+    enumerable: false,
+    configurable: true,
+  });
+
+  const textContent = getTextContent(element);
   Object.defineProperty(element, "_internalTextContent", {
     value: textContent,
     writable: true,
@@ -436,7 +480,7 @@ export function setInnerHTML(element: any, html: string): void {
     .map(([k, v]) => ` ${k}="${v}"`)
     .join("");
   const tagNameLower = element.tagName.toLowerCase();
-  element.outerHTML = `<${tagNameLower}${attrs}>${element.innerHTML}</${tagNameLower}>`;
+  element.outerHTML = `<${tagNameLower}${attrs}>${actualInnerHTML}</${tagNameLower}>`;
 }
 
 function setTextContent(element: any, text: string): void {
@@ -501,6 +545,24 @@ export function cloneNode(node: any, deep: boolean = false): any {
   }
 
   return createTextNode("");
+}
+
+export function getInnerHTML(element: any): string {
+  if (element.nodeType !== NodeType.ELEMENT_NODE) {
+    return "";
+  }
+
+  let innerHTML = "";
+  for (const child of element.childNodes) {
+    if (child.nodeType === NodeType.ELEMENT_NODE) {
+      innerHTML += child.outerHTML;
+    } else if (child.nodeType === NodeType.TEXT_NODE) {
+      innerHTML += child.textContent || "";
+    } else if (child.nodeType === NodeType.COMMENT_NODE) {
+      innerHTML += `<!--${child.data || ""}-->`;
+    }
+  }
+  return innerHTML;
 }
 
 export { querySelector, querySelectorAll } from "./css-selector.js";
