@@ -224,25 +224,43 @@ function parseUnquotedValue(state: TokenizerState): string {
 }
 
 function parseEntityInline(state: TokenizerState): string {
+  const originalPos = state.position;
   advance(state);
   
   let entityName = '';
-  while (!isAtEndOfInput(state) && getCurrentChar(state) !== ';') {
-    entityName += getCurrentChar(state);
+  let maxEntityLength = 50;
+  
+  while (!isAtEndOfInput(state) && getCurrentChar(state) !== ';' && entityName.length < maxEntityLength) {
+    const char = getCurrentChar(state);
+    
+    if (/\s/.test(char) || char === '<' || char === '&') {
+      
+      state.position = originalPos;
+      advance(state);
+      return '&';
+    }
+    entityName += char;
     advance(state);
   }
   
-  if (getCurrentChar(state) === ';') {
+  
+  if (getCurrentChar(state) !== ';' || entityName.length >= maxEntityLength) {
+    
+    state.position = originalPos;
     advance(state);
+    return '&';
   }
+  
+  
+  advance(state);
 
   if (entityName.startsWith('#')) {
     if (entityName.startsWith('#x') || entityName.startsWith('#X')) {
       const code = parseInt(entityName.slice(2), 16);
-      return String.fromCharCode(code);
+      return isNaN(code) ? '&' + entityName + ';' : String.fromCharCode(code);
     } else {
       const code = parseInt(entityName.slice(1), 10);
-      return String.fromCharCode(code);
+      return isNaN(code) ? '&' + entityName + ';' : String.fromCharCode(code);
     }
   } else {
     return HTML_ENTITIES[entityName] || `&${entityName};`;
@@ -411,7 +429,7 @@ function parseMarkup(state: TokenizerState): Token | null {
       return parseComment(state);
     } else if (matchString(state, '<![CDATA[')) {
       return parseCDATA(state);
-    } else if (matchString(state, '<!DOCTYPE')) {
+    } else if (matchString(state, '<!DOCTYPE') || matchString(state, '<!doctype')) {
       return parseDoctype(state);
     }
   } else if (peek(state, 1) === '?') {
