@@ -33,19 +33,17 @@ export interface TokenizerState {
   length: number;
 }
 
+const SELF_CLOSING_TAGS = new Set([
+  'area', 'base', 'br', 'col', 'embed', 'hr', 'img', 'input',
+  'link', 'meta', 'param', 'source', 'track', 'wbr'
+]);
+
 const HTML_ENTITIES: Record<string, string> = {
-  'amp': '&',
-  'lt': '<',
-  'gt': '>',
-  'quot': '"',
-  'apos': "'",
-  'nbsp': '\u00A0',
-  'copy': '©',
-  'reg': '®',
-  'trade': '™',
+  'amp': '&', 'lt': '<', 'gt': '>', 'quot': '"', 'apos': "'",
+  'nbsp': '\u00A0', 'copy': '©', 'reg': '®', 'trade': '™'
 };
 
-export function createTokenizerState(input: string): TokenizerState {
+function createTokenizerState(input: string): TokenizerState {
   return {
     input,
     position: 0,
@@ -55,106 +53,55 @@ export function createTokenizerState(input: string): TokenizerState {
   };
 }
 
-export function tokenize(html: string): Token[] {
-  const state = createTokenizerState(html);
-  const tokens: Token[] = [];
-
-  while (state.position < state.length) {
-    const token = getNextToken(state);
-    if (token) {
-      tokens.push(token);
-    }
-  }
-
-  tokens.push({
-    type: TokenType.EOF,
-    value: '',
-    position: createPosition(state, state.position, state.position)
-  });
-
-  return tokens;
-}
-
-function getNextToken(state: TokenizerState): Token | null {
-  if (isAtEndOfInput(state)) {
-    return null;
-  }
-
-  const char = getCurrentChar(state);
-
-  if (char === '<') {
-    return parseMarkup(state);
-  } else {
-    return parseText(state);
-  }
-}
-
-function parseMarkup(state: TokenizerState): Token | null {
-  const start = state.position;
-  
-  if (peek(state, 1) === '!') {
-    if (peek(state, 2) === '-' && peek(state, 3) === '-') {
-      return parseComment(state);
-    } else if (matchString(state, '<![CDATA[')) {
-      return parseCDATA(state);
-    } else if (matchString(state, '<!DOCTYPE')) {
-      return parseDoctype(state);
-    }
-  } else if (peek(state, 1) === '?') {
-    return parseProcessingInstruction(state);
-  } else if (peek(state, 1) === '/') {
-    return parseClosingTag(state);
-  } else {
-    return parseOpeningTag(state);
-  }
-
-  return null;
-}
-
-function parseOpeningTag(state: TokenizerState): Token {
-  const start = state.position;
-  advance(state);
-  const tagName = parseTagName(state);
-  const attributes = parseAttributes(state);
-  
-  let isSelfClosing = false;
-  skipWhitespace(state);
-  if (getCurrentChar(state) === '/') {
-    isSelfClosing = true;
-    advance(state);
-  }
-
-  skipWhitespace(state);
-  if (getCurrentChar(state) === '>') {
-    advance(state);
-  }
-
+function createPosition(state: TokenizerState, start: number, end: number): Position {
   return {
-    type: TokenType.TAG_OPEN,
-    value: tagName,
-    position: createPosition(state, start, state.position),
-    attributes,
-    isSelfClosing
+    start,
+    end,
+    line: state.line,
+    column: state.column
   };
 }
 
-function parseClosingTag(state: TokenizerState): Token {
-  const start = state.position;
-  advance(state);
-  advance(state);
-  const tagName = parseTagName(state);
-  
-  skipWhitespace(state);
-  if (getCurrentChar(state) === '>') {
+function getCurrentChar(state: TokenizerState): string {
+  return state.input[state.position] || '';
+}
+
+function peek(state: TokenizerState, offset: number): string {
+  return state.input[state.position + offset] || '';
+}
+
+function advance(state: TokenizerState, count: number = 1): void {
+  for (let i = 0; i < count && state.position < state.length; i++) {
+    if (state.input[state.position] === '\n') {
+      state.line++;
+      state.column = 1;
+    } else {
+      state.column++;
+    }
+    state.position++;
+  }
+}
+
+function isAtEndOfInput(state: TokenizerState): boolean {
+  return state.position >= state.length;
+}
+
+function matchString(state: TokenizerState, str: string): boolean {
+  return state.input.slice(state.position, state.position + str.length) === str;
+}
+
+function skipWhitespace(state: TokenizerState): void {
+  while (!isAtEndOfInput(state) && /\s/.test(getCurrentChar(state))) {
     advance(state);
   }
+}
 
-  return {
-    type: TokenType.TAG_CLOSE,
-    value: tagName,
-    position: createPosition(state, start, state.position),
-    isClosing: true
-  };
+function isTagNameChar(char: string): boolean {
+  return /[a-zA-Z0-9\-:_]/.test(char);
+}
+
+function isAttributeNameChar(char: string): boolean {
+  return /[a-zA-Z0-9\-:_.]/.test(char);
 }
 
 function parseTagName(state: TokenizerState): string {
@@ -259,7 +206,7 @@ function parseUnquotedValue(state: TokenizerState): string {
   
   while (!isAtEndOfInput(state)) {
     const char = getCurrentChar(state);
-    if (isWhitespace(char) || char === '>' || char === '/' || char === '?') {
+    if (/\s/.test(char) || char === '>' || char === '/' || char === '?') {
       break;
     } else if (char === '&') {
       const entity = parseEntityInline(state);
@@ -274,6 +221,78 @@ function parseUnquotedValue(state: TokenizerState): string {
   }
 
   return value;
+}
+
+function parseEntityInline(state: TokenizerState): string {
+  advance(state);
+  
+  let entityName = '';
+  while (!isAtEndOfInput(state) && getCurrentChar(state) !== ';') {
+    entityName += getCurrentChar(state);
+    advance(state);
+  }
+  
+  if (getCurrentChar(state) === ';') {
+    advance(state);
+  }
+
+  if (entityName.startsWith('#')) {
+    if (entityName.startsWith('#x') || entityName.startsWith('#X')) {
+      const code = parseInt(entityName.slice(2), 16);
+      return String.fromCharCode(code);
+    } else {
+      const code = parseInt(entityName.slice(1), 10);
+      return String.fromCharCode(code);
+    }
+  } else {
+    return HTML_ENTITIES[entityName] || `&${entityName};`;
+  }
+}
+
+function parseOpeningTag(state: TokenizerState): Token {
+  const start = state.position;
+  advance(state);
+  const tagName = parseTagName(state);
+  const attributes = parseAttributes(state);
+  
+  let isSelfClosing = false;
+  skipWhitespace(state);
+  if (getCurrentChar(state) === '/') {
+    isSelfClosing = true;
+    advance(state);
+  }
+
+  skipWhitespace(state);
+  if (getCurrentChar(state) === '>') {
+    advance(state);
+  }
+
+  return {
+    type: TokenType.TAG_OPEN,
+    value: tagName,
+    position: createPosition(state, start, state.position),
+    attributes: Object.keys(attributes).length > 0 ? attributes : {},
+    isSelfClosing: isSelfClosing || SELF_CLOSING_TAGS.has(tagName)
+  };
+}
+
+function parseClosingTag(state: TokenizerState): Token {
+  const start = state.position;
+  advance(state);
+  advance(state);
+  const tagName = parseTagName(state);
+  
+  skipWhitespace(state);
+  if (getCurrentChar(state) === '>') {
+    advance(state);
+  }
+
+  return {
+    type: TokenType.TAG_CLOSE,
+    value: tagName,
+    position: createPosition(state, start, state.position),
+    isClosing: true
+  };
 }
 
 function parseComment(state: TokenizerState): Token {
@@ -386,83 +405,56 @@ function parseText(state: TokenizerState): Token {
   };
 }
 
-function parseEntityInline(state: TokenizerState): string {
-  advance(state);
-  
-  let entityName = '';
-  while (!isAtEndOfInput(state) && getCurrentChar(state) !== ';') {
-    entityName += getCurrentChar(state);
-    advance(state);
-  }
-  
-  if (getCurrentChar(state) === ';') {
-    advance(state);
-  }
-
-  if (entityName.startsWith('#')) {
-    if (entityName.startsWith('#x') || entityName.startsWith('#X')) {
-      const code = parseInt(entityName.slice(2), 16);
-      return String.fromCharCode(code);
-    } else {
-      const code = parseInt(entityName.slice(1), 10);
-      return String.fromCharCode(code);
+function parseMarkup(state: TokenizerState): Token | null {
+  if (peek(state, 1) === '!') {
+    if (peek(state, 2) === '-' && peek(state, 3) === '-') {
+      return parseComment(state);
+    } else if (matchString(state, '<![CDATA[')) {
+      return parseCDATA(state);
+    } else if (matchString(state, '<!DOCTYPE')) {
+      return parseDoctype(state);
     }
+  } else if (peek(state, 1) === '?') {
+    return parseProcessingInstruction(state);
+  } else if (peek(state, 1) === '/') {
+    return parseClosingTag(state);
   } else {
-    return HTML_ENTITIES[entityName] || `&${entityName};`;
+    return parseOpeningTag(state);
+  }
+
+  return null;
+}
+
+function getNextToken(state: TokenizerState): Token | null {
+  if (isAtEndOfInput(state)) {
+    return null;
+  }
+
+  const char = getCurrentChar(state);
+
+  if (char === '<') {
+    return parseMarkup(state);
+  } else {
+    return parseText(state);
   }
 }
 
-function getCurrentChar(state: TokenizerState): string {
-  return state.input[state.position] || '';
-}
+export function tokenize(html: string): Token[] {
+  const state = createTokenizerState(html);
+  const tokens: Token[] = [];
 
-function peek(state: TokenizerState, offset: number): string {
-  return state.input[state.position + offset] || '';
-}
-
-function advance(state: TokenizerState, count: number = 1): void {
-  for (let i = 0; i < count && state.position < state.length; i++) {
-    if (state.input[state.position] === '\n') {
-      state.line++;
-      state.column = 1;
-    } else {
-      state.column++;
+  while (state.position < state.length) {
+    const token = getNextToken(state);
+    if (token) {
+      tokens.push(token);
     }
-    state.position++;
   }
-}
 
-function isAtEndOfInput(state: TokenizerState): boolean {
-  return state.position >= state.length;
-}
+  tokens.push({
+    type: TokenType.EOF,
+    value: '',
+    position: createPosition(state, state.position, state.position)
+  });
 
-function matchString(state: TokenizerState, str: string): boolean {
-  return state.input.slice(state.position, state.position + str.length) === str;
-}
-
-function skipWhitespace(state: TokenizerState): void {
-  while (!isAtEndOfInput(state) && isWhitespace(getCurrentChar(state))) {
-    advance(state);
-  }
-}
-
-function isWhitespace(char: string): boolean {
-  return /\s/.test(char);
-}
-
-function isTagNameChar(char: string): boolean {
-  return /[a-zA-Z0-9\-:_]/.test(char);
-}
-
-function isAttributeNameChar(char: string): boolean {
-  return /[a-zA-Z0-9\-:_.]/.test(char);
-}
-
-function createPosition(state: TokenizerState, start: number, end: number): Position {
-  return {
-    start,
-    end,
-    line: state.line,
-    column: state.column
-  };
+  return tokens;
 }
