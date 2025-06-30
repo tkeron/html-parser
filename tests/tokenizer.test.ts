@@ -1,4 +1,4 @@
-import { expect, test, describe } from 'bun:test';
+import { expect, it, describe } from 'bun:test';
 import {
   tokenize,
   TokenType,
@@ -8,7 +8,7 @@ import {
 describe('HTML Tokenizer', () => {
 
   describe('Basic Tags', () => {
-    test('should tokenize simple opening tag', () => {
+    it('should tokenize simple opening tag', () => {
       const tokens = tokenize('<div>');
 
       expect(tokens).toHaveLength(2);
@@ -22,7 +22,7 @@ describe('HTML Tokenizer', () => {
       expect(tokens[1]!.type).toBe(TokenType.EOF);
     });
 
-    test('should tokenize simple closing tag', () => {
+    it('should tokenize simple closing tag', () => {
       const tokens = tokenize('</div>');
 
       expect(tokens).toHaveLength(2);
@@ -34,7 +34,7 @@ describe('HTML Tokenizer', () => {
       });
     });
 
-    test('should tokenize self-closing tag', () => {
+    it('should tokenize self-closing tag', () => {
       const tokens = tokenize('<img/>');
 
       expect(tokens).toHaveLength(2);
@@ -47,7 +47,7 @@ describe('HTML Tokenizer', () => {
       });
     });
 
-    test('should handle case insensitive tag names', () => {
+    it('should handle case insensitive tag names', () => {
       const tokens = tokenize('<DIV></DIV>');
 
       expect(tokens[0]!.value).toBe('div');
@@ -56,7 +56,7 @@ describe('HTML Tokenizer', () => {
   });
 
   describe('Attributes', () => {
-    test('should parse attributes with double quotes', () => {
+    it('should parse attributes with double quotes', () => {
       const tokens = tokenize('<div class="container" id="main">');
 
       expect(tokens[0]?.attributes).toEqual({
@@ -65,7 +65,7 @@ describe('HTML Tokenizer', () => {
       });
     });
 
-    test('should parse attributes with single quotes', () => {
+    it('should parse attributes with single quotes', () => {
       const tokens = tokenize(`<div class='container' id='main'>`);
 
       expect(tokens[0]?.attributes).toEqual({
@@ -74,7 +74,7 @@ describe('HTML Tokenizer', () => {
       });
     });
 
-    test('should parse unquoted attributes', () => {
+    it('should parse unquoted attributes', () => {
       const tokens = tokenize('<div class=container id=main>');
 
       expect(tokens[0]?.attributes).toEqual({
@@ -83,7 +83,7 @@ describe('HTML Tokenizer', () => {
       });
     });
 
-    test('should parse boolean attributes', () => {
+    it('should parse boolean attributes', () => {
       const tokens = tokenize('<input disabled checked>');
 
       expect(tokens[0]?.attributes).toEqual({
@@ -92,7 +92,7 @@ describe('HTML Tokenizer', () => {
       });
     });
 
-    test('should handle mixed attribute types', () => {
+    it('should handle mixed attribute types', () => {
       const tokens = tokenize('<input type="text" disabled value=test>');
 
       expect(tokens[0]?.attributes).toEqual({
@@ -102,7 +102,7 @@ describe('HTML Tokenizer', () => {
       });
     });
 
-    test('should handle attributes with special characters', () => {
+    it('should handle attributes with special characters', () => {
       const tokens = tokenize('<div data-test="value" aria-label="test">');
 
       expect(tokens[0]?.attributes).toEqual({
@@ -113,7 +113,7 @@ describe('HTML Tokenizer', () => {
   });
 
   describe('Text Content', () => {
-    test('should tokenize plain text', () => {
+    it('should tokenize plain text', () => {
       const tokens = tokenize('Hello World');
 
       expect(tokens).toHaveLength(2);
@@ -124,13 +124,13 @@ describe('HTML Tokenizer', () => {
       });
     });
 
-    test('should handle text with whitespace', () => {
+    it('should handle text with whitespace', () => {
       const tokens = tokenize('  Hello   World  ');
 
       expect(tokens[0]?.value).toBe('  Hello   World  ');
     });
 
-    test('should handle multiline text', () => {
+    it('should handle multiline text', () => {
       const tokens = tokenize('Line 1\nLine 2\nLine 3');
 
       expect(tokens[0]?.value).toBe('Line 1\nLine 2\nLine 3');
@@ -138,31 +138,31 @@ describe('HTML Tokenizer', () => {
   });
 
   describe('HTML Entities', () => {
-    test('should parse named entities', () => {
+    it('should parse named entities', () => {
       const tokens = tokenize('&amp; &lt; &gt; &quot; &nbsp;');
 
       expect(tokens[0]?.value).toBe('& < > " \u00A0');
     });
 
-    test('should parse numeric entities', () => {
+    it('should parse numeric entities', () => {
       const tokens = tokenize('&#65; &#66; &#67;');
 
       expect(tokens[0]?.value).toBe('A B C');
     });
 
-    test('should parse hexadecimal entities', () => {
+    it('should parse hexadecimal entities', () => {
       const tokens = tokenize('&#x41; &#x42; &#x43;');
 
       expect(tokens[0]?.value).toBe('A B C');
     });
 
-    test('should handle entities in attributes', () => {
+    it('should handle entities in attributes', () => {
       const tokens = tokenize('<div title="&quot;Hello&quot;">');
 
       expect(tokens[0]?.attributes!.title).toBe('"Hello"');
     });
 
-    test('should handle unknown entities', () => {
+    it('should handle unknown entities', () => {
       const tokens = tokenize('&unknown;');
 
       expect(tokens[0]?.value).toBe('&unknown;');
@@ -170,7 +170,7 @@ describe('HTML Tokenizer', () => {
   });
 
   describe('Comments', () => {
-    test('should parse HTML comments', () => {
+    it('should parse HTML comments', () => {
       const tokens = tokenize('<!-- This is a comment -->');
 
       expect(tokens[0]).toEqual({
@@ -180,14 +180,14 @@ describe('HTML Tokenizer', () => {
       });
     });
 
-    test('should handle multiline comments', () => {
+    it('should handle multiline comments', () => {
       const tokens = tokenize(`<!-- \n        Multi line\n        comment\n      -->`);
 
       expect(tokens[0]?.type).toBe(TokenType.COMMENT);
       expect(tokens[0]?.value).toContain('Multi line');
     });
 
-    test('should handle empty comments', () => {
+    it('should handle empty comments', () => {
       const tokens = tokenize('<!---->');
 
       expect(tokens[0]).toEqual({
@@ -199,7 +199,7 @@ describe('HTML Tokenizer', () => {
   });
 
   describe('CDATA Sections', () => {
-    test('should parse CDATA sections', () => {
+    it('should parse CDATA sections', () => {
       const tokens = tokenize('<![CDATA[Some data]]>');
 
       expect(tokens[0]).toEqual({
@@ -209,7 +209,7 @@ describe('HTML Tokenizer', () => {
       });
     });
 
-    test('should handle CDATA with special characters', () => {
+    it('should handle CDATA with special characters', () => {
       const tokens = tokenize('<![CDATA[<script>alert("test");</script>]]>');
 
       expect(tokens[0]?.value).toBe('<script>alert("test");</script>');
@@ -217,7 +217,7 @@ describe('HTML Tokenizer', () => {
   });
 
   describe('DOCTYPE Declaration', () => {
-    test('should parse DOCTYPE declaration', () => {
+    it('should parse DOCTYPE declaration', () => {
       const tokens = tokenize('<!DOCTYPE html>');
 
       expect(tokens[0]).toEqual({
@@ -227,7 +227,7 @@ describe('HTML Tokenizer', () => {
       });
     });
 
-    test('should parse complex DOCTYPE', () => {
+    it('should parse complex DOCTYPE', () => {
       const tokens = tokenize('<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01//EN" "http://www.w3.org/TR/html4/strict.dtd">');
 
       expect(tokens[0]?.type).toBe(TokenType.DOCTYPE);
@@ -236,7 +236,7 @@ describe('HTML Tokenizer', () => {
   });
 
   describe('Processing Instructions', () => {
-    test('should parse XML processing instruction', () => {
+    it('should parse XML processing instruction', () => {
       const tokens = tokenize('<?xml version="1.0" encoding="UTF-8"?>');
 
       expect(tokens[0]).toEqual({
@@ -246,7 +246,7 @@ describe('HTML Tokenizer', () => {
       });
     });
 
-    test('should parse PHP-style processing instruction', () => {
+    it('should parse PHP-style processing instruction', () => {
       const tokens = tokenize('<?php echo "Hello"; ?>');
 
       expect(tokens[0]?.type).toBe(TokenType.PROCESSING_INSTRUCTION);
@@ -255,7 +255,7 @@ describe('HTML Tokenizer', () => {
   });
 
   describe('Complex HTML Documents', () => {
-    test('should tokenize complete HTML document', () => {
+    it('should tokenize complete HTML document', () => {
       const html = `<!DOCTYPE html>
 <html lang="en">
   <head>
@@ -278,7 +278,7 @@ describe('HTML Tokenizer', () => {
       expect(htmlTag!.attributes!.lang).toBe('en');
     });
 
-    test('should handle mixed content', () => {
+    it('should handle mixed content', () => {
       const html = `<div>
         Text before <!-- comment -->
         <span>nested</span>
@@ -294,14 +294,14 @@ describe('HTML Tokenizer', () => {
   });
 
   describe('Edge Cases', () => {
-    test('should handle empty input', () => {
+    it('should handle empty input', () => {
       const tokens = tokenize('');
 
       expect(tokens).toHaveLength(1);
       expect(tokens[0]?.type).toBe(TokenType.EOF);
     });
 
-    test('should handle whitespace only', () => {
+    it('should handle whitespace only', () => {
       const tokens = tokenize('   \n\t  ');
 
       expect(tokens).toHaveLength(2);
@@ -309,14 +309,14 @@ describe('HTML Tokenizer', () => {
       expect(tokens[0]?.value).toBe('   \n\t  ');
     });
 
-    test('should handle malformed tags', () => {
+    it('should handle malformed tags', () => {
       const tokens = tokenize('<div class="test>');
 
       expect(tokens[0]?.type).toBe(TokenType.TAG_OPEN);
       expect(tokens[0]?.value).toBe('div');
     });
 
-    test('should handle unclosed comments', () => {
+    it('should handle unclosed comments', () => {
       const tokens = tokenize('<!-- unclosed comment');
 
       expect(tokens[0]?.type).toBe(TokenType.COMMENT);
@@ -325,7 +325,7 @@ describe('HTML Tokenizer', () => {
   });
 
   describe('Advanced Edge Cases', () => {
-    test('should handle attributes with no spaces', () => {
+    it('should handle attributes with no spaces', () => {
       const tokens = tokenize('<div class="test"id="main"data-value="123">');
       expect(tokens.length).toBeGreaterThan(0);
       const tag = tokens[0]!;
@@ -337,7 +337,7 @@ describe('HTML Tokenizer', () => {
       });
     });
 
-    test('should handle attributes with excessive spaces', () => {
+    it('should handle attributes with excessive spaces', () => {
       const tokens = tokenize('<div   class  =  "test"    id   =   "main"   >');
       expect(tokens.length).toBeGreaterThan(0);
       const tag = tokens[0]!;
@@ -348,7 +348,7 @@ describe('HTML Tokenizer', () => {
       });
     });
 
-    test('should handle mixed quote styles in same tag', () => {
+    it('should handle mixed quote styles in same tag', () => {
       const tokens = tokenize(`<div class='single' id="double" data-test='mix "quoted" content'>`);
       expect(tokens.length).toBeGreaterThan(0);
       const tag = tokens[0]!;
@@ -358,7 +358,7 @@ describe('HTML Tokenizer', () => {
       expect(tag.attributes!['data-test']).toBe('mix "quoted" content');
     });
 
-    test('should handle malformed quotes gracefully', () => {
+    it('should handle malformed quotes gracefully', () => {
       const tokens = tokenize('<div class="unclosed id="test">');
       expect(tokens.length).toBeGreaterThan(0);
       const tag = tokens[0]!;
@@ -368,13 +368,13 @@ describe('HTML Tokenizer', () => {
       expect(tag.attributes).toBeDefined();
     });
 
-    test('should handle empty tag names', () => {
+    it('should handle empty tag names', () => {
       const tokens = tokenize('<>content</>');
 
       expect(tokens.length).toBeGreaterThan(0);
     });
 
-    test('should handle tags with numbers and special characters', () => {
+    it('should handle tags with numbers and special characters', () => {
       const tokens = tokenize('<h1 class="heading-1" data-level="1">');
       expect(tokens.length).toBeGreaterThan(0);
       const tag = tokens[0]!;
@@ -386,7 +386,7 @@ describe('HTML Tokenizer', () => {
       });
     });
 
-    test('should handle extremely long attribute values', () => {
+    it('should handle extremely long attribute values', () => {
       const longValue = 'a'.repeat(10000);
       const tokens = tokenize(`<div data-long="${longValue}">`);
       expect(tokens.length).toBeGreaterThan(0);
@@ -395,7 +395,7 @@ describe('HTML Tokenizer', () => {
       expect(tag.attributes!['data-long']).toBe(longValue);
     });
 
-    test('should handle unicode characters in attributes', () => {
+    it('should handle unicode characters in attributes', () => {
       const tokens = tokenize('<div title="测试" data-emoji="🚀" class="café">');
       expect(tokens.length).toBeGreaterThan(0);
       const tag = tokens[0]!;
@@ -407,7 +407,7 @@ describe('HTML Tokenizer', () => {
       });
     });
 
-    test('should handle nested quotes in attributes', () => {
+    it('should handle nested quotes in attributes', () => {
       const tokens = tokenize(`<div onclick="alert('Hello')" title='She said "hi"'>`);
       expect(tokens.length).toBeGreaterThan(0);
       const tag = tokens[0]!;
@@ -416,7 +416,7 @@ describe('HTML Tokenizer', () => {
       expect(tag.attributes!.title).toBe('She said "hi"');
     });
 
-    test('should handle attributes without values', () => {
+    it('should handle attributes without values', () => {
       const tokens = tokenize('<input type="checkbox" checked disabled readonly>');
       expect(tokens.length).toBeGreaterThan(0);
       const tag = tokens[0]!;
@@ -429,9 +429,9 @@ describe('HTML Tokenizer', () => {
       });
     });
 
-    test('should handle CDATA with complex content', () => {
+    it('should handle CDATA with complex content', () => {
       const complexContent = `
-        function test() {
+        function it() {
           return "<div>HTML inside JS</div>";
         }
         /* Comment with </script> */
@@ -444,7 +444,7 @@ describe('HTML Tokenizer', () => {
       expect(cdataToken.value).toBe(complexContent);
     });
 
-    test('should handle processing instructions with various formats', () => {
+    it('should handle processing instructions with various formats', () => {
       const tests = [
         { input: '<?xml version="1.0" encoding="UTF-8"?>', expected: 'xml' },
         { input: '<?xml-stylesheet type="text/xsl" href="style.xsl"?>', expected: 'xml' },
@@ -461,7 +461,7 @@ describe('HTML Tokenizer', () => {
       });
     });
 
-    test('should handle comments with special content', () => {
+    it('should handle comments with special content', () => {
       const specialComments = [
         '<!-- TODO: Fix this -->',
         '<!-- <script>alert("xss")</script> -->',
@@ -478,7 +478,7 @@ describe('HTML Tokenizer', () => {
       });
     });
 
-    test('should handle mixed content with all token types', () => {
+    it('should handle mixed content with all token types', () => {
       const html = `
         <?xml version="1.0"?>
         <!DOCTYPE html>
@@ -526,7 +526,7 @@ describe('HTML Tokenizer', () => {
   })
 
   describe('Performance and Stress Tests', () => {
-    test('should handle very large documents', () => {
+    it('should handle very large documents', () => {
 
       let html = '<div>';
       for (let i = 0; i < 1000; i++) {
@@ -542,7 +542,7 @@ describe('HTML Tokenizer', () => {
       expect(endTime - startTime).toBeLessThan(1000);
     });
 
-    test('should handle deeply nested structures', () => {
+    it('should handle deeply nested structures', () => {
       let html = '';
       const depth = 100;
 
@@ -559,7 +559,7 @@ describe('HTML Tokenizer', () => {
       expect(tokens.length).toBe(depth * 2 + 2);
     });
 
-    test('should handle many attributes per element', () => {
+    it('should handle many attributes per element', () => {
       let html = '<div';
       for (let i = 0; i < 100; i++) {
         html += ` attr-${i}="value-${i}"`;
@@ -575,7 +575,7 @@ describe('HTML Tokenizer', () => {
   })
 
   describe('Real-world Scenarios', () => {
-    test('should handle SVG elements', () => {
+    it('should handle SVG elements', () => {
       const svg = `
         <svg width="100" height="100" xmlns="http://www.w3.org/2000/svg">
           <circle cx="50" cy="50" r="40" stroke="black" stroke-width="3" fill="red"/>
@@ -593,7 +593,7 @@ describe('HTML Tokenizer', () => {
       expect(circleTag.attributes!.fill).toBe('red');
     });
 
-    test('should handle script and style tags', () => {
+    it('should handle script and style tags', () => {
       const html = `
         <script type="text/javascript">
           function hello() {
@@ -615,7 +615,7 @@ describe('HTML Tokenizer', () => {
       expect(styleTag.attributes!.type).toBe('text/css');
     });
 
-    test('should handle form elements with complex attributes', () => {
+    it('should handle form elements with complex attributes', () => {
       const html = `
         <form method="POST" action="/submit" enctype="multipart/form-data">
           <input type="email" name="email" required pattern="[a-z0-9._%+-]+@[a-z0-9.-]+\\.[a-z]{2,}$" title="Please enter a valid email">
@@ -638,7 +638,7 @@ describe('HTML Tokenizer', () => {
   })
 
   describe('Error Recovery', () => {
-    test('should handle incomplete tags gracefully', () => {
+    it('should handle incomplete tags gracefully', () => {
       const malformedHTML = '<div class="test><p>Content</p>';
       const tokens = tokenize(malformedHTML);
 
@@ -646,7 +646,7 @@ describe('HTML Tokenizer', () => {
       expect(tokens[tokens.length - 1]!.type).toBe(TokenType.EOF);
     });
 
-    test('should handle unmatched quotes in attributes', () => {
+    it('should handle unmatched quotes in attributes', () => {
       const html = '<div class="test id=\'main">Content</div>';
       const tokens = tokenize(html);
 
@@ -654,7 +654,7 @@ describe('HTML Tokenizer', () => {
       expect(divTag).toBeDefined();
     });
 
-    test('should continue parsing after errors', () => {
+    it('should continue parsing after errors', () => {
       const html = '<div><p>Valid paragraph</p><span>Valid span</span>';
       const tokens = tokenize(html);
 

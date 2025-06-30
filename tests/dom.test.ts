@@ -402,8 +402,7 @@ describe("DOM extra tests", () => {
     expect(img.getAttribute("alt")).toBe("Sample Image");
 
     const main = doc.body?.querySelector("main")!;
-    //@ts-ignore
-    const commentNode = main.childNodes.find(
+    const commentNode = (main.childNodes as any).find(
       (n: any) => n.nodeType === NodeType.COMMENT_NODE
     );
     expect(commentNode).toBeTruthy();

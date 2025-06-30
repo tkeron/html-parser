@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'bun:test';
-import { parseHTML } from '../index.js';
+import { parseHTML } from '../index';
 
 describe('API Integration Tests - Real DOM Usage', () => {
     it('should work like real DOM API - querySelector and setAttribute integrated', () => {
