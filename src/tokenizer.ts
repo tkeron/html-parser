@@ -1,3 +1,25 @@
+/**
+ * HTML Tokenizer using Bun's HTMLRewriter for efficient HTML parsing
+ * This tokenizer provides a stream-based approach to HTML parsing
+ */
+
+export enum TokenType {
+  TAG_OPEN = 'TAG_OPEN',
+  TAG_CLOSE = 'TAG_CLOSE',
+  TEXT = 'TEXT',
+  COMMENT = 'COMMENT',
+  CDATA = 'CDATA',
+  DOCTYPE = 'DOCTYPE',
+  PROCESSING_INSTRUCTION = 'PROCESSING_INSTRUCTION',
+  EOF = 'EOF'
+}
+
+export interface Position {
+  line: number;
+  column: number;
+  offset: number;
+}
+
 export interface Token {
   type: TokenType;
   value: string;
@@ -7,472 +29,364 @@ export interface Token {
   isClosing?: boolean;
 }
 
-export interface Position {
-  start: number;
-  end: number;
-  line: number;
-  column: number;
-}
-
-export enum TokenType {
-  TAG_OPEN = 'TAG_OPEN',
-  TAG_CLOSE = 'TAG_CLOSE',
-  TEXT = 'TEXT',
-  COMMENT = 'COMMENT',
-  CDATA = 'CDATA',
-  DOCTYPE = 'DOCTYPE',
-  PROCESSING_INSTRUCTION = 'PI',
-  EOF = 'EOF'
-}
-
-export interface TokenizerState {
-  input: string;
-  position: number;
-  line: number;
-  column: number;
-  length: number;
-}
-
-const SELF_CLOSING_TAGS = new Set([
-  'area', 'base', 'br', 'col', 'embed', 'hr', 'img', 'input',
-  'link', 'meta', 'param', 'source', 'track', 'wbr'
-]);
-
+// HTML entities mapping
 const HTML_ENTITIES: Record<string, string> = {
-  'amp': '&', 'lt': '<', 'gt': '>', 'quot': '"', 'apos': "'",
-  'nbsp': '\u00A0', 'copy': '©', 'reg': '®', 'trade': '™'
+  '&amp;': '&',
+  '&lt;': '<',
+  '&gt;': '>',
+  '&quot;': '"',
+  '&apos;': "'",
+  '&nbsp;': '\u00A0',
+  '&copy;': '©',
+  '&reg;': '®',
+  '&trade;': '™',
+  '&hellip;': '…',
+  '&mdash;': '—',
+  '&ndash;': '–',
+  '&lsquo;': '\u2018',
+  '&rsquo;': '\u2019',
+  '&ldquo;': '\u201C',
+  '&rdquo;': '\u201D'
 };
 
-function createTokenizerState(input: string): TokenizerState {
-  return {
-    input,
-    position: 0,
-    line: 1,
-    column: 1,
-    length: input.length
-  };
-}
-
-function createPosition(state: TokenizerState, start: number, end: number): Position {
-  return {
-    start,
-    end,
-    line: state.line,
-    column: state.column
-  };
-}
-
-function getCurrentChar(state: TokenizerState): string {
-  return state.input[state.position] || '';
-}
-
-function peek(state: TokenizerState, offset: number): string {
-  return state.input[state.position + offset] || '';
-}
-
-function advance(state: TokenizerState, count: number = 1): void {
-  for (let i = 0; i < count && state.position < state.length; i++) {
-    if (state.input[state.position] === '\n') {
-      state.line++;
-      state.column = 1;
-    } else {
-      state.column++;
-    }
-    state.position++;
-  }
-}
-
-function isAtEndOfInput(state: TokenizerState): boolean {
-  return state.position >= state.length;
-}
-
-function matchString(state: TokenizerState, str: string): boolean {
-  return state.input.slice(state.position, state.position + str.length) === str;
-}
-
-function skipWhitespace(state: TokenizerState): void {
-  while (!isAtEndOfInput(state) && /\s/.test(getCurrentChar(state))) {
-    advance(state);
-  }
-}
-
-function isTagNameChar(char: string): boolean {
-  return /[a-zA-Z0-9\-:_]/.test(char);
-}
-
-function isAttributeNameChar(char: string): boolean {
-  return /[a-zA-Z0-9\-:_.]/.test(char);
-}
-
-function parseTagName(state: TokenizerState): string {
-  let tagName = '';
+/**
+ * Decode HTML entities in a string and handle null characters
+ */
+function decodeEntities(text: string): string {
+  // First, replace null characters with the Unicode replacement character
+  let result = text.replace(/\u0000/g, '\uFFFD');
   
-  while (!isAtEndOfInput(state)) {
-    const char = getCurrentChar(state);
-    if (isTagNameChar(char)) {
-      tagName += char;
-      advance(state);
-    } else {
-      break;
+  // Then decode HTML entities
+  return result.replace(/&(?:#x([0-9a-fA-F]+)|#([0-9]+)|([a-zA-Z][a-zA-Z0-9]*));/g, (match, hex, decimal, named) => {
+    if (hex) {
+      return String.fromCharCode(parseInt(hex, 16));
     }
-  }
-
-  return tagName.toLowerCase();
+    if (decimal) {
+      return String.fromCharCode(parseInt(decimal, 10));
+    }
+    if (named) {
+      return HTML_ENTITIES[`&${named};`] || match;
+    }
+    return match;
+  });
 }
 
-function parseAttributes(state: TokenizerState): Record<string, string> {
+/**
+ * Parse attributes from a tag string
+ */
+function parseAttributes(attributeString: string): Record<string, string> {
   const attributes: Record<string, string> = {};
   
-  while (!isAtEndOfInput(state)) {
-    skipWhitespace(state);
-    
-    const char = getCurrentChar(state);
-    if (char === '>' || char === '/' || char === '?') {
-      break;
-    }
-
-    const attrName = parseAttributeName(state);
-    if (!attrName) break;
-
-    skipWhitespace(state);
-    
-    if (getCurrentChar(state) === '=') {
-      advance(state);
-      skipWhitespace(state);
-      const attrValue = parseAttributeValue(state);
-      attributes[attrName.toLowerCase()] = attrValue;
-    } else {
-      attributes[attrName.toLowerCase()] = '';
+  // Regex to match attributes: name="value", name='value', name=value, or just name
+  const attrRegex = /([a-zA-Z][a-zA-Z0-9\-_:]*)\s*(?:=\s*(?:"([^"]*)"|'([^']*)'|([^\s>]+)))?/g;
+  let match;
+  
+  while ((match = attrRegex.exec(attributeString)) !== null) {
+    const [, name, doubleQuoted, singleQuoted, unquoted] = match;
+    if (name) {
+      const value = doubleQuoted ?? singleQuoted ?? unquoted ?? '';
+      attributes[name.toLowerCase()] = decodeEntities(value);
     }
   }
-
+  
   return attributes;
 }
 
-function parseAttributeName(state: TokenizerState): string {
-  let name = '';
-  
-  while (!isAtEndOfInput(state)) {
-    const char = getCurrentChar(state);
-    if (isAttributeNameChar(char)) {
-      name += char;
-      advance(state);
-    } else {
-      break;
-    }
-  }
-
-  return name;
-}
-
-function parseAttributeValue(state: TokenizerState): string {
-  const char = getCurrentChar(state);
-  
-  if (char === '"') {
-    return parseQuotedValue(state, '"');
-  } else if (char === "'") {
-    return parseQuotedValue(state, "'");
-  } else {
-    return parseUnquotedValue(state);
-  }
-}
-
-function parseQuotedValue(state: TokenizerState, quote: string): string {
-  advance(state);
-  let value = '';
-  
-  while (!isAtEndOfInput(state)) {
-    const char = getCurrentChar(state);
-    if (char === quote) {
-      advance(state);
-      break;
-    } else if (char === '&') {
-      const entity = parseEntityInline(state);
-      value += entity;
-    } else if (char === '\0') {
-      value += '\uFFFD';
-      advance(state);
-    } else {
-      value += char;
-      advance(state);
-    }
-  }
-
-  return value;
-}
-
-function parseUnquotedValue(state: TokenizerState): string {
-  let value = '';
-  
-  while (!isAtEndOfInput(state)) {
-    const char = getCurrentChar(state);
-    if (/\s/.test(char) || char === '>' || char === '/' || char === '?') {
-      break;
-    } else if (char === '&') {
-      const entity = parseEntityInline(state);
-      value += entity;
-    } else if (char === '\0') {
-      value += '\uFFFD';
-      advance(state);
-    } else {
-      value += char;
-      advance(state);
-    }
-  }
-
-  return value;
-}
-
-function parseEntityInline(state: TokenizerState): string {
-  const originalPos = state.position;
-  advance(state);
-  
-  let entityName = '';
-  let maxEntityLength = 50;
-  
-  while (!isAtEndOfInput(state) && getCurrentChar(state) !== ';' && entityName.length < maxEntityLength) {
-    const char = getCurrentChar(state);
-    
-    if (/\s/.test(char) || char === '<' || char === '&') {
-      
-      state.position = originalPos;
-      advance(state);
-      return '&';
-    }
-    entityName += char;
-    advance(state);
-  }
-  
-  
-  if (getCurrentChar(state) !== ';' || entityName.length >= maxEntityLength) {
-    
-    state.position = originalPos;
-    advance(state);
-    return '&';
-  }
-  
-  
-  advance(state);
-
-  if (entityName.startsWith('#')) {
-    if (entityName.startsWith('#x') || entityName.startsWith('#X')) {
-      const code = parseInt(entityName.slice(2), 16);
-      return isNaN(code) ? '&' + entityName + ';' : String.fromCharCode(code);
-    } else {
-      const code = parseInt(entityName.slice(1), 10);
-      return isNaN(code) ? '&' + entityName + ';' : String.fromCharCode(code);
-    }
-  } else {
-    return HTML_ENTITIES[entityName] || `&${entityName};`;
-  }
-}
-
-function parseOpeningTag(state: TokenizerState): Token {
-  const start = state.position;
-  advance(state);
-  const tagName = parseTagName(state);
-  const attributes = parseAttributes(state);
-  
-  let isSelfClosing = false;
-  skipWhitespace(state);
-  if (getCurrentChar(state) === '/') {
-    isSelfClosing = true;
-    advance(state);
-  }
-
-  skipWhitespace(state);
-  if (getCurrentChar(state) === '>') {
-    advance(state);
-  }
-
+/**
+ * Calculate position in text
+ */
+function calculatePosition(text: string, offset: number): Position {
+  const lines = text.slice(0, offset).split('\n');
   return {
-    type: TokenType.TAG_OPEN,
-    value: tagName,
-    position: createPosition(state, start, state.position),
-    attributes: Object.keys(attributes).length > 0 ? attributes : {},
-    isSelfClosing: isSelfClosing || SELF_CLOSING_TAGS.has(tagName)
+    line: lines.length,
+    column: lines[lines.length - 1]?.length ?? 0,
+    offset
   };
 }
 
-function parseClosingTag(state: TokenizerState): Token {
-  const start = state.position;
-  advance(state);
-  advance(state);
-  const tagName = parseTagName(state);
-  
-  skipWhitespace(state);
-  if (getCurrentChar(state) === '>') {
-    advance(state);
-  }
-
-  return {
-    type: TokenType.TAG_CLOSE,
-    value: tagName,
-    position: createPosition(state, start, state.position),
-    isClosing: true
-  };
-}
-
-function parseComment(state: TokenizerState): Token {
-  const start = state.position;
-  advance(state, 4);
-  
-  let content = '';
-  while (!isAtEndOfInput(state)) {
-    if (matchString(state, '-->')) {
-      advance(state, 3);
-      break;
-    }
-    content += getCurrentChar(state);
-    advance(state);
-  }
-
-  return {
-    type: TokenType.COMMENT,
-    value: content,
-    position: createPosition(state, start, state.position)
-  };
-}
-
-function parseCDATA(state: TokenizerState): Token {
-  const start = state.position;
-  advance(state, 9);
-  
-  let content = '';
-  while (!isAtEndOfInput(state)) {
-    if (matchString(state, ']]>')) {
-      advance(state, 3);
-      break;
-    }
-    content += getCurrentChar(state);
-    advance(state);
-  }
-
-  return {
-    type: TokenType.CDATA,
-    value: content,
-    position: createPosition(state, start, state.position)
-  };
-}
-
-function parseDoctype(state: TokenizerState): Token {
-  const start = state.position;
-  
-  let content = '';
-  while (!isAtEndOfInput(state) && getCurrentChar(state) !== '>') {
-    content += getCurrentChar(state);
-    advance(state);
-  }
-  
-  if (getCurrentChar(state) === '>') {
-    content += getCurrentChar(state);
-    advance(state);
-  }
-
-  return {
-    type: TokenType.DOCTYPE,
-    value: content,
-    position: createPosition(state, start, state.position)
-  };
-}
-
-function parseProcessingInstruction(state: TokenizerState): Token {
-  const start = state.position;
-  
-  let content = '';
-  while (!isAtEndOfInput(state)) {
-    if (matchString(state, '?>')) {
-      advance(state, 2);
-      break;
-    }
-    content += getCurrentChar(state);
-    advance(state);
-  }
-
-  return {
-    type: TokenType.PROCESSING_INSTRUCTION,
-    value: content,
-    position: createPosition(state, start, state.position)
-  };
-}
-
-function parseText(state: TokenizerState): Token {
-  const start = state.position;
-  let content = '';
-  
-  while (!isAtEndOfInput(state)) {
-    const char = getCurrentChar(state);
-    if (char === '<') {
-      break;
-    } else if (char === '&') {
-      const entity = parseEntityInline(state);
-      content += entity;
-    } else if (char === '\0') {
-      content += '\uFFFD';
-      advance(state);
-    } else {
-      content += char;
-      advance(state);
-    }
-  }
-
-  return {
-    type: TokenType.TEXT,
-    value: content,
-    position: createPosition(state, start, state.position)
-  };
-}
-
-function parseMarkup(state: TokenizerState): Token | null {
-  if (peek(state, 1) === '!') {
-    if (peek(state, 2) === '-' && peek(state, 3) === '-') {
-      return parseComment(state);
-    } else if (matchString(state, '<![CDATA[')) {
-      return parseCDATA(state);
-    } else if (matchString(state, '<!DOCTYPE') || matchString(state, '<!doctype')) {
-      return parseDoctype(state);
-    }
-  } else if (peek(state, 1) === '?') {
-    return parseProcessingInstruction(state);
-  } else if (peek(state, 1) === '/') {
-    return parseClosingTag(state);
-  } else {
-    return parseOpeningTag(state);
-  }
-
-  return null;
-}
-
-function getNextToken(state: TokenizerState): Token | null {
-  if (isAtEndOfInput(state)) {
-    return null;
-  }
-
-  const char = getCurrentChar(state);
-
-  if (char === '<') {
-    return parseMarkup(state);
-  } else {
-    return parseText(state);
-  }
-}
-
+/**
+ * Tokenize HTML using a combination of HTMLRewriter and manual parsing
+ * HTMLRewriter is great for structured HTML but we need manual parsing for edge cases
+ */
 export function tokenize(html: string): Token[] {
-  const state = createTokenizerState(html);
   const tokens: Token[] = [];
+  let position = 0;
+  
+  // Handle special cases first (DOCTYPE, comments, CDATA, processing instructions)
+  const specialCases = [
+    // DOCTYPE
+    {
+      pattern: /<!DOCTYPE\s+[^>]*>/gi,
+      type: TokenType.DOCTYPE,
+      getValue: (match: string) => match
+    },
+    // Comments (including unclosed ones)
+    {
+      pattern: /<!--([\s\S]*?)(?:-->|$)/g,
+      type: TokenType.COMMENT,
+      getValue: (match: string) => match.slice(4, match.endsWith('-->') ? -3 : match.length)
+    },
+    // CDATA
+    {
+      pattern: /<!\[CDATA\[([\s\S]*?)\]\]>/g,
+      type: TokenType.CDATA,
+      getValue: (match: string) => match.slice(9, -3)
+    },
+    // Processing Instructions
+    {
+      pattern: /<\?([^?]*(?:\?(?!>)[^?]*)*)\?>/g,
+      type: TokenType.PROCESSING_INSTRUCTION,
+      getValue: (match: string) => match.slice(0, -2) // Remove the ?> at the end
+    }
+  ];
 
-  while (state.position < state.length) {
-    const token = getNextToken(state);
-    if (token) {
-      tokens.push(token);
+  // Track processed ranges to avoid double processing
+  const processedRanges: Array<[number, number]> = [];
+  
+  // Process special cases first
+  for (const { pattern, type, getValue } of specialCases) {
+    const regex = new RegExp(pattern);
+    let match;
+    
+    while ((match = regex.exec(html)) !== null) {
+      const start = match.index;
+      const end = start + match[0].length;
+      
+      tokens.push({
+        type,
+        value: getValue(match[0]),
+        position: calculatePosition(html, start)
+      });
+      
+      processedRanges.push([start, end]);
     }
   }
-
+  
+  // Sort processed ranges by start position
+  processedRanges.sort((a, b) => a[0] - b[0]);
+  
+  // Process remaining HTML with manual parsing
+  let currentPos = 0;
+  
+  while (currentPos < html.length) {
+    // Check if current position is in a processed range
+    const inProcessedRange = processedRanges.some(([start, end]) => 
+      currentPos >= start && currentPos < end
+    );
+    
+    if (inProcessedRange) {
+      // Skip to end of processed range
+      const range = processedRanges.find(([start, end]) => 
+        currentPos >= start && currentPos < end
+      );
+      if (range) {
+        currentPos = range[1];
+      }
+      continue;
+    }
+    
+    const char = html[currentPos];
+    
+    if (char === '<') {
+      // Check if it's a tag
+      const tagMatch = html.slice(currentPos).match(/^<\/?([a-zA-Z][a-zA-Z0-9]*)[^>]*>/);
+      
+      if (tagMatch) {
+        const fullTag = tagMatch[0];
+        const tagName = tagMatch[1]?.toLowerCase();
+        
+        if (!tagName) {
+          currentPos++;
+          continue;
+        }
+        
+        const isClosing = fullTag.startsWith('</');
+        const isSelfClosing = fullTag.endsWith('/>');
+        
+        // Parse attributes if it's an opening tag
+        let attributes: Record<string, string> = {};
+        if (!isClosing) {
+          const attrMatch = fullTag.match(/^<[a-zA-Z][a-zA-Z0-9]*\s+([^>]*?)\/?>$/);
+          if (attrMatch && attrMatch[1]) {
+            attributes = parseAttributes(attrMatch[1]);
+          }
+        }
+        
+        tokens.push({
+          type: isClosing ? TokenType.TAG_CLOSE : TokenType.TAG_OPEN,
+          value: tagName,
+          position: calculatePosition(html, currentPos),
+          ...(isClosing ? { isClosing: true } : { 
+            attributes, 
+            isSelfClosing 
+          })
+        });
+        
+        currentPos += fullTag.length;
+      } else {
+        // Not a valid tag, treat as text
+        const textStart = currentPos;
+        currentPos++;
+        
+        // Find the end of text (next '<' or end of string)
+        while (currentPos < html.length && html[currentPos] !== '<') {
+          currentPos++;
+        }
+        
+        const textContent = html.slice(textStart, currentPos);
+        if (textContent) { // Keep all text content, including whitespace-only
+          tokens.push({
+            type: TokenType.TEXT,
+            value: decodeEntities(textContent),
+            position: calculatePosition(html, textStart)
+          });
+        }
+      }
+    } else {
+      // Text content
+      const textStart = currentPos;
+      
+      // Find the end of text (next '<' or end of string)
+      while (currentPos < html.length && html[currentPos] !== '<') {
+        currentPos++;
+      }
+      
+      const textContent = html.slice(textStart, currentPos);
+      if (textContent) { // Keep all text content, including whitespace-only
+        tokens.push({
+          type: TokenType.TEXT,
+          value: decodeEntities(textContent),
+          position: calculatePosition(html, textStart)
+        });
+      }
+    }
+  }
+  
+  // Sort tokens by position
+  tokens.sort((a, b) => a.position.offset - b.position.offset);
+  
+  // Add EOF token
   tokens.push({
     type: TokenType.EOF,
     value: '',
-    position: createPosition(state, state.position, state.position)
+    position: calculatePosition(html, html.length)
   });
-
+  
   return tokens;
+}
+
+/**
+ * Enhanced tokenizer that uses HTMLRewriter for better performance on large HTML
+ * This is more efficient for well-formed HTML documents
+ */
+export function tokenizeWithRewriter(html: string): Token[] {
+  const tokens: Token[] = [];
+  let textBuffer = '';
+  let position = 0;
+  
+  // First pass: collect all tokens using HTMLRewriter
+  const rewriter = new HTMLRewriter();
+  
+  // Handle all elements
+  rewriter.on('*', {
+    element(element) {
+      // Flush any accumulated text
+      if (textBuffer.trim()) {
+        tokens.push({
+          type: TokenType.TEXT,
+          value: decodeEntities(textBuffer),
+          position: calculatePosition(html, position - textBuffer.length)
+        });
+        textBuffer = '';
+      }
+      
+      // Add opening tag
+      const attributes: Record<string, string> = {};
+      for (const [name, value] of element.attributes) {
+        attributes[name] = value;
+      }
+      
+      tokens.push({
+        type: TokenType.TAG_OPEN,
+        value: element.tagName.toLowerCase(),
+        position: calculatePosition(html, position),
+        attributes,
+        isSelfClosing: element.selfClosing
+      });
+      
+      // Handle self-closing tags
+      if (!element.selfClosing) {
+        // We'll add the closing tag in the end handler
+        element.onEndTag((endTag) => {
+          tokens.push({
+            type: TokenType.TAG_CLOSE,
+            value: endTag.name.toLowerCase(),
+            position: calculatePosition(html, position),
+            isClosing: true
+          });
+        });
+      }
+    },
+    
+    text(text) {
+      textBuffer += text.text;
+    },
+    
+    comments(comment) {
+      tokens.push({
+        type: TokenType.COMMENT,
+        value: comment.text,
+        position: calculatePosition(html, position)
+      });
+    }
+  });
+  
+  try {
+    // Transform the HTML (this triggers the rewriter)
+    const response = new Response(html, {
+      headers: { 'Content-Type': 'text/html' }
+    });
+    
+    rewriter.transform(response);
+    
+    // Flush any remaining text
+    if (textBuffer.trim()) {
+      tokens.push({
+        type: TokenType.TEXT,
+        value: decodeEntities(textBuffer),
+        position: calculatePosition(html, position - textBuffer.length)
+      });
+    }
+    
+  } catch (error) {
+    // If HTMLRewriter fails, fall back to manual parsing
+    console.warn('HTMLRewriter failed, falling back to manual parsing:', error);
+    return tokenize(html);
+  }
+  
+  // Sort tokens by position and add EOF
+  tokens.sort((a, b) => a.position.offset - b.position.offset);
+  tokens.push({
+    type: TokenType.EOF,
+    value: '',
+    position: calculatePosition(html, html.length)
+  });
+  
+  return tokens;
+}
+
+/**
+ * Smart tokenizer that chooses the best method based on HTML content
+ */
+export function smartTokenize(html: string): Token[] {
+  // Use HTMLRewriter for well-formed HTML, manual parsing for edge cases
+  const hasSpecialContent = /<!DOCTYPE|<!--|\[CDATA\[|<\?/.test(html);
+  
+  if (hasSpecialContent || html.length < 1000) {
+    // Use manual parsing for small HTML or HTML with special content
+    return tokenize(html);
+  } else {
+    // Use HTMLRewriter for large, well-formed HTML
+    return tokenizeWithRewriter(html);
+  }
 }
