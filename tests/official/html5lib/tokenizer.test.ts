@@ -1,8 +1,8 @@
 import { describe, it } from 'bun:test';
-import { 
-  loadHTML5libTokenizerTests, 
+import {
+  loadHTML5libTokenizerTests,
   runHTML5libTokenizerTestSuite,
-  type HTML5libTokenizerTestSuite 
+  type HTML5libTokenizerTestSuite
 } from './tokenizer-utils';
 
 // Sample HTML5lib tokenizer tests embedded directly
@@ -14,7 +14,7 @@ const basicTokenizerTests: HTML5libTokenizerTestSuite = {
       "output": [["DOCTYPE", "html", null, null, true]]
     },
     {
-      "description": "Correct Doctype uppercase", 
+      "description": "Correct Doctype uppercase",
       "input": "<!DOCTYPE HTML>",
       "output": [["DOCTYPE", "html", null, null, true]]
     },
@@ -26,7 +26,7 @@ const basicTokenizerTests: HTML5libTokenizerTestSuite = {
     {
       "description": "Start Tag w/attribute",
       "input": "<h a='b'>",
-      "output": [["StartTag", "h", {"a": "b"}]]
+      "output": [["StartTag", "h", { "a": "b" }]]
     },
     {
       "description": "Start/End Tag",
@@ -46,7 +46,7 @@ const basicTokenizerTests: HTML5libTokenizerTestSuite = {
     {
       "description": "Multiple attributes",
       "input": "<h a='b' c='d'>",
-      "output": [["StartTag", "h", {"a": "b", "c": "d"}]]
+      "output": [["StartTag", "h", { "a": "b", "c": "d" }]]
     },
     {
       "description": "Self-closing tag",
@@ -76,7 +76,7 @@ const basicTokenizerTests: HTML5libTokenizerTestSuite = {
     {
       "description": "Unquoted attribute",
       "input": "<h a=b>",
-      "output": [["StartTag", "h", {"a": "b"}]]
+      "output": [["StartTag", "h", { "a": "b" }]]
     },
     {
       "description": "Tag with mixed case",
@@ -171,12 +171,12 @@ describe('HTML5lib Tokenizer Tests', () => {
 });
 
 // Test for loading external test files (when available)
-describe.skip('HTML5lib External Tests', () => {
+describe('HTML5lib External Tests', () => {
   it('should be able to load external test files', async () => {
     // This would be used to load actual HTML5lib test files
     // const testData = await Bun.file('/path/to/test1.test').text();
     // await loadHTML5libTokenizerTests(testData, 'External Test');
-    
+
     // For now, we'll just verify our utilities work
     const testData = JSON.stringify(basicTokenizerTests);
     await loadHTML5libTokenizerTests(testData, 'Loaded Basic Tests');
