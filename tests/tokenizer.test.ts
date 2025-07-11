@@ -222,7 +222,7 @@ describe('HTML Tokenizer', () => {
 
       expect(tokens[0]).toEqual({
         type: TokenType.DOCTYPE,
-        value: '<!DOCTYPE html>',
+        value: 'html',
         position: expect.any(Object)
       });
     });
@@ -231,7 +231,7 @@ describe('HTML Tokenizer', () => {
       const tokens = tokenize('<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01//EN" "http://www.w3.org/TR/html4/strict.dtd">');
 
       expect(tokens[0]?.type).toBe(TokenType.DOCTYPE);
-      expect(tokens[0]?.value).toContain('PUBLIC');
+      expect(tokens[0]?.value).toBe('html');
     });
   });
 

@@ -46,7 +46,8 @@ const HTML_ENTITIES: Record<string, string> = {
   '&lsquo;': '\u2018',
   '&rsquo;': '\u2019',
   '&ldquo;': '\u201C',
-  '&rdquo;': '\u201D'
+  '&rdquo;': '\u201D',
+  '&not;': '¬'
 };
 
 /**
@@ -57,7 +58,7 @@ function decodeEntities(text: string): string {
   let result = text.replace(/\u0000/g, '\uFFFD');
   
   // Then decode HTML entities
-  return result.replace(/&(?:#x([0-9a-fA-F]+)|#([0-9]+)|([a-zA-Z][a-zA-Z0-9]*));/g, (match, hex, decimal, named) => {
+  return result.replace(/&(?:#x([0-9a-fA-F]+);?|#([0-9]+);?|([a-zA-Z][a-zA-Z0-9]*);?)/g, (match, hex, decimal, named) => {
     if (hex) {
       return String.fromCharCode(parseInt(hex, 16));
     }
@@ -65,7 +66,23 @@ function decodeEntities(text: string): string {
       return String.fromCharCode(parseInt(decimal, 10));
     }
     if (named) {
-      return HTML_ENTITIES[`&${named};`] || match;
+      // First try with semicolon
+      if (HTML_ENTITIES[`&${named};`]) {
+        return HTML_ENTITIES[`&${named};`];
+      }
+      
+      // For entities without semicolon, try to find the longest valid entity prefix
+      if (!match.endsWith(';')) {
+        for (let i = named.length; i > 0; i--) {
+          const prefix = named.substring(0, i);
+          if (HTML_ENTITIES[`&${prefix};`]) {
+            const remainder = named.substring(i);
+            return HTML_ENTITIES[`&${prefix};`] + remainder;
+          }
+        }
+      }
+      
+      return match;
     }
     return match;
   });
@@ -118,7 +135,11 @@ export function tokenize(html: string): Token[] {
     {
       pattern: /<!DOCTYPE\s+[^>]*>/gi,
       type: TokenType.DOCTYPE,
-      getValue: (match: string) => match
+      getValue: (match: string) => {
+        // Extract just the doctype name (e.g., "html" from "<!DOCTYPE html>")
+        const doctypeMatch = match.match(/<!DOCTYPE\s+([^\s>]+)/i);
+        return doctypeMatch && doctypeMatch[1] ? doctypeMatch[1].toLowerCase() : match;
+      }
     },
     // Comments (including unclosed ones)
     {

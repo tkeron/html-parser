@@ -154,7 +154,7 @@ describe('HTML Parser', () => {
       expect(ast.children).toHaveLength(1);
       const doctypeNode = ast.children![0]!;
       expect(doctypeNode.type).toBe(ASTNodeType.DOCTYPE);
-      expect(doctypeNode.content).toBe('<!DOCTYPE html>');
+      expect(doctypeNode.content).toBe('html');
     });
 
     test('should parse CDATA sections', () => {
