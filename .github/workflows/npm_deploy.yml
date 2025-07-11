@@ -1,0 +1,24 @@
+name: html-parser package
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  build-test-publish:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4.0.3
+        with:
+          node-version: 22.x
+          registry-url: "https://registry.npmjs.org/"
+
+      - uses: oven-sh/setup-bun@v2
+
+      - run: |
+          bun i
+          bun test
+          npm publish --access public
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}

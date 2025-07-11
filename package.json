@@ -1,12 +1,25 @@
 {
-  "name": "html-parser",
+  "name": "@tkeron/html-parser",
+  "version": "0.1.0",
+  "description": "A fast and lightweight HTML parser for Bun",
+  "main": "index.js",
   "module": "index.ts",
   "type": "module",
-  "private": true,
+  "author": "tkeron",
+  "license": "MIT",
   "devDependencies": {
     "@types/bun": "latest"
   },
   "peerDependencies": {
     "typescript": "^5.8.3"
+  },
+  "keywords": [
+    "cli",
+    "commands",
+    "command-line",
+    "arguments"
+  ],
+  "repository": {
+    "url": "git@github.com:tkeron/html-parser.git"
   }
 }
