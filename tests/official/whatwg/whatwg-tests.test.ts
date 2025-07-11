@@ -2,7 +2,7 @@ import { describe, it, expect } from 'bun:test';
 import { tokenize } from '../../../src/tokenizer';
 import { parse } from '../../../src/parser';
 
-describe.skip('WHATWG HTML Parser Tests', () => {
+describe('WHATWG HTML Parser Tests', () => {
   describe('HTML Living Standard Compliance', () => {
     it('should handle HTML5 polyglot documents', () => {
       const polyglotHTML = `<!DOCTYPE html>
