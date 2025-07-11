@@ -80,7 +80,7 @@ describe("DOM Simulator - Phase 1: Structure and Conversion", () => {
       const div = doc.childNodes[0]!;
       const p = div.childNodes[0]!;
 
-      expect(p.parentNode).toBe(div);
+      expect(p.parentNode).toBe(<any>div);
       expect(div.parentNode).toBe(doc);
       expect(div.firstChild).toBe(p);
       expect(div.lastChild).toBe(p);
