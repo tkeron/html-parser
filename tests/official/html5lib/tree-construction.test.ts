@@ -1,10 +1,10 @@
-import { describe, it, expect } from 'bun:test';
-import { 
-  loadHTML5libTreeTests, 
+import { describe, it, expect } from "bun:test";
+import {
+  loadHTML5libTreeTests,
   runHTML5libTreeTestSuite,
   parseHTML5libDATFile,
-  type HTML5libTreeTest 
-} from './tree-construction-utils';
+  type HTML5libTreeTest,
+} from "./tree-construction-utils";
 
 // Sample HTML5lib tree construction tests in DAT format
 const basicTreeTestData = `#data
@@ -207,70 +207,44 @@ const errorHandlingTestData = `#data
 |     <a>`;
 
 // Run the embedded tests
-describe('HTML5lib Tree Construction Tests', () => {
-  it('should parse DAT format correctly', () => {
+describe("HTML5lib Tree Construction Tests", () => {
+  it("should parse DAT format correctly", () => {
     const tests = parseHTML5libDATFile(basicTreeTestData);
     expect(tests.length).toBeGreaterThan(0);
-    
+
     // Check first test
     const firstTest = tests[0];
     if (firstTest) {
-      expect(firstTest.data).toBe('Test');
+      expect(firstTest.data).toBe("Test");
       expect(firstTest.errors.length).toBeGreaterThan(0);
-      expect(firstTest.document).toContain('<html>');
+      expect(firstTest.document).toContain("<html>");
     }
   });
-  
-  it('should handle doctype tests', () => {
+
+  it("should handle doctype tests", () => {
     const tests = parseHTML5libDATFile(doctypeTestData);
     expect(tests.length).toBeGreaterThan(0);
-    
+
     // Check first doctype test
     const firstTest = tests[0];
     if (firstTest) {
-      expect(firstTest.data).toBe('<!DOCTYPE html>');
+      expect(firstTest.data).toBe("<!DOCTYPE html>");
       expect(firstTest.errors.length).toBe(0);
-      expect(firstTest.document).toContain('<!DOCTYPE html>');
+      expect(firstTest.document).toContain("<!DOCTYPE html>");
     }
   });
-  
-  it('should handle error cases', () => {
+
+  it("should handle error cases", () => {
     const tests = parseHTML5libDATFile(errorHandlingTestData);
     expect(tests.length).toBeGreaterThan(0);
-    
+
     // Check error handling
     const firstTest = tests[0];
     if (firstTest) {
       expect(firstTest.errors.length).toBeGreaterThan(0);
-      expect(firstTest.errors[0]).toContain('expected-doctype-but-got-start-tag');
+      expect(firstTest.errors[0]).toContain(
+        "expected-doctype-but-got-start-tag"
+      );
     }
   });
-});
-
-// Test for loading external test files (when available)
-describe.skip('HTML5lib External Tree Tests', () => {
-  it('should be able to load external DAT files', async () => {
-    // This would be used to load actual HTML5lib test files
-    // const testData = await Bun.file('/path/to/tests1.dat').text();
-    // await loadHTML5libTreeTests(testData, 'External Tree Test');
-    
-    // For now, we'll just verify our utilities work
-    await loadHTML5libTreeTests(basicTreeTestData, 'Loaded Basic Tree Tests');
-  });
-});
-
-// Individual test suites for different aspects
-describe.skip('HTML5lib Tree Construction - Basic Elements', () => {
-  const tests = parseHTML5libDATFile(basicTreeTestData);
-  runHTML5libTreeTestSuite(tests, 'Basic Elements');
-});
-
-describe.skip('HTML5lib Tree Construction - DOCTYPE Handling', () => {
-  const tests = parseHTML5libDATFile(doctypeTestData);
-  runHTML5libTreeTestSuite(tests, 'DOCTYPE Handling');
-});
-
-describe.skip('HTML5lib Tree Construction - Error Handling', () => {
-  const tests = parseHTML5libDATFile(errorHandlingTestData);
-  runHTML5libTreeTestSuite(tests, 'Error Handling');
 });
