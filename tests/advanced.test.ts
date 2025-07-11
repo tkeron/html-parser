@@ -448,7 +448,7 @@ describe('HTML Parser & Tokenizer - Advanced Tests', () => {
     });
 
     test('should treat template engine syntax as plain text', () => {
-      const html = `<div>{{ user.name }}</div><p>Hola, &lt;%= name %&gt;</p>`;
+      const html = `<div>{{ user.name }}</div><p>Hello, &lt;%= name %&gt;</p>`;
       const tokens = tokenize(html);
       const ast = parse(tokens);
 
@@ -460,7 +460,7 @@ describe('HTML Parser & Tokenizer - Advanced Tests', () => {
       const pElement = ast.children!.find(child => child.tagName === 'p')!;
       expect(pElement).toBeDefined();
       const pText = pElement.children!.find(child => child.type === ASTNodeType.TEXT)!;
-      expect(pText.content).toBe('Hola, <%= name %>');
+      expect(pText.content).toBe('Hello, <%= name %>');
     });
 
     test('should handle null characters in content gracefully', () => {

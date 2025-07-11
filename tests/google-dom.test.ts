@@ -11,7 +11,7 @@ describe("Google DOM Parsing Test", () => {
     try {
       googleHTML = readFileSync(filePath, "utf-8");
     } catch (error) {
-      throw new Error(`No se pudo leer el archivo: ${error}`);
+      throw new Error(`Could not read file: ${error}`);
     }
 
     let doc: Document;
@@ -19,7 +19,7 @@ describe("Google DOM Parsing Test", () => {
     try {
       doc = parseHTML(googleHTML);
     } catch (error) {
-      throw new Error(`Error al parsear HTML de Google: ${error}`);
+      throw new Error(`Error parsing Google HTML: ${error}`);
     }
 
     expect(doc).toBeDefined();
