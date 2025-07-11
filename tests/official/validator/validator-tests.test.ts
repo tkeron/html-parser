@@ -1,6 +1,5 @@
 import { describe, it, expect } from 'bun:test';
-import { tokenize } from '../../../src/tokenizer';
-import { parse } from '../../../src/parser';
+import { parseHTML } from '../../../index';
 
 describe.skip('Validator.nu Tests', () => {
   describe('HTML5 Validation Standards', () => {
@@ -20,11 +19,11 @@ describe.skip('Validator.nu Tests', () => {
 </body>
 </html>`;
       
-      const tokens = tokenize(validHTML);
-      const ast = parse(tokens);
+      const document = parseHTML(validHTML);
       
-      expect(ast).toBeDefined();
-      expect((ast as any).children?.length).toBeGreaterThan(0);
+      expect(document).toBeDefined();
+      expect(document.documentElement?.tagName).toBe('HTML');
+      expect(document.querySelector('title')?.textContent).toBe('Valid HTML5 Document');
     });
 
     it('should handle required attributes', () => {
@@ -35,10 +34,11 @@ describe.skip('Validator.nu Tests', () => {
         <area shape="rect" coords="0,0,100,100" href="#" alt="Link">
       `;
       
-      const tokens = tokenize(requiredAttrsHTML);
-      const ast = parse(tokens);
+      const document = parseHTML(requiredAttrsHTML);
       
-      expect(ast).toBeDefined();
+      expect(document).toBeDefined();
+      expect(document.querySelector('img')?.getAttribute('alt')).toBe('Description');
+      expect(document.querySelector('label')?.getAttribute('for')).toBe('name');
     });
 
     it('should handle content model violations', () => {
@@ -52,10 +52,10 @@ describe.skip('Validator.nu Tests', () => {
         </a>
       `;
       
-      const tokens = tokenize(contentModelHTML);
-      const ast = parse(tokens);
+      const document = parseHTML(contentModelHTML);
+      // const ast = parse(tokens);
       
-      expect(ast).toBeDefined();
+      expect(document).toBeDefined();
     });
 
     it('should handle obsolete elements', () => {
@@ -66,10 +66,10 @@ describe.skip('Validator.nu Tests', () => {
         <blink>Blinking text</blink>
       `;
       
-      const tokens = tokenize(obsoleteHTML);
-      const ast = parse(tokens);
+      const document = parseHTML(obsoleteHTML);
+      // const ast = parse(tokens);
       
-      expect(ast).toBeDefined();
+      expect(document).toBeDefined();
     });
 
     it('should handle deprecated attributes', () => {
@@ -84,10 +84,10 @@ describe.skip('Validator.nu Tests', () => {
         </body>
       `;
       
-      const tokens = tokenize(deprecatedHTML);
-      const ast = parse(tokens);
+      const document = parseHTML(deprecatedHTML);
+      // const ast = parse(tokens);
       
-      expect(ast).toBeDefined();
+      expect(document).toBeDefined();
     });
   });
 
@@ -113,10 +113,10 @@ describe.skip('Validator.nu Tests', () => {
         </form>
       `;
       
-      const tokens = tokenize(formHTML);
-      const ast = parse(tokens);
+      const document = parseHTML(formHTML);
+      // const ast = parse(tokens);
       
-      expect(ast).toBeDefined();
+      expect(document).toBeDefined();
     });
 
     it('should handle valid HTML5 media elements', () => {
@@ -135,10 +135,10 @@ describe.skip('Validator.nu Tests', () => {
         </audio>
       `;
       
-      const tokens = tokenize(mediaHTML);
-      const ast = parse(tokens);
+      const document = parseHTML(mediaHTML);
+      // const ast = parse(tokens);
       
-      expect(ast).toBeDefined();
+      expect(document).toBeDefined();
     });
 
     it('should handle valid HTML5 semantic structure', () => {
@@ -161,10 +161,10 @@ describe.skip('Validator.nu Tests', () => {
         </article>
       `;
       
-      const tokens = tokenize(semanticHTML);
-      const ast = parse(tokens);
+      const document = parseHTML(semanticHTML);
+      // const ast = parse(tokens);
       
-      expect(ast).toBeDefined();
+      expect(document).toBeDefined();
     });
 
     it('should handle valid HTML5 interactive elements', () => {
@@ -183,10 +183,10 @@ describe.skip('Validator.nu Tests', () => {
         <meter value="0.8" min="0" max="1">80%</meter>
       `;
       
-      const tokens = tokenize(interactiveHTML);
-      const ast = parse(tokens);
+      const document = parseHTML(interactiveHTML);
+      // const ast = parse(tokens);
       
-      expect(ast).toBeDefined();
+      expect(document).toBeDefined();
     });
   });
 
@@ -199,10 +199,10 @@ describe.skip('Validator.nu Tests', () => {
         </div>
       `;
       
-      const tokens = tokenize(unclosedHTML);
-      const ast = parse(tokens);
+      const document = parseHTML(unclosedHTML);
+      // const ast = parse(tokens);
       
-      expect(ast).toBeDefined();
+      expect(document).toBeDefined();
     });
 
     it('should handle mismatched tags', () => {
@@ -214,10 +214,10 @@ describe.skip('Validator.nu Tests', () => {
         </div>
       `;
       
-      const tokens = tokenize(mismatchedHTML);
-      const ast = parse(tokens);
+      const document = parseHTML(mismatchedHTML);
+      // const ast = parse(tokens);
       
-      expect(ast).toBeDefined();
+      expect(document).toBeDefined();
     });
 
     it('should handle invalid nesting', () => {
@@ -228,10 +228,10 @@ describe.skip('Validator.nu Tests', () => {
         </p>
       `;
       
-      const tokens = tokenize(invalidNestingHTML);
-      const ast = parse(tokens);
+      const document = parseHTML(invalidNestingHTML);
+      // const ast = parse(tokens);
       
-      expect(ast).toBeDefined();
+      expect(document).toBeDefined();
     });
   });
 });
