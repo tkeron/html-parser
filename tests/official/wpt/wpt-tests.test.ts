@@ -2,7 +2,7 @@ import { describe, it, expect } from 'bun:test';
 import { tokenize } from '../../../src/tokenizer';
 import { parse } from '../../../src/parser';
 
-describe.skip('Web Platform Tests (WPT) Compliance', () => {
+describe('Web Platform Tests (WPT) Compliance', () => {
   describe('HTML5 Parsing Semantics', () => {
     it('should handle DOCTYPE variations', () => {
       const doctypes = [
@@ -309,7 +309,7 @@ describe.skip('Web Platform Tests (WPT) Compliance', () => {
   });
 });
 
-describe.skip('WPT Integration Tests', () => {
+describe('WPT Integration Tests', () => {
   it('should handle complex real-world HTML', () => {
     const complexHtml = `
       <!DOCTYPE html>

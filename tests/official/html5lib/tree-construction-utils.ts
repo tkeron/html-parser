@@ -23,7 +23,9 @@ export function parseHTML5libDATFile(content: string): HTML5libTreeTest[] {
   
   for (const section of sections) {
     const lines = section.split('\n');
-    const test: Partial<HTML5libTreeTest> = {};
+    const test: Partial<HTML5libTreeTest> = {
+      errors: [] // Initialize errors as empty array
+    };
     
     let currentSection = '';
     let currentContent: string[] = [];
@@ -31,7 +33,7 @@ export function parseHTML5libDATFile(content: string): HTML5libTreeTest[] {
     for (const line of lines) {
       if (line.startsWith('#')) {
         // Save previous section
-        if (currentSection && currentContent.length > 0) {
+        if (currentSection) {
           switch (currentSection) {
             case 'data':
               test.data = currentContent.join('\n');
@@ -67,7 +69,7 @@ export function parseHTML5libDATFile(content: string): HTML5libTreeTest[] {
     }
     
     // Save last section
-    if (currentSection && currentContent.length > 0) {
+    if (currentSection) {
       switch (currentSection) {
         case 'data':
           test.data = currentContent.join('\n');

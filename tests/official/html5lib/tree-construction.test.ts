@@ -207,7 +207,7 @@ const errorHandlingTestData = `#data
 |     <a>`;
 
 // Run the embedded tests
-describe.skip('HTML5lib Tree Construction Tests', () => {
+describe('HTML5lib Tree Construction Tests', () => {
   it('should parse DAT format correctly', () => {
     const tests = parseHTML5libDATFile(basicTreeTestData);
     expect(tests.length).toBeGreaterThan(0);
