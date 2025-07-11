@@ -164,6 +164,30 @@ export function createElement(
     configurable: true,
   });
 
+  // Add className property
+  Object.defineProperty(element, "className", {
+    get() {
+      return element.attributes.class || "";
+    },
+    set(value: string) {
+      element.attributes.class = value;
+    },
+    enumerable: true,
+    configurable: true,
+  });
+
+  // Add id property
+  Object.defineProperty(element, "id", {
+    get() {
+      return element.attributes.id || "";
+    },
+    set(value: string) {
+      element.attributes.id = value;
+    },
+    enumerable: true,
+    configurable: true,
+  });
+
   return element;
 }
 

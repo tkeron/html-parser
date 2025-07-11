@@ -1,6 +1,8 @@
 interface SelectorToken {
-  type: "tag" | "class" | "id";
+  type: "tag" | "class" | "id" | "attribute";
   value: string;
+  attributeName?: string;
+  attributeValue?: string;
 }
 
 interface SelectorGroup {
@@ -18,6 +20,23 @@ function parseSelector(selector: string): SelectorGroup[] {
       tokens = [{ type: "id", value: trimmed.slice(1) }];
     } else if (trimmed.startsWith(".")) {
       tokens = [{ type: "class", value: trimmed.slice(1) }];
+    } else if (trimmed.includes("[") && trimmed.includes("]")) {
+      // Handle attribute selectors like input[type="email"]
+      const attributeMatch = trimmed.match(/^([^[]+)\[([^=]+)=?"?([^"]*)"?\]$/);
+      if (attributeMatch) {
+        const [, tagName, attrName, attrValue] = attributeMatch;
+        tokens = [
+          { type: "tag", value: (tagName || "").toLowerCase() },
+          { 
+            type: "attribute", 
+            value: attrName || "",
+            attributeName: attrName || "",
+            attributeValue: attrValue || ""
+          }
+        ];
+      } else {
+        tokens = [{ type: "tag", value: trimmed.toLowerCase() }];
+      }
     } else {
       tokens = [{ type: "tag", value: trimmed.toLowerCase() }];
     }
@@ -41,6 +60,9 @@ function matchesToken(element: any, token: SelectorToken): boolean {
       return classes.includes(token.value);
     case "id":
       return element.attributes?.id === token.value;
+    case "attribute":
+      const attrValue = element.attributes?.[token.attributeName || ""];
+      return attrValue === token.attributeValue;
     default:
       return false;
   }
