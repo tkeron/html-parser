@@ -1,7 +1,7 @@
 import { describe, it, expect } from 'bun:test';
 import { parseHTML } from '../../../index';
 
-describe.skip('Validator.nu HTML5 Compliance Tests', () => {
+describe('Validator.nu HTML5 Compliance Tests', () => {
   describe('HTML5 Document Structure', () => {
     it('should handle valid HTML5 document', () => {
       const html = `<!DOCTYPE html>
