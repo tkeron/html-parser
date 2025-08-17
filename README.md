@@ -1,6 +1,6 @@
 # HTML Parser - Powered by Bun Native Tokenizer
 
-> ⚠️ **Work in Progress** - This package is currently under active development and not yet published to npm.
+> ⚠️ **Work in Progress** - This package is currently under active development.
 
 A fast and lightweight HTML parser for Bun that converts HTML strings into DOM Document objects. **Now powered by a native Bun tokenizer** for optimal performance.
 
