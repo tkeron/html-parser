@@ -426,6 +426,11 @@ function updateElementContent(element: any): void {
     enumerable: false,
     configurable: true,
   });
+
+  // Propagate changes up to parent elements
+  if (element.parentElement) {
+    updateElementContent(element.parentElement);
+  }
 }
 
 export function getTextContent(node: any): string {

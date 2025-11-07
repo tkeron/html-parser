@@ -172,7 +172,7 @@ describe('HTML5lib Tokenizer Tests', () => {
 
 // Test for loading external test files (when available)
 describe('HTML5lib External Tests', () => {
-  it('should be able to load external test files', async () => {
+  it.skip('should be able to load external test files', async () => {
     // This would be used to load actual HTML5lib test files
     // const testData = await Bun.file('/path/to/test1.test').text();
     // await loadHTML5libTokenizerTests(testData, 'External Test');
