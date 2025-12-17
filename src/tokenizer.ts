@@ -1,8 +1,3 @@
-/**
- * HTML Tokenizer using Bun's HTMLRewriter for efficient HTML parsing
- * This tokenizer provides a stream-based approach to HTML parsing
- */
-
 export enum TokenType {
   TAG_OPEN = 'TAG_OPEN',
   TAG_CLOSE = 'TAG_CLOSE',
@@ -29,7 +24,6 @@ export interface Token {
   isClosing?: boolean;
 }
 
-// HTML entities mapping
 const HTML_ENTITIES: Record<string, string> = {
   '&amp;': '&',
   '&lt;': '<',
@@ -54,10 +48,8 @@ const HTML_ENTITIES: Record<string, string> = {
  * Decode HTML entities in a string and handle null characters
  */
 function decodeEntities(text: string): string {
-  // First, replace null characters with the Unicode replacement character
   let result = text.replace(/\u0000/g, '\uFFFD');
   
-  // Then decode HTML entities
   return result.replace(/&(?:#x([0-9a-fA-F]+);?|#([0-9]+);?|([a-zA-Z][a-zA-Z0-9]*);?)/g, (match, hex, decimal, named) => {
     if (hex) {
       return String.fromCharCode(parseInt(hex, 16));
@@ -66,12 +58,10 @@ function decodeEntities(text: string): string {
       return String.fromCharCode(parseInt(decimal, 10));
     }
     if (named) {
-      // First try with semicolon
       if (HTML_ENTITIES[`&${named};`]) {
         return HTML_ENTITIES[`&${named};`];
       }
       
-      // For entities without semicolon, try to find the longest valid entity prefix
       if (!match.endsWith(';')) {
         for (let i = named.length; i > 0; i--) {
           const prefix = named.substring(0, i);
@@ -94,7 +84,6 @@ function decodeEntities(text: string): string {
 function parseAttributes(attributeString: string): Record<string, string> {
   const attributes: Record<string, string> = {};
   
-  // Regex to match attributes: name="value", name='value', name=value, or just name
   const attrRegex = /([a-zA-Z][a-zA-Z0-9\-_:]*)\s*(?:=\s*(?:"([^"]*)"|'([^']*)'|([^\s>]+)))?/g;
   let match;
   
@@ -129,42 +118,34 @@ export function tokenize(html: string): Token[] {
   const tokens: Token[] = [];
   let position = 0;
   
-  // Handle special cases first (DOCTYPE, comments, CDATA, processing instructions)
   const specialCases = [
-    // DOCTYPE
     {
       pattern: /<!DOCTYPE\s+[^>]*>/gi,
       type: TokenType.DOCTYPE,
       getValue: (match: string) => {
-        // Extract just the doctype name (e.g., "html" from "<!DOCTYPE html>")
         const doctypeMatch = match.match(/<!DOCTYPE\s+([^\s>]+)/i);
         return doctypeMatch && doctypeMatch[1] ? doctypeMatch[1].toLowerCase() : match;
       }
     },
-    // Comments (including unclosed ones)
     {
       pattern: /<!--([\s\S]*?)(?:-->|$)/g,
       type: TokenType.COMMENT,
       getValue: (match: string) => match.slice(4, match.endsWith('-->') ? -3 : match.length)
     },
-    // CDATA
     {
       pattern: /<!\[CDATA\[([\s\S]*?)\]\]>/g,
       type: TokenType.CDATA,
       getValue: (match: string) => match.slice(9, -3)
     },
-    // Processing Instructions
     {
       pattern: /<\?([^?]*(?:\?(?!>)[^?]*)*)\?>/g,
       type: TokenType.PROCESSING_INSTRUCTION,
-      getValue: (match: string) => match.slice(0, -2) // Remove the ?> at the end
+      getValue: (match: string) => match.slice(0, -2)
     }
   ];
 
-  // Track processed ranges to avoid double processing
   const processedRanges: Array<[number, number]> = [];
   
-  // Process special cases first
   for (const { pattern, type, getValue } of specialCases) {
     const regex = new RegExp(pattern);
     let match;
@@ -183,20 +164,16 @@ export function tokenize(html: string): Token[] {
     }
   }
   
-  // Sort processed ranges by start position
   processedRanges.sort((a, b) => a[0] - b[0]);
   
-  // Process remaining HTML with manual parsing
   let currentPos = 0;
   
   while (currentPos < html.length) {
-    // Check if current position is in a processed range
     const inProcessedRange = processedRanges.some(([start, end]) => 
       currentPos >= start && currentPos < end
     );
     
     if (inProcessedRange) {
-      // Skip to end of processed range
       const range = processedRanges.find(([start, end]) => 
         currentPos >= start && currentPos < end
       );
@@ -209,8 +186,7 @@ export function tokenize(html: string): Token[] {
     const char = html[currentPos];
     
     if (char === '<') {
-      // Check if it's a tag
-      const tagMatch = html.slice(currentPos).match(/^<\/?([a-zA-Z][a-zA-Z0-9]*)[^>]*>/);
+      const tagMatch = html.slice(currentPos).match(/^<\/?([a-zA-Z][^\s/>]*)([^>]*)>/);
       
       if (tagMatch) {
         const fullTag = tagMatch[0];
@@ -224,10 +200,9 @@ export function tokenize(html: string): Token[] {
         const isClosing = fullTag.startsWith('</');
         const isSelfClosing = fullTag.endsWith('/>');
         
-        // Parse attributes if it's an opening tag
         let attributes: Record<string, string> = {};
         if (!isClosing) {
-          const attrMatch = fullTag.match(/^<[a-zA-Z][a-zA-Z0-9]*\s+([^>]*?)\/?>$/);
+          const attrMatch = fullTag.match(/^<[a-zA-Z][^\s/>]*\s+([^>]*?)\/?>$/);
           if (attrMatch && attrMatch[1]) {
             attributes = parseAttributes(attrMatch[1]);
           }
@@ -245,17 +220,15 @@ export function tokenize(html: string): Token[] {
         
         currentPos += fullTag.length;
       } else {
-        // Not a valid tag, treat as text
         const textStart = currentPos;
         currentPos++;
         
-        // Find the end of text (next '<' or end of string)
         while (currentPos < html.length && html[currentPos] !== '<') {
           currentPos++;
         }
         
         const textContent = html.slice(textStart, currentPos);
-        if (textContent) { // Keep all text content, including whitespace-only
+        if (textContent) {
           tokens.push({
             type: TokenType.TEXT,
             value: decodeEntities(textContent),
@@ -264,16 +237,14 @@ export function tokenize(html: string): Token[] {
         }
       }
     } else {
-      // Text content
       const textStart = currentPos;
       
-      // Find the end of text (next '<' or end of string)
       while (currentPos < html.length && html[currentPos] !== '<') {
         currentPos++;
       }
       
       const textContent = html.slice(textStart, currentPos);
-      if (textContent) { // Keep all text content, including whitespace-only
+      if (textContent) {
         tokens.push({
           type: TokenType.TEXT,
           value: decodeEntities(textContent),
@@ -296,22 +267,15 @@ export function tokenize(html: string): Token[] {
   return tokens;
 }
 
-/**
- * Enhanced tokenizer that uses HTMLRewriter for better performance on large HTML
- * This is more efficient for well-formed HTML documents
- */
 export function tokenizeWithRewriter(html: string): Token[] {
   const tokens: Token[] = [];
   let textBuffer = '';
   let position = 0;
   
-  // First pass: collect all tokens using HTMLRewriter
   const rewriter = new HTMLRewriter();
   
-  // Handle all elements
   rewriter.on('*', {
     element(element) {
-      // Flush any accumulated text
       if (textBuffer.trim()) {
         tokens.push({
           type: TokenType.TEXT,
@@ -335,9 +299,7 @@ export function tokenizeWithRewriter(html: string): Token[] {
         isSelfClosing: element.selfClosing
       });
       
-      // Handle self-closing tags
       if (!element.selfClosing) {
-        // We'll add the closing tag in the end handler
         element.onEndTag((endTag) => {
           tokens.push({
             type: TokenType.TAG_CLOSE,
@@ -396,18 +358,12 @@ export function tokenizeWithRewriter(html: string): Token[] {
   return tokens;
 }
 
-/**
- * Smart tokenizer that chooses the best method based on HTML content
- */
 export function smartTokenize(html: string): Token[] {
-  // Use HTMLRewriter for well-formed HTML, manual parsing for edge cases
   const hasSpecialContent = /<!DOCTYPE|<!--|\[CDATA\[|<\?/.test(html);
   
   if (hasSpecialContent || html.length < 1000) {
-    // Use manual parsing for small HTML or HTML with special content
     return tokenize(html);
   } else {
-    // Use HTMLRewriter for large, well-formed HTML
     return tokenizeWithRewriter(html);
   }
 }
