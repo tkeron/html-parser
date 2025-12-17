@@ -55,60 +55,19 @@ export function createElement(
     },
 
     removeChild(child: any): any {
-      const index = element.childNodes.indexOf(child);
-      if (index === -1) {
-        throw new Error("Child not found");
-      }
+      return removeChild(element, child);
+    },
 
-      element.childNodes.splice(index, 1);
+    insertBefore(newNode: any, referenceNode: any): any {
+      return insertBefore(element, newNode, referenceNode);
+    },
 
-      if (child.previousSibling) {
-        child.previousSibling.nextSibling = child.nextSibling;
-      }
-      if (child.nextSibling) {
-        child.nextSibling.previousSibling = child.previousSibling;
-      }
+    replaceChild(newChild: any, oldChild: any): any {
+      return replaceChild(element, newChild, oldChild);
+    },
 
-      if (element.firstChild === child) {
-        element.firstChild = child.nextSibling;
-      }
-      if (element.lastChild === child) {
-        element.lastChild = child.previousSibling;
-      }
-
-      if (child.nodeType === NodeType.ELEMENT_NODE) {
-        const childElement = child;
-        const elemIndex = element.children.indexOf(childElement);
-        if (elemIndex !== -1) {
-          element.children.splice(elemIndex, 1);
-
-          if (childElement.previousElementSibling) {
-            childElement.previousElementSibling.nextElementSibling =
-              childElement.nextElementSibling;
-          }
-          if (childElement.nextElementSibling) {
-            childElement.nextElementSibling.previousElementSibling =
-              childElement.previousElementSibling;
-          }
-
-          if (element.firstElementChild === childElement) {
-            element.firstElementChild = childElement.nextElementSibling;
-          }
-          if (element.lastElementChild === childElement) {
-            element.lastElementChild = childElement.previousElementSibling;
-          }
-        }
-      }
-
-      child.parentNode = null;
-      if (child.nodeType === NodeType.ELEMENT_NODE) {
-        child.parentElement = null;
-      }
-      child.previousSibling = null;
-      child.nextSibling = null;
-
-      updateElementContent(element);
-      return child;
+    insertAfter(newNode: any, referenceNode: any): any {
+      return insertAfter(element, newNode, referenceNode);
     },
 
     setAttribute(name: string, value: string): void {
@@ -249,6 +208,27 @@ export function createDocument(): any {
       return createTextNode(data);
     },
 
+    appendChild(child: any): any {
+      appendChild(document, child);
+      return child;
+    },
+
+    removeChild(child: any): any {
+      return removeChild(document, child);
+    },
+
+    insertBefore(newNode: any, referenceNode: any): any {
+      return insertBefore(document, newNode, referenceNode);
+    },
+
+    replaceChild(newChild: any, oldChild: any): any {
+      return replaceChild(document, newChild, oldChild);
+    },
+
+    insertAfter(newNode: any, referenceNode: any): any {
+      return insertAfter(document, newNode, referenceNode);
+    },
+
     querySelector(selector: string): any {
       return querySelectorFunction(document, selector);
     },
@@ -346,6 +326,23 @@ function convertASTNodeToDOM(astNode: ASTNode): any {
 }
 
 function appendChild(parent: any, child: any): void {
+  // Check for hierarchy request error: prevent circular references
+  // Check if parent is a descendant of child
+  if (child.nodeType === NodeType.ELEMENT_NODE || child.nodeType === NodeType.DOCUMENT_NODE) {
+    let ancestor = parent;
+    while (ancestor) {
+      if (ancestor === child) {
+        throw new Error("HierarchyRequestError: Cannot insert a node as a descendant of itself");
+      }
+      ancestor = ancestor.parentNode;
+    }
+  }
+
+  // Remove child from its current parent if it has one
+  if (child.parentNode) {
+    removeChild(child.parentNode, child);
+  }
+
   child.parentNode = parent;
   parent.childNodes.push(child);
 
@@ -390,6 +387,354 @@ function appendChild(parent: any, child: any): void {
   if (parent.nodeType === NodeType.ELEMENT_NODE) {
     updateElementContent(parent);
   }
+}
+
+function removeChild(parent: any, child: any): any {
+  const index = parent.childNodes.indexOf(child);
+  if (index === -1) {
+    throw new Error("Child not found");
+  }
+
+  parent.childNodes.splice(index, 1);
+
+  if (child.previousSibling) {
+    child.previousSibling.nextSibling = child.nextSibling;
+  }
+  if (child.nextSibling) {
+    child.nextSibling.previousSibling = child.previousSibling;
+  }
+
+  if (parent.firstChild === child) {
+    parent.firstChild = child.nextSibling;
+  }
+  if (parent.lastChild === child) {
+    parent.lastChild = child.previousSibling;
+  }
+
+  // Only handle element-specific relationships if parent is an element
+  if (parent.nodeType === NodeType.ELEMENT_NODE && child.nodeType === NodeType.ELEMENT_NODE) {
+    const childElement = child;
+    const elemIndex = parent.children.indexOf(childElement);
+    if (elemIndex !== -1) {
+      parent.children.splice(elemIndex, 1);
+
+      if (childElement.previousElementSibling) {
+        childElement.previousElementSibling.nextElementSibling =
+          childElement.nextElementSibling;
+      }
+      if (childElement.nextElementSibling) {
+        childElement.nextElementSibling.previousElementSibling =
+          childElement.previousElementSibling;
+      }
+
+      if (parent.firstElementChild === childElement) {
+        parent.firstElementChild = childElement.nextElementSibling;
+      }
+      if (parent.lastElementChild === childElement) {
+        parent.lastElementChild = childElement.previousElementSibling;
+      }
+    }
+  }
+
+  child.parentNode = null;
+  if (child.nodeType === NodeType.ELEMENT_NODE) {
+    child.parentElement = null;
+  }
+  child.previousSibling = null;
+  child.nextSibling = null;
+  if (child.nodeType === NodeType.ELEMENT_NODE) {
+    child.previousElementSibling = null;
+    child.nextElementSibling = null;
+  }
+
+  if (parent.nodeType === NodeType.ELEMENT_NODE) {
+    updateElementContent(parent);
+  }
+  return child;
+}
+
+function insertBefore(parent: any, newNode: any, referenceNode: any): any {
+  // If referenceNode is null, append to the end
+  if (referenceNode === null) {
+    appendChild(parent, newNode);
+    return newNode;
+  }
+
+  // Verify referenceNode is actually a child of parent
+  const refIndex = parent.childNodes.indexOf(referenceNode);
+  if (refIndex === -1) {
+    throw new Error("Reference node is not a child of this node");
+  }
+
+  // Check for hierarchy request error: prevent circular references
+  if (newNode.nodeType === NodeType.ELEMENT_NODE || newNode.nodeType === NodeType.DOCUMENT_NODE) {
+    let ancestor = parent;
+    while (ancestor) {
+      if (ancestor === newNode) {
+        throw new Error("HierarchyRequestError: Cannot insert a node as a descendant of itself");
+      }
+      ancestor = ancestor.parentNode;
+    }
+  }
+
+  // Remove newNode from its current parent if it has one
+  if (newNode.parentNode) {
+    removeChild(newNode.parentNode, newNode);
+  }
+
+  // Insert into childNodes
+  parent.childNodes.splice(refIndex, 0, newNode);
+  newNode.parentNode = parent;
+
+  // Update sibling relationships for all nodes
+  newNode.previousSibling = referenceNode.previousSibling;
+  newNode.nextSibling = referenceNode;
+  
+  if (referenceNode.previousSibling) {
+    referenceNode.previousSibling.nextSibling = newNode;
+  }
+  referenceNode.previousSibling = newNode;
+
+  // Update firstChild if inserting at the beginning
+  if (parent.firstChild === referenceNode) {
+    parent.firstChild = newNode;
+  }
+
+  // Handle element-specific relationships
+  if (
+    parent.nodeType === NodeType.ELEMENT_NODE &&
+    newNode.nodeType === NodeType.ELEMENT_NODE
+  ) {
+    const parentElement = parent;
+    const newElement = newNode;
+
+    newElement.parentElement = parentElement;
+
+    // Find the reference node in the children array
+    let refElementIndex = -1;
+    if (referenceNode.nodeType === NodeType.ELEMENT_NODE) {
+      refElementIndex = parentElement.children.indexOf(referenceNode);
+    } else {
+      // Find the next element sibling
+      let nextElement = referenceNode.nextSibling;
+      while (nextElement && nextElement.nodeType !== NodeType.ELEMENT_NODE) {
+        nextElement = nextElement.nextSibling;
+      }
+      if (nextElement) {
+        refElementIndex = parentElement.children.indexOf(nextElement);
+      }
+    }
+
+    if (refElementIndex === -1) {
+      // No element siblings after, append to children
+      parentElement.children.push(newElement);
+    } else {
+      // Insert before the reference element
+      parentElement.children.splice(refElementIndex, 0, newElement);
+    }
+
+    // Update element sibling relationships
+    const newElemIndex = parentElement.children.indexOf(newElement);
+    newElement.previousElementSibling =
+      newElemIndex > 0 ? parentElement.children[newElemIndex - 1] : null;
+    newElement.nextElementSibling =
+      newElemIndex < parentElement.children.length - 1
+        ? parentElement.children[newElemIndex + 1]
+        : null;
+
+    if (newElement.previousElementSibling) {
+      newElement.previousElementSibling.nextElementSibling = newElement;
+    }
+    if (newElement.nextElementSibling) {
+      newElement.nextElementSibling.previousElementSibling = newElement;
+    }
+
+    // Update firstElementChild if needed
+    if (newElemIndex === 0) {
+      parentElement.firstElementChild = newElement;
+    }
+
+    // lastElementChild is not affected since we're inserting before
+  }
+
+  if (parent.nodeType === NodeType.ELEMENT_NODE) {
+    updateElementContent(parent);
+  }
+
+  return newNode;
+}
+
+function replaceChild(parent: any, newChild: any, oldChild: any): any {
+  // Verify oldChild is actually a child of parent
+  const oldIndex = parent.childNodes.indexOf(oldChild);
+  if (oldIndex === -1) {
+    throw new Error("Old child is not a child of this node");
+  }
+
+  // Check for hierarchy request error: prevent circular references
+  if (newChild.nodeType === NodeType.ELEMENT_NODE || newChild.nodeType === NodeType.DOCUMENT_NODE) {
+    let ancestor = parent;
+    while (ancestor) {
+      if (ancestor === newChild) {
+        throw new Error("HierarchyRequestError: Cannot insert a node as a descendant of itself");
+      }
+      ancestor = ancestor.parentNode;
+    }
+  }
+
+  // Remove newChild from its current parent if it has one
+  if (newChild.parentNode) {
+    removeChild(newChild.parentNode, newChild);
+  }
+
+  // Replace in childNodes array
+  parent.childNodes[oldIndex] = newChild;
+  newChild.parentNode = parent;
+
+  // Transfer sibling relationships
+  newChild.previousSibling = oldChild.previousSibling;
+  newChild.nextSibling = oldChild.nextSibling;
+
+  if (oldChild.previousSibling) {
+    oldChild.previousSibling.nextSibling = newChild;
+  }
+  if (oldChild.nextSibling) {
+    oldChild.nextSibling.previousSibling = newChild;
+  }
+
+  // Update first/last child if needed
+  if (parent.firstChild === oldChild) {
+    parent.firstChild = newChild;
+  }
+  if (parent.lastChild === oldChild) {
+    parent.lastChild = newChild;
+  }
+
+  // Handle element-specific relationships
+  if (parent.nodeType === NodeType.ELEMENT_NODE) {
+    const parentElement = parent;
+
+    // Remove old element from children if it's an element
+    if (oldChild.nodeType === NodeType.ELEMENT_NODE) {
+      const oldElemIndex = parentElement.children.indexOf(oldChild);
+      if (oldElemIndex !== -1) {
+        if (newChild.nodeType === NodeType.ELEMENT_NODE) {
+          // Replace with new element
+          parentElement.children[oldElemIndex] = newChild;
+          newChild.parentElement = parentElement;
+
+          // Transfer element sibling relationships
+          newChild.previousElementSibling = oldChild.previousElementSibling;
+          newChild.nextElementSibling = oldChild.nextElementSibling;
+
+          if (oldChild.previousElementSibling) {
+            oldChild.previousElementSibling.nextElementSibling = newChild;
+          }
+          if (oldChild.nextElementSibling) {
+            oldChild.nextElementSibling.previousElementSibling = newChild;
+          }
+
+          if (parentElement.firstElementChild === oldChild) {
+            parentElement.firstElementChild = newChild;
+          }
+          if (parentElement.lastElementChild === oldChild) {
+            parentElement.lastElementChild = newChild;
+          }
+        } else {
+          // Replacing element with non-element, remove from children
+          parentElement.children.splice(oldElemIndex, 1);
+
+          if (oldChild.previousElementSibling) {
+            oldChild.previousElementSibling.nextElementSibling =
+              oldChild.nextElementSibling;
+          }
+          if (oldChild.nextElementSibling) {
+            oldChild.nextElementSibling.previousElementSibling =
+              oldChild.previousElementSibling;
+          }
+
+          if (parentElement.firstElementChild === oldChild) {
+            parentElement.firstElementChild = oldChild.nextElementSibling;
+          }
+          if (parentElement.lastElementChild === oldChild) {
+            parentElement.lastElementChild = oldChild.previousElementSibling;
+          }
+        }
+      }
+    } else if (newChild.nodeType === NodeType.ELEMENT_NODE) {
+      // Replacing non-element with element, need to insert into children array
+      const newElement = newChild;
+      newElement.parentElement = parentElement;
+
+      // Find correct position in children array
+      let insertIndex = 0;
+      for (let i = 0; i < oldIndex; i++) {
+        if (parent.childNodes[i].nodeType === NodeType.ELEMENT_NODE) {
+          insertIndex++;
+        }
+      }
+
+      parentElement.children.splice(insertIndex, 0, newElement);
+
+      // Update element sibling relationships
+      newElement.previousElementSibling =
+        insertIndex > 0 ? parentElement.children[insertIndex - 1] : null;
+      newElement.nextElementSibling =
+        insertIndex < parentElement.children.length - 1
+          ? parentElement.children[insertIndex + 1]
+          : null;
+
+      if (newElement.previousElementSibling) {
+        newElement.previousElementSibling.nextElementSibling = newElement;
+      }
+      if (newElement.nextElementSibling) {
+        newElement.nextElementSibling.previousElementSibling = newElement;
+      }
+
+      if (insertIndex === 0) {
+        parentElement.firstElementChild = newElement;
+      }
+      if (insertIndex === parentElement.children.length - 1) {
+        parentElement.lastElementChild = newElement;
+      }
+    }
+  }
+
+  // Clear oldChild's relationships
+  oldChild.parentNode = null;
+  if (oldChild.nodeType === NodeType.ELEMENT_NODE) {
+    oldChild.parentElement = null;
+  }
+  oldChild.previousSibling = null;
+  oldChild.nextSibling = null;
+  if (oldChild.nodeType === NodeType.ELEMENT_NODE) {
+    oldChild.previousElementSibling = null;
+    oldChild.nextElementSibling = null;
+  }
+
+  if (parent.nodeType === NodeType.ELEMENT_NODE) {
+    updateElementContent(parent);
+  }
+
+  return oldChild;
+}
+
+function insertAfter(parent: any, newNode: any, referenceNode: any): any {
+  // If referenceNode is null, insert at the beginning
+  if (referenceNode === null) {
+    insertBefore(parent, newNode, parent.firstChild);
+    return newNode;
+  }
+
+  // Verify referenceNode is actually a child of parent
+  const refIndex = parent.childNodes.indexOf(referenceNode);
+  if (refIndex === -1) {
+    throw new Error("Reference node is not a child of this node");
+  }
+
+  // Insert after means insert before the next sibling
+  const nextSibling = referenceNode.nextSibling;
+  return insertBefore(parent, newNode, nextSibling);
 }
 
 function updateElementContent(element: any): void {

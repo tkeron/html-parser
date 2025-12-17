@@ -10,6 +10,9 @@ export interface ParentNode extends Node {
   lastChild: ChildNode | null;
   appendChild(child: ChildNode): ChildNode;
   removeChild(child: ChildNode): ChildNode;
+  insertBefore(newNode: ChildNode, referenceNode: ChildNode | null): ChildNode;
+  replaceChild(newChild: ChildNode, oldChild: ChildNode): ChildNode;
+  insertAfter?(newNode: ChildNode, referenceNode: ChildNode | null): ChildNode;
 }
 
 export interface Text extends ChildNode {
