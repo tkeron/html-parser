@@ -1,7 +1,7 @@
 import { describe, it, expect } from 'bun:test';
 import { parseHTML } from '../../../index';
 
-// Helper function to normalize text for comparison
+
 function normalizeText(text: string): string {
   return text
     .replace(/\s+/g, ' ')
@@ -16,7 +16,7 @@ describe('Final HTML Output Validation', () => {
       const document = parseHTML(html);
       
       expect(document).toBeDefined();
-      expect(document.nodeType).toBe(9); // DOCUMENT_NODE
+      expect(document.nodeType).toBe(9); 
       
       const div = document.querySelector('div');
       expect(div).toBeDefined();
@@ -101,9 +101,9 @@ describe('Final HTML Output Validation', () => {
       expect(p).toBeDefined();
       expect(p?.textContent).toBe('Content');
       
-      // Check for comment node
+      
       const commentNode = div?.childNodes[0];
-      expect(commentNode?.nodeType).toBe(8); // COMMENT_NODE
+      expect(commentNode?.nodeType).toBe(8); 
     });
   });
 
@@ -135,16 +135,16 @@ describe('Final HTML Output Validation', () => {
       expect(div).toBeDefined();
       expect(div?.childNodes.length).toBe(3);
       
-      // First text node
-      expect(div?.childNodes[0]?.nodeType).toBe(3); // TEXT_NODE
+      
+      expect(div?.childNodes[0]?.nodeType).toBe(3); 
       expect(div?.childNodes[0]?.textContent).toBe('Text before ');
       
-      // Span element
-      expect(div?.childNodes[1]?.nodeType).toBe(1); // ELEMENT_NODE
+      
+      expect(div?.childNodes[1]?.nodeType).toBe(1); 
       expect((div?.childNodes[1] as Element)?.tagName).toBe('SPAN');
       
-      // Last text node
-      expect(div?.childNodes[2]?.nodeType).toBe(3); // TEXT_NODE
+      
+      expect(div?.childNodes[2]?.nodeType).toBe(3); 
       expect(div?.childNodes[2]?.textContent).toBe(' text after');
     });
 
@@ -264,7 +264,7 @@ describe('Final HTML Output Validation', () => {
       const document = parseHTML(malformedHTML);
       
       expect(document).toBeDefined();
-      expect(document.nodeType).toBe(9); // DOCUMENT_NODE
+      expect(document.nodeType).toBe(9); 
       
       const divs = document.querySelectorAll('div');
       expect(divs.length).toBeGreaterThan(0);
@@ -296,7 +296,7 @@ describe('Final HTML Output Validation', () => {
       const p = document.querySelector('p');
       expect(p).toBeDefined();
       expect(p?.textContent).toContain('Special chars:');
-      // The exact entity handling depends on your implementation
+      
     });
 
     it('should handle multiple top-level elements', () => {
@@ -321,17 +321,17 @@ describe('Final HTML Output Validation', () => {
       
       const document = parseHTML(html);
       
-      // Test getElementById
+      
       const byId = document.getElementById('test');
       expect(byId).toBeDefined();
       expect(byId?.tagName).toBe('DIV');
       
-      // Test querySelector
+      
       const bySelector = document.querySelector('.container');
       expect(bySelector).toBeDefined();
       expect(bySelector?.id).toBe('test');
       
-      // Test querySelectorAll
+      
       const byClass = document.querySelectorAll('.text');
       expect(byClass.length).toBe(1);
       expect(byClass[0]?.textContent).toBe('Hello');

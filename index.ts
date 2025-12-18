@@ -4,11 +4,6 @@ import {
   astToDOM,
 } from './src/dom-simulator.js';
 
-/**
- * Parse HTML string into Document object
- * @param html The HTML string to parse
- * @returns A Document object
- */
 export function parseHTML(html: string = ""): Document {
   const tokens = tokenize(html);
   const ast = parse(tokens);

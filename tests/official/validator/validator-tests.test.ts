@@ -42,7 +42,7 @@ describe('Validator.nu Tests', () => {
     });
 
     it('should handle content model violations', () => {
-      // These should parse but may generate warnings in a full validator
+      
       const contentModelHTML = `
         <p>
           <div>Block inside paragraph</div>
@@ -53,7 +53,7 @@ describe('Validator.nu Tests', () => {
       `;
       
       const document = parseHTML(contentModelHTML);
-      // const ast = parse(tokens);
+      
       
       expect(document).toBeDefined();
     });
@@ -67,7 +67,7 @@ describe('Validator.nu Tests', () => {
       `;
       
       const document = parseHTML(obsoleteHTML);
-      // const ast = parse(tokens);
+      
       
       expect(document).toBeDefined();
     });
@@ -85,7 +85,7 @@ describe('Validator.nu Tests', () => {
       `;
       
       const document = parseHTML(deprecatedHTML);
-      // const ast = parse(tokens);
+      
       
       expect(document).toBeDefined();
     });
@@ -114,7 +114,7 @@ describe('Validator.nu Tests', () => {
       `;
       
       const document = parseHTML(formHTML);
-      // const ast = parse(tokens);
+      
       
       expect(document).toBeDefined();
     });
@@ -136,7 +136,7 @@ describe('Validator.nu Tests', () => {
       `;
       
       const document = parseHTML(mediaHTML);
-      // const ast = parse(tokens);
+      
       
       expect(document).toBeDefined();
     });
@@ -162,7 +162,7 @@ describe('Validator.nu Tests', () => {
       `;
       
       const document = parseHTML(semanticHTML);
-      // const ast = parse(tokens);
+      
       
       expect(document).toBeDefined();
     });
@@ -184,7 +184,7 @@ describe('Validator.nu Tests', () => {
       `;
       
       const document = parseHTML(interactiveHTML);
-      // const ast = parse(tokens);
+      
       
       expect(document).toBeDefined();
     });
@@ -200,7 +200,7 @@ describe('Validator.nu Tests', () => {
       `;
       
       const document = parseHTML(unclosedHTML);
-      // const ast = parse(tokens);
+      
       
       expect(document).toBeDefined();
     });
@@ -215,7 +215,7 @@ describe('Validator.nu Tests', () => {
       `;
       
       const document = parseHTML(mismatchedHTML);
-      // const ast = parse(tokens);
+      
       
       expect(document).toBeDefined();
     });
@@ -229,7 +229,7 @@ describe('Validator.nu Tests', () => {
       `;
       
       const document = parseHTML(invalidNestingHTML);
-      // const ast = parse(tokens);
+      
       
       expect(document).toBeDefined();
     });

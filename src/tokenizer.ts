@@ -44,9 +44,6 @@ const HTML_ENTITIES: Record<string, string> = {
   '&not;': '¬'
 };
 
-/**
- * Decode HTML entities in a string and handle null characters
- */
 function decodeEntities(text: string): string {
   let result = text.replace(/\u0000/g, '\uFFFD');
   
@@ -78,9 +75,6 @@ function decodeEntities(text: string): string {
   });
 }
 
-/**
- * Parse attributes from a tag string
- */
 function parseAttributes(attributeString: string): Record<string, string> {
   const attributes: Record<string, string> = {};
   
@@ -98,9 +92,6 @@ function parseAttributes(attributeString: string): Record<string, string> {
   return attributes;
 }
 
-/**
- * Calculate position in text
- */
 function calculatePosition(text: string, offset: number): Position {
   const lines = text.slice(0, offset).split('\n');
   return {
@@ -110,10 +101,6 @@ function calculatePosition(text: string, offset: number): Position {
   };
 }
 
-/**
- * Tokenize HTML using a combination of HTMLRewriter and manual parsing
- * HTMLRewriter is great for structured HTML but we need manual parsing for edge cases
- */
 export function tokenize(html: string): Token[] {
   const tokens: Token[] = [];
   let position = 0;
@@ -254,10 +241,8 @@ export function tokenize(html: string): Token[] {
     }
   }
   
-  // Sort tokens by position
   tokens.sort((a, b) => a.position.offset - b.position.offset);
   
-  // Add EOF token
   tokens.push({
     type: TokenType.EOF,
     value: '',
@@ -285,7 +270,6 @@ export function tokenizeWithRewriter(html: string): Token[] {
         textBuffer = '';
       }
       
-      // Add opening tag
       const attributes: Record<string, string> = {};
       for (const [name, value] of element.attributes) {
         attributes[name] = value;
@@ -325,14 +309,12 @@ export function tokenizeWithRewriter(html: string): Token[] {
   });
   
   try {
-    // Transform the HTML (this triggers the rewriter)
     const response = new Response(html, {
       headers: { 'Content-Type': 'text/html' }
     });
     
     rewriter.transform(response);
     
-    // Flush any remaining text
     if (textBuffer.trim()) {
       tokens.push({
         type: TokenType.TEXT,
@@ -342,12 +324,10 @@ export function tokenizeWithRewriter(html: string): Token[] {
     }
     
   } catch (error) {
-    // If HTMLRewriter fails, fall back to manual parsing
     console.warn('HTMLRewriter failed, falling back to manual parsing:', error);
     return tokenize(html);
   }
   
-  // Sort tokens by position and add EOF
   tokens.sort((a, b) => a.position.offset - b.position.offset);
   tokens.push({
     type: TokenType.EOF,

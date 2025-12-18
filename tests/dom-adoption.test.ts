@@ -69,7 +69,7 @@ describe("DOM Manipulation - Node Adoption Between Documents", () => {
 
       expect(span.parentNode).toBe(article);
       expect(span.parentElement).toBe(article);
-      expect(div.contains).toBeUndefined(); // or check if defined and works
+      expect(div.contains).toBeUndefined(); 
     });
 
     it("should preserve element attributes when moving between documents", () => {
@@ -172,15 +172,15 @@ describe("DOM Manipulation - Node Adoption Between Documents", () => {
 
       article.appendChild(spanB);
 
-      // Doc1 should only have spanA now
+      
       expect(doc1.querySelector("div").children.length).toBe(1);
       expect(doc1.querySelector("div").children[0].textContent).toBe("A");
 
-      // Doc2 should have spanB
+      
       expect(doc2.querySelector("article").children.length).toBe(1);
       expect(doc2.querySelector("article").children[0].textContent).toBe("B");
 
-      // Queries should be independent
+      
       expect(doc1.querySelectorAll("span").length).toBe(1);
       expect(doc2.querySelectorAll("span").length).toBe(1);
     });
@@ -200,8 +200,8 @@ describe("DOM Manipulation - Node Adoption Between Documents", () => {
 
   describe("Complex node adoption scenarios", () => {
     it("should handle moving node with event listeners (structure only)", () => {
-      // This test verifies structure is maintained; actual event handling would require
-      // event listener implementation
+      
+      
       const doc1 = parseHTML('<div><button id="btn">Click</button></div>');
       const doc2 = parseHTML("<div></div>");
 
@@ -221,8 +221,8 @@ describe("DOM Manipulation - Node Adoption Between Documents", () => {
       const div = doc.querySelector("div");
       const span = doc.querySelector("span");
 
-      // Try to append div to span (which is currently a child of div)
-      // This should throw a HierarchyRequestError
+      
+      
       expect(() => {
         span.appendChild(div);
       }).toThrow("HierarchyRequestError");
@@ -312,11 +312,11 @@ describe("DOM Manipulation - Node Adoption Between Documents", () => {
       const article = doc2.querySelector("article");
       const span = div.querySelector("span");
 
-      // Move to doc2
+      
       article.appendChild(span);
       expect(span.parentNode).toBe(article);
 
-      // Move back to doc1
+      
       div.appendChild(span);
       expect(span.parentNode).toBe(div);
       expect(div.innerHTML).toBe("<span>Original</span>");
@@ -332,11 +332,11 @@ describe("DOM Manipulation - Node Adoption Between Documents", () => {
 
       const originalHTML = div.innerHTML;
 
-      // Move to doc2
+      
       doc2.appendChild(section);
       expect(div.innerHTML).toBe("");
 
-      // Move back to doc1
+      
       div.appendChild(section);
       expect(div.innerHTML).toBe(originalHTML);
     });
@@ -348,7 +348,7 @@ describe("DOM Manipulation - Node Adoption Between Documents", () => {
       const div = doc1.querySelector("div");
       const section = doc2.querySelector("section");
 
-      // Move all spans one by one
+      
       while (div.children.length > 0) {
         section.appendChild(div.children[0]);
       }

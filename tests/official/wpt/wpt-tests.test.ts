@@ -135,10 +135,10 @@ describe('Web Platform Tests (WPT) Compliance', () => {
     
     it('should handle numeric character references', () => {
       const numericRefs = [
-        '&#65;',   // A
-        '&#x41;',  // A (hex)
-        '&#8364;', // Euro symbol
-        '&#x20AC;' // Euro symbol (hex)
+        '&#65;',   
+        '&#x41;',  
+        '&#8364;', 
+        '&#x20AC;' 
       ];
       
       numericRefs.forEach(ref => {
@@ -404,6 +404,6 @@ describe('WPT Integration Tests', () => {
     
     expect(ast).toBeDefined();
     expect((ast as any).children?.length).toBeGreaterThan(0);
-    expect(end - start).toBeLessThan(1000); // Should parse within 1 second
+    expect(end - start).toBeLessThan(1000); 
   });
 });

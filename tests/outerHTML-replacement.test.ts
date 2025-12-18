@@ -3,9 +3,9 @@ import { parseHTML } from "../index";
 
 describe("outerHTML replacement - Browser behavior", () => {
   it("should replace element with its innerHTML when setting outerHTML = innerHTML", () => {
-    // Simula el comportamiento del navegador:
-    // elem.outerHTML = elem.innerHTML;
-    // Esto reemplaza el elemento completo con solo su contenido interno
+    
+    
+    
     
     const doc = parseHTML(`
       <html>
@@ -20,29 +20,29 @@ describe("outerHTML replacement - Browser behavior", () => {
     const elem = doc.querySelector("#mi-prueba");
     expect(elem).not.toBeNull();
     
-    // Capturamos el innerHTML antes de la operación
+    
     const innerHTML = elem!.innerHTML;
     expect(innerHTML).toContain("<strong>¡Hola!</strong>");
     expect(innerHTML).toContain("Soy el contenido que se quedará.");
     
-    // Capturamos el padre antes de la operación
+    
     const parent = elem!.parentNode;
     expect(parent).not.toBeNull();
     expect(parent!.childNodes).toContain(elem);
     
-    // LA MAGIA: Sustituimos el outerHTML con el innerHTML
+    
     elem!.outerHTML = innerHTML;
     
-    // Verificación: El ID 'mi-prueba' ya no debe existir en el DOM
+    
     const elemAfter = doc.querySelector("#mi-prueba");
     expect(elemAfter).toBeNull();
     
-    // El contenido (strong e innerHTML) debe seguir existiendo en el body
+    
     const body = doc.querySelector("body");
     expect(body!.innerHTML).toContain("<strong>¡Hola!</strong>");
     expect(body!.innerHTML).toContain("Soy el contenido que se quedará.");
     
-    // El div con id y style NO debe existir
+    
     expect(body!.innerHTML).not.toContain('id="mi-prueba"');
     expect(body!.innerHTML).not.toContain('style=');
   });
@@ -60,13 +60,13 @@ describe("outerHTML replacement - Browser behavior", () => {
     const parent = paragraph!.parentNode;
     const innerHTML = paragraph!.innerHTML;
     
-    // Reemplazar el <p> con solo "Simple text"
+    
     paragraph!.outerHTML = innerHTML;
     
-    // El párrafo no debe existir
+    
     expect(doc.querySelector("#paragraph")).toBeNull();
     
-    // El texto debe seguir ahí
+    
     expect(parent!.textContent).toContain("Simple text");
   });
 
@@ -86,13 +86,13 @@ describe("outerHTML replacement - Browser behavior", () => {
     const ul = doc.querySelector("ul");
     const innerHTML = container!.innerHTML;
     
-    // Reemplazar el <li> con sus hijos
+    
     container!.outerHTML = innerHTML;
     
-    // El li no debe existir
+    
     expect(doc.querySelector("#item-container")).toBeNull();
     
-    // Los spans deben seguir existiendo directamente en el ul
+    
     const spans = ul!.querySelectorAll("span");
     expect(spans.length).toBe(2);
     expect(spans[0]?.textContent).toBe("Item 1");
@@ -112,13 +112,13 @@ describe("outerHTML replacement - Browser behavior", () => {
     const parent = span!.parentNode;
     const childCountBefore = parent!.childNodes.length;
     
-    // Reemplazar con string vacío = eliminar el elemento
+    
     span!.outerHTML = "";
     
-    // El span no debe existir
+    
     expect(doc.querySelector("#to-remove")).toBeNull();
     
-    // El padre debe tener un hijo menos
+    
     expect(parent!.childNodes.length).toBe(childCountBefore - 1);
   });
 
@@ -134,13 +134,13 @@ describe("outerHTML replacement - Browser behavior", () => {
     
     const parent = oldParagraph!.parentNode;
     
-    // Reemplazar con un div diferente
+    
     oldParagraph!.outerHTML = '<div id="new">New content</div>';
     
-    // El párrafo viejo no debe existir
+    
     expect(doc.querySelector("#old")).toBeNull();
     
-    // El div nuevo debe existir
+    
     const newDiv = doc.querySelector("#new");
     expect(newDiv).not.toBeNull();
     expect(newDiv!.textContent).toBe("New content");
@@ -160,14 +160,14 @@ describe("outerHTML replacement - Browser behavior", () => {
     const firstSpan = doc.querySelectorAll("span")[0];
     const lastSpan = doc.querySelectorAll("span")[1];
     
-    // Reemplazar middle con su innerHTML
+    
     middle!.outerHTML = middle!.innerHTML;
     
-    // Los hermanos deben seguir conectados correctamente
+    
     expect(firstSpan!.nextSibling).not.toBe(middle);
     expect(lastSpan!.previousSibling).not.toBe(middle);
     
-    // El texto "Middle" debe seguir existiendo como texto
+    
     const parent = firstSpan!.parentNode;
     expect(parent!.textContent).toContain("Middle");
   });
@@ -192,14 +192,14 @@ describe("outerHTML replacement - Browser behavior", () => {
     const article = doc.querySelector("article");
     const innerHTML = wrapper!.innerHTML;
     
-    // Reemplazar section con su contenido
+    
     wrapper!.outerHTML = innerHTML;
     
-    // El section no debe existir
+    
     expect(doc.querySelector("#wrapper")).toBeNull();
     expect(doc.querySelector("section")).toBeNull();
     
-    // Pero todo su contenido debe estar directamente en article
+    
     expect(article!.querySelector("h2")).not.toBeNull();
     expect(article!.querySelector("h2")!.textContent).toBe("Title");
     expect(article!.querySelector("strong")).not.toBeNull();

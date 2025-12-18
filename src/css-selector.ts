@@ -21,18 +21,15 @@ function parseSelector(selector: string): SelectorGroup[] {
     } else if (trimmed.startsWith(".")) {
       tokens = [{ type: "class", value: trimmed.slice(1) }];
     } else if (trimmed.includes("[") && trimmed.includes("]")) {
-      // Handle attribute selectors like input[type="email"], meta[charset], or [role="button"]
       const attributeMatch = trimmed.match(/^([^[\]]*)\[([^=\]]+)(?:=["']?([^"'\]]*?)["']?)?\]$/);
       if (attributeMatch) {
         const [, tagName, attrName, attrValue] = attributeMatch;
         tokens = [];
         
-        // Add tag token if there's a tag name
         if (tagName && tagName.trim()) {
           tokens.push({ type: "tag", value: tagName.trim().toLowerCase() });
         }
         
-        // Add attribute token
         tokens.push({ 
           type: "attribute", 
           value: (attrName || "").trim(),
@@ -67,11 +64,9 @@ function matchesToken(element: any, token: SelectorToken): boolean {
       return element.attributes?.id === token.value;
     case "attribute":
       const attrValue = element.attributes?.[token.attributeName || ""];
-      // If no attribute value specified in selector, just check if attribute exists
       if (token.attributeValue === undefined) {
         return attrValue !== undefined;
       }
-      // Otherwise check for exact match
       return attrValue === token.attributeValue;
     default:
       return false;

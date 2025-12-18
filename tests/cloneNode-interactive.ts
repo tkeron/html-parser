@@ -1,18 +1,10 @@
 #!/usr/bin/env bun
 
-/**
- * Script interactivo para probar cloneNode manualmente
- * 
- * Uso:
- *   bun run tests/cloneNode-interactive.ts
- * 
- * Este script permite probar cloneNode con diferentes HTML inputs
- * y ver en detalle qué sucede durante el clonado.
- */
+
 
 import { parseHTML } from "../index.js";
 
-// Colores para la consola
+
 const colors = {
   reset: "\x1b[0m",
   bright: "\x1b[1m",
@@ -40,7 +32,7 @@ function testCloneNode(html: string, selector: string, testName: string) {
   console.log(html);
   console.log();
 
-  // Parse HTML
+  
   const doc = parseHTML(html);
   const element = doc.querySelector(selector);
 
@@ -71,7 +63,7 @@ function testCloneNode(html: string, selector: string, testName: string) {
   console.log("  - textContent.length:", cloned.textContent.length);
   console.log();
 
-  // Comparación
+  
   log(colors.bright + colors.cyan, "📊 Comparación:");
   const checks = {
     "nodeName coincide":
@@ -93,7 +85,7 @@ function testCloneNode(html: string, selector: string, testName: string) {
   }
   console.log();
 
-  // Mostrar innerHTML
+  
   log(colors.cyan, "📄 Original innerHTML:");
   console.log(element.innerHTML);
   console.log();
@@ -102,7 +94,7 @@ function testCloneNode(html: string, selector: string, testName: string) {
   console.log(cloned.innerHTML);
   console.log();
 
-  // Verificar querySelector en el clon
+  
   log(colors.bright + colors.cyan, "🔍 Pruebas de querySelector en el clon:");
   const queries = [
     "div",
@@ -132,9 +124,9 @@ function testCloneNode(html: string, selector: string, testName: string) {
   );
 }
 
-// ============================================================================
-// TESTS
-// ============================================================================
+
+
+
 
 console.clear();
 log(
@@ -142,14 +134,14 @@ log(
   "\n🧬 cloneNode Interactive Test Suite\n"
 );
 
-// Test 1: Simple element
+
 testCloneNode(
   `<div id="simple">Hello World</div>`,
   "#simple",
   "Elemento simple con texto"
 );
 
-// Test 2: Nested elements
+
 testCloneNode(
   `
   <div id="nested">
@@ -165,7 +157,7 @@ testCloneNode(
   "Elementos anidados múltiples niveles"
 );
 
-// Test 3: Complex structure
+
 testCloneNode(
   `
   <article id="article">
@@ -189,7 +181,7 @@ testCloneNode(
   "Estructura compleja tipo artículo"
 );
 
-// Test 4: Form elements
+
 testCloneNode(
   `
   <form id="form">
@@ -203,7 +195,7 @@ testCloneNode(
   "Formulario con inputs"
 );
 
-// Test 5: Table
+
 testCloneNode(
   `
   <table id="table">

@@ -6,7 +6,7 @@ import {
   type HTML5libTreeTest,
 } from "./tree-construction-utils";
 
-// Sample HTML5lib tree construction tests in DAT format
+
 const basicTreeTestData = `#data
 Test
 #errors
@@ -206,13 +206,13 @@ const errorHandlingTestData = `#data
 |       <a>
 |     <a>`;
 
-// Run the embedded tests
+
 describe("HTML5lib Tree Construction Tests", () => {
   it("should parse DAT format correctly", () => {
     const tests = parseHTML5libDATFile(basicTreeTestData);
     expect(tests.length).toBeGreaterThan(0);
 
-    // Check first test
+    
     const firstTest = tests[0];
     if (firstTest) {
       expect(firstTest.data).toBe("Test");
@@ -225,7 +225,7 @@ describe("HTML5lib Tree Construction Tests", () => {
     const tests = parseHTML5libDATFile(doctypeTestData);
     expect(tests.length).toBeGreaterThan(0);
 
-    // Check first doctype test
+    
     const firstTest = tests[0];
     if (firstTest) {
       expect(firstTest.data).toBe("<!DOCTYPE html>");
@@ -238,7 +238,7 @@ describe("HTML5lib Tree Construction Tests", () => {
     const tests = parseHTML5libDATFile(errorHandlingTestData);
     expect(tests.length).toBeGreaterThan(0);
 
-    // Check error handling
+    
     const firstTest = tests[0];
     if (firstTest) {
       expect(firstTest.errors.length).toBeGreaterThan(0);

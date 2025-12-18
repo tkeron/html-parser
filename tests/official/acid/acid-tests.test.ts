@@ -233,7 +233,7 @@ describe('Performance Benchmarks', () => {
     const end = performance.now();
     
     expect(ast).toBeDefined();
-    expect(end - start).toBeLessThan(10); // Should be very fast
+    expect(end - start).toBeLessThan(10); 
   });
   
   it('should handle medium-sized HTML', () => {
@@ -245,7 +245,7 @@ describe('Performance Benchmarks', () => {
     const end = performance.now();
     
     expect(ast).toBeDefined();
-    expect(end - start).toBeLessThan(100); // Should still be fast
+    expect(end - start).toBeLessThan(100); 
   });
   
   it('should handle large HTML documents', () => {
@@ -257,7 +257,7 @@ describe('Performance Benchmarks', () => {
     const end = performance.now();
     
     expect(ast).toBeDefined();
-    expect(end - start).toBeLessThan(1000); // Should complete within 1 second
+    expect(end - start).toBeLessThan(1000); 
   });
   
   it('should handle deeply nested HTML', () => {
@@ -276,7 +276,7 @@ describe('Performance Benchmarks', () => {
     const end = performance.now();
     
     expect(ast).toBeDefined();
-    expect(end - start).toBeLessThan(500); // Should handle deep nesting
+    expect(end - start).toBeLessThan(500); 
   });
 });
 
@@ -284,14 +284,14 @@ describe('Memory Usage Tests', () => {
   it('should not leak memory on repeated parsing', () => {
     const testHtml = '<div><p>Memory test</p></div>';
     
-    // Parse the same HTML multiple times
+    
     for (let i = 0; i < 1000; i++) {
       const tokens = tokenize(testHtml);
       const ast = parse(tokens);
       expect(ast).toBeDefined();
     }
     
-    // If we get here without crashing, memory is likely managed well
+    
     expect(true).toBe(true);
   });
   

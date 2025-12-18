@@ -5,7 +5,7 @@ import {
   type HTML5libTokenizerTestSuite
 } from './tokenizer-utils';
 
-// Sample HTML5lib tokenizer tests embedded directly
+
 const basicTokenizerTests: HTML5libTokenizerTestSuite = {
   "tests": [
     {
@@ -86,7 +86,7 @@ const basicTokenizerTests: HTML5libTokenizerTestSuite = {
   ]
 };
 
-// Entity tests
+
 const entityTests: HTML5libTokenizerTestSuite = {
   "tests": [
     {
@@ -123,7 +123,7 @@ const entityTests: HTML5libTokenizerTestSuite = {
   ]
 };
 
-// Comment tests
+
 const commentTests: HTML5libTokenizerTestSuite = {
   "tests": [
     {
@@ -163,7 +163,7 @@ const commentTests: HTML5libTokenizerTestSuite = {
   ]
 };
 
-// Run the embedded tests
+
 describe('HTML5lib Tokenizer Tests', () => {
   runHTML5libTokenizerTestSuite(basicTokenizerTests, 'Basic Tokenizer');
   runHTML5libTokenizerTestSuite(entityTests, 'Entity Handling');

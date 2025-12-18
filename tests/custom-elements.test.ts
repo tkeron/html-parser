@@ -210,7 +210,7 @@ describe('Custom Elements Support', () => {
       const ast = parse(tokens);
 
       const element = ast.children![0]!;
-      // nodeName should also be uppercase
+      
       if (element.nodeName) {
         expect(element.nodeName.toUpperCase()).toBe('MY-COMP');
       }
@@ -382,11 +382,11 @@ describe('Custom Elements Support', () => {
       const tokens = tokenize(html);
       const ast = parse(tokens);
 
-      // Find first element (skip whitespace text nodes)
+      
       const userProfile = ast.children!.find(node => node.type === ASTNodeType.ELEMENT)!;
       expect(userProfile.tagName).toBe('user-profile');
       
-      // Should have proper nesting
+      
       expect(userProfile.children).toBeDefined();
       expect(userProfile.children!.length).toBeGreaterThan(0);
     });
@@ -412,7 +412,7 @@ describe('Custom Elements Support', () => {
       const tokens = tokenize(html);
       const ast = parse(tokens);
 
-      // Find first element (skip whitespace text nodes)
+      
       const appRoot = ast.children!.find(node => node.type === ASTNodeType.ELEMENT)!;
       expect(appRoot.tagName).toBe('app-root');
     });
@@ -471,12 +471,12 @@ describe('Custom Elements Support', () => {
     test('tokenizer should capture full custom element name', () => {
       const tokens = tokenize('<my-component-123></my-component-123>');
       
-      // Find the opening tag token
+      
       const openTag = tokens.find(t => t.type === 'TAG_OPEN');
       expect(openTag).toBeDefined();
       expect(openTag!.value).toBe('my-component-123');
       
-      // Find the closing tag token
+      
       const closeTag = tokens.find(t => t.type === 'TAG_CLOSE');
       expect(closeTag).toBeDefined();
       expect(closeTag!.value).toBe('my-component-123');
@@ -642,7 +642,7 @@ describe('Custom Elements Support', () => {
       const tokens = tokenize(html);
       const ast = parse(tokens);
 
-      // Should have comment, element, comment
+      
       const myComp = ast.children!.find(node => node.type === ASTNodeType.ELEMENT)!;
       expect(myComp.tagName).toBe('my-comp');
     });
@@ -700,7 +700,7 @@ describe('Custom Elements Support', () => {
       const tokens = tokenize('<table><tr><td><my-cell>content</my-cell></td></tr></table>');
       const ast = parse(tokens);
 
-      // Find the custom element
+      
       const table = ast.children![0]!;
       expect(table.tagName).toBe('table');
     });

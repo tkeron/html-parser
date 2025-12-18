@@ -11,17 +11,17 @@ describe("cloneNode functionality", () => {
 
       const cloned = original.cloneNode(true);
 
-      // Verificar que el nodo clonado existe
+      
       expect(cloned).toBeTruthy();
       expect(cloned.nodeName).toBe("DIV");
 
-      // Verificar que los atributos se copian
+      
       expect(cloned.getAttribute("id")).toBe("original");
 
-      // Verificar que el contenido de texto se copia
+      
       expect(cloned.textContent).toBe("Hello World");
 
-      // Verificar que tiene los hijos correctos
+      
       expect(cloned.childNodes.length).toBeGreaterThan(0);
     });
 
@@ -38,20 +38,20 @@ describe("cloneNode functionality", () => {
 
       const cloned = parent.cloneNode(true);
 
-      // Verificar estructura básica
+      
       expect(cloned.nodeName).toBe("DIV");
       expect(cloned.getAttribute("id")).toBe("parent");
 
-      // Verificar que los hijos se clonaron
+      
       expect(cloned.childNodes.length).toBeGreaterThan(0);
       
-      // Verificar que el hijo div está presente
+      
       const childDiv = cloned.querySelector(".child");
       expect(childDiv).toBeTruthy();
       expect(childDiv?.nodeName).toBe("DIV");
       expect(childDiv?.getAttribute("class")).toBe("child");
 
-      // Verificar el nieto span
+      
       const span = cloned.querySelector("span");
       expect(span).toBeTruthy();
       expect(span?.textContent).toBe("Nested Text");
@@ -70,7 +70,7 @@ describe("cloneNode functionality", () => {
 
       const cloned = list.cloneNode(true);
 
-      // Verificar que todos los items se clonaron
+      
       const items = cloned.querySelectorAll("li");
       expect(items.length).toBe(3);
       expect(items[0]?.textContent).toBe("Item 1");
@@ -89,18 +89,18 @@ describe("cloneNode functionality", () => {
       const doc = parseHTML(html);
       const container = doc.querySelector("#container")!;
 
-      // Guardar innerHTML original
+      
       const originalInnerHTML = container.innerHTML;
       expect(originalInnerHTML).toBeTruthy();
       expect(originalInnerHTML.length).toBeGreaterThan(0);
 
       const cloned = container.cloneNode(true);
 
-      // Verificar que innerHTML del clon no esté vacío
+      
       expect(cloned.innerHTML).toBeTruthy();
       expect(cloned.innerHTML.length).toBeGreaterThan(0);
 
-      // Verificar que el contenido es similar
+      
       expect(cloned.innerHTML).toContain("<h1>Title</h1>");
       expect(cloned.innerHTML).toContain("<p>Paragraph 1</p>");
       expect(cloned.innerHTML).toContain("<p>Paragraph 2</p>");
@@ -111,19 +111,19 @@ describe("cloneNode functionality", () => {
       const doc = parseHTML(html);
       const mixed = doc.querySelector("#mixed")!;
 
-      // Verificar estructura original
+      
       const originalChildCount = mixed.childNodes.length;
       expect(originalChildCount).toBeGreaterThan(0);
 
       const cloned = mixed.cloneNode(true);
 
-      // Verificar que tiene la misma cantidad de hijos
+      
       expect(cloned.childNodes.length).toBe(originalChildCount);
 
-      // Verificar contenido completo
+      
       expect(cloned.textContent).toBe("Text beforebold textText after");
 
-      // Verificar que el elemento strong existe
+      
       const strong = cloned.querySelector("strong");
       expect(strong).toBeTruthy();
       expect(strong?.textContent).toBe("bold text");
@@ -136,7 +136,7 @@ describe("cloneNode functionality", () => {
 
       const cloned = element.cloneNode(true);
 
-      // Verificar todos los atributos
+      
       expect(cloned.getAttribute("id")).toBe("attrs");
       expect(cloned.getAttribute("class")).toBe("test");
       expect(cloned.getAttribute("data-value")).toBe("123");
@@ -161,11 +161,11 @@ describe("cloneNode functionality", () => {
 
       const cloned = article.cloneNode(true);
 
-      // Verificar estructura
+      
       expect(cloned.nodeName).toBe("ARTICLE");
       expect(cloned.getAttribute("id")).toBe("article");
 
-      // Verificar elementos
+      
       expect(cloned.querySelector("h2")?.textContent).toBe("Article Title");
       
       const paragraphs = cloned.querySelectorAll("p");
@@ -173,12 +173,12 @@ describe("cloneNode functionality", () => {
       expect(paragraphs[0]?.textContent).toBe("First paragraph");
       expect(paragraphs[1]?.textContent).toBe("Last paragraph");
 
-      // Verificar div anidado
+      
       const highlight = cloned.querySelector(".highlight");
       expect(highlight).toBeTruthy();
       expect(highlight?.querySelector("span")?.textContent).toBe("Highlighted");
 
-      // Verificar que se copió el comentario
+      
       const hasComment = Array.from(cloned.childNodes).some(
         (node: any) => node.nodeType === NodeType.COMMENT_NODE
       );
@@ -203,7 +203,7 @@ describe("cloneNode functionality", () => {
 
       const cloned = section.cloneNode(true);
 
-      // Verificar outerHTML
+      
       expect(cloned.outerHTML).toBeTruthy();
       expect(cloned.outerHTML).toContain("section");
       expect(cloned.outerHTML).toContain("class=\"main\"");
@@ -220,7 +220,7 @@ describe("cloneNode functionality", () => {
 
       const cloned = parent.cloneNode(false);
 
-      // Debe copiar el elemento pero no los hijos
+      
       expect(cloned.nodeName).toBe("DIV");
       expect(cloned.getAttribute("id")).toBe("parent");
       expect(cloned.childNodes.length).toBe(0);
@@ -234,12 +234,12 @@ describe("cloneNode functionality", () => {
 
       const cloned = element.cloneNode(false);
 
-      // Atributos deben copiarse
+      
       expect(cloned.getAttribute("id")).toBe("test");
       expect(cloned.getAttribute("class")).toBe("container");
       expect(cloned.getAttribute("data-value")).toBe("123");
 
-      // Hijos NO deben copiarse
+      
       expect(cloned.childNodes.length).toBe(0);
       expect(cloned.innerHTML).toBe("");
     });
@@ -253,7 +253,7 @@ describe("cloneNode functionality", () => {
 
       const cloned = original.cloneNode(true);
 
-      // Modificar el clon no debe afectar el original
+      
       cloned.setAttribute("id", "cloned");
       cloned.setAttribute("data-modified", "true");
 
@@ -273,10 +273,10 @@ describe("cloneNode functionality", () => {
       
       expect(clonedChild).toBeTruthy();
       
-      // Modificar hijo del clon
+      
       clonedChild?.setAttribute("data-cloned", "yes");
 
-      // El hijo original no debe verse afectado
+      
       const originalChild = parent.querySelector("#child");
       expect(originalChild?.hasAttribute("data-cloned")).toBe(false);
     });
@@ -324,7 +324,7 @@ describe("cloneNode functionality", () => {
 
       const cloned = level1.cloneNode(true);
 
-      // Verificar todos los niveles
+      
       expect(cloned.querySelector("#level2")).toBeTruthy();
       expect(cloned.querySelector("#level3")).toBeTruthy();
       expect(cloned.querySelector("#level4")).toBeTruthy();
@@ -340,22 +340,22 @@ describe("cloneNode functionality", () => {
       const doc = parseHTML(html);
       const container = doc.querySelector("#container")!;
 
-      // Acceder a innerHTML para asegurar que _internalInnerHTML esté establecido
+      
       const originalInnerHTML = container.innerHTML;
       expect(originalInnerHTML).toBeTruthy();
 
       const cloned = container.cloneNode(true);
 
-      // Verificar que innerHTML funciona en el clon
+      
       const clonedInnerHTML = cloned.innerHTML;
       expect(clonedInnerHTML).toBeTruthy();
       expect(clonedInnerHTML.length).toBeGreaterThan(0);
 
-      // Verificar que contiene el mismo contenido
+      
       expect(clonedInnerHTML).toContain("<p>Paragraph 1</p>");
       expect(clonedInnerHTML).toContain("<p>Paragraph 2</p>");
 
-      // Verificar que el accessor de innerHTML funciona correctamente
+      
       expect(typeof cloned.innerHTML).toBe("string");
     });
 
@@ -369,10 +369,10 @@ describe("cloneNode functionality", () => {
 
       const cloned = parent.cloneNode(true);
 
-      // Verificar que childNodes tiene la misma estructura
+      
       expect(cloned.childNodes.length).toBe(originalChildCount);
       
-      // Verificar que podemos acceder a cada hijo
+      
       for (let i = 0; i < cloned.childNodes.length; i++) {
         expect(cloned.childNodes[i]).toBeTruthy();
         expect(cloned.childNodes[i].nodeType).toBeDefined();
@@ -386,12 +386,12 @@ describe("cloneNode functionality", () => {
 
       const cloned = container.cloneNode(true);
 
-      // Verificar que el array children está correctamente poblado
+      
       expect(cloned.children).toBeTruthy();
       expect(Array.isArray(cloned.children)).toBe(true);
       expect(cloned.children.length).toBe(3);
 
-      // Verificar que todos son elementos
+      
       for (const child of cloned.children) {
         expect(child.nodeType).toBe(NodeType.ELEMENT_NODE);
       }
@@ -404,12 +404,12 @@ describe("cloneNode functionality", () => {
 
       const cloned = list.cloneNode(true);
 
-      // Verificar referencias firstChild y lastChild
+      
       expect(cloned.firstChild).toBeTruthy();
       expect(cloned.lastChild).toBeTruthy();
       
-      // En DOM real, firstChild puede ser un nodo de texto (whitespace)
-      // pero debemos asegurar que existen
+      
+      
       expect(cloned.firstElementChild).toBeTruthy();
       expect(cloned.lastElementChild).toBeTruthy();
       
@@ -427,12 +427,12 @@ describe("cloneNode functionality", () => {
       const doc = parseHTML(html);
       const dynamic = doc.querySelector("#dynamic")!;
 
-      // Modificar innerHTML antes de clonar
+      
       dynamic.innerHTML = "<p>Dynamic content</p><span>More content</span>";
 
       const cloned = dynamic.cloneNode(true);
 
-      // Verificar que el contenido modificado se clonó
+      
       expect(cloned.querySelector("p")).toBeTruthy();
       expect(cloned.querySelector("p")?.textContent).toBe("Dynamic content");
       expect(cloned.querySelector("span")).toBeTruthy();
@@ -446,17 +446,17 @@ describe("cloneNode functionality", () => {
 
       const cloned = original.cloneNode(true);
 
-      // Verificar contenido clonado
+      
       expect(cloned.querySelector("p")?.textContent).toBe("Original");
 
-      // Modificar innerHTML del clon
+      
       cloned.innerHTML = "<span>Modified</span>";
 
-      // Original no debe cambiar
+      
       expect(original.querySelector("p")?.textContent).toBe("Original");
       expect(original.querySelector("span")).toBeNull();
 
-      // Clon debe tener el nuevo contenido
+      
       expect(cloned.querySelector("span")?.textContent).toBe("Modified");
       expect(cloned.querySelector("p")).toBeNull();
     });
@@ -488,13 +488,13 @@ describe("cloneNode functionality", () => {
 
       const cloned = card.cloneNode(true);
 
-      // Verificar estructura completa
+      
       expect(cloned.getAttribute("data-id")).toBe("123");
       expect(cloned.querySelector(".card-header")).toBeTruthy();
       expect(cloned.querySelector(".card-body")).toBeTruthy();
       expect(cloned.querySelector(".card-footer")).toBeTruthy();
 
-      // Verificar contenido específico
+      
       expect(cloned.querySelector(".card-title")?.textContent).toBe("Card Title");
       expect(cloned.querySelector("strong")?.textContent).toBe("bold");
       
@@ -502,7 +502,7 @@ describe("cloneNode functionality", () => {
       expect(items.length).toBe(2);
       
       const buttons = cloned.querySelectorAll("button");
-      expect(buttons.length).toBe(3); // close, save, cancel
+      expect(buttons.length).toBe(3); 
     });
 
     it("should clone a form with various input types", () => {
@@ -522,7 +522,7 @@ describe("cloneNode functionality", () => {
 
       const cloned = form.cloneNode(true);
 
-      // Verificar que todos los inputs se clonaron
+      
       const textInput = cloned.querySelector('[name="username"]');
       expect(textInput).toBeTruthy();
       expect(textInput?.getAttribute("value")).toBe("john");

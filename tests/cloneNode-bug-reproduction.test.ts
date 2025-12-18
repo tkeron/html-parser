@@ -1,13 +1,7 @@
 import { describe, it, expect } from "vitest";
 import { parseHTML } from "../index.js";
 
-/**
- * Tests específicos para reproducir el problema reportado:
- * "Cuando se clona un nodo con cloneNode(true), el nodo clonado 
- * pierde su contenido interno (_internalInnerHTML y estructura de hijos)."
- * 
- * Estos tests intentan reproducir el problema exacto descrito.
- */
+
 describe("cloneNode - Bug Reproduction Tests", () => {
   
   it("REPRODUCCIÓN: debe copiar _internalInnerHTML correctamente", () => {
@@ -26,43 +20,43 @@ describe("cloneNode - Bug Reproduction Tests", () => {
     const doc = parseHTML(html);
     const container = doc.querySelector("#container")!;
     
-    // Verificar estado ANTES del clonado
+    
     console.log("=== ANTES DEL CLONADO ===");
     console.log("Original innerHTML:", container.innerHTML);
     console.log("Original _internalInnerHTML:", (container as any)._internalInnerHTML);
     console.log("Original childNodes.length:", container.childNodes.length);
     console.log("Original children.length:", container.children.length);
     
-    // Realizar el clonado
+    
     const cloned = container.cloneNode(true);
     
-    // Verificar estado DESPUÉS del clonado
+    
     console.log("\n=== DESPUÉS DEL CLONADO ===");
     console.log("Clonado innerHTML:", cloned.innerHTML);
     console.log("Clonado _internalInnerHTML:", (cloned as any)._internalInnerHTML);
     console.log("Clonado childNodes.length:", cloned.childNodes.length);
     console.log("Clonado children.length:", cloned.children.length);
     
-    // VERIFICACIONES CRÍTICAS
     
-    // 1. innerHTML no debe estar vacío
+    
+    
     expect(cloned.innerHTML).toBeTruthy();
     expect(cloned.innerHTML.length).toBeGreaterThan(0);
     
-    // 2. Debe contener los elementos esperados
+    
     expect(cloned.innerHTML).toContain("Título Principal");
     expect(cloned.innerHTML).toContain("<strong>texto en negrita</strong>");
     expect(cloned.innerHTML).toContain("<li>Item 1</li>");
     
-    // 3. childNodes debe tener contenido
+    
     expect(cloned.childNodes.length).toBeGreaterThan(0);
     expect(cloned.childNodes.length).toBe(container.childNodes.length);
     
-    // 4. children debe tener los elementos
-    expect(cloned.children.length).toBe(3); // h1, p, ul
+    
+    expect(cloned.children.length).toBe(3); 
     expect(cloned.children.length).toBe(container.children.length);
     
-    // 5. Los elementos deben ser accesibles mediante querySelector
+    
     expect(cloned.querySelector("h1")).toBeTruthy();
     expect(cloned.querySelector("p")).toBeTruthy();
     expect(cloned.querySelector("ul")).toBeTruthy();
@@ -99,7 +93,7 @@ describe("cloneNode - Bug Reproduction Tests", () => {
     console.log("Level-2 existe:", !!cloned.querySelector(".level-2"));
     console.log("Level-3 existe:", !!cloned.querySelector(".level-3"));
     
-    // VERIFICAR que la estructura se mantiene
+    
     expect(cloned.childNodes.length).toBe(parent.childNodes.length);
     expect(cloned.querySelector(".level-1")).toBeTruthy();
     expect(cloned.querySelector(".level-2")).toBeTruthy();
@@ -143,16 +137,16 @@ describe("cloneNode - Bug Reproduction Tests", () => {
     console.log("innerHTML length clonado:", cloned.innerHTML.length);
     console.log("Hijos clonados:", cloned.children.length);
     
-    // VERIFICAR atributos
+    
     expect(cloned.getAttribute("id")).toBe("complex");
     expect(cloned.getAttribute("class")).toBe("container main");
     expect(cloned.getAttribute("data-id")).toBe("123");
     expect(cloned.getAttribute("data-type")).toBe("test");
     expect(cloned.getAttribute("aria-label")).toBe("Complex element");
     
-    // VERIFICAR contenido
+    
     expect(cloned.innerHTML.length).toBeGreaterThan(0);
-    expect(cloned.children.length).toBe(3); // header, main, footer
+    expect(cloned.children.length).toBe(3); 
     expect(cloned.querySelector("header h1")?.textContent).toBe("Header Title");
     expect(cloned.querySelector("main p")?.textContent).toBe("Main content");
     expect(cloned.querySelector("footer p")?.textContent).toBe("Footer content");
@@ -215,7 +209,7 @@ describe("cloneNode - Bug Reproduction Tests", () => {
     
     console.table(comparison);
     
-    // VERIFICAR que todos coinciden
+    
     expect(comparison.nodeName.match).toBe(true);
     expect(comparison.id.match).toBe(true);
     expect(comparison.childNodesLength.match).toBe(true);
@@ -223,7 +217,7 @@ describe("cloneNode - Bug Reproduction Tests", () => {
     expect(comparison.innerHTMLLength.match).toBe(true);
     expect(comparison.textContentLength.match).toBe(true);
     
-    // Verificar contenido específico
+    
     expect(cloned.querySelector("h1")?.textContent).toBe("Artículo de Prueba");
     expect(cloned.querySelector(".intro")?.textContent).toBe("Introducción del artículo.");
     expect(cloned.querySelectorAll("section").length).toBe(2);
@@ -273,7 +267,7 @@ describe("cloneNode - Bug Reproduction Tests", () => {
       
       console.log(JSON.stringify(result, null, 2));
       
-      // VERIFICAR que ningún innerHTML está vacío (excepto elementos sin hijos)
+      
       if (element.children.length > 0) {
         expect(cloned.innerHTML).toBeTruthy();
         expect(cloned.innerHTML.length).toBeGreaterThan(0);
@@ -303,12 +297,12 @@ describe("cloneNode - Bug Reproduction Tests", () => {
     
     console.log("Clonado childNodes.length INMEDIATAMENTE:", cloned.childNodes.length);
     
-    // Verificar inmediatamente después del clonado
+    
     expect(cloned.childNodes).toBeTruthy();
     expect(cloned.childNodes.length).toBeGreaterThan(0);
     expect(cloned.childNodes.length).toBe(test.childNodes.length);
     
-    // Verificar que podemos iterar los childNodes
+    
     console.log("\nIterando childNodes del clon:");
     for (let i = 0; i < cloned.childNodes.length; i++) {
       const node = cloned.childNodes[i];
@@ -316,7 +310,7 @@ describe("cloneNode - Bug Reproduction Tests", () => {
       expect(node).toBeTruthy();
     }
     
-    // Verificar que los spans son accesibles
+    
     const spans = cloned.querySelectorAll("span");
     expect(spans.length).toBe(2);
     expect(spans[0]?.textContent).toBe("Span 1");
