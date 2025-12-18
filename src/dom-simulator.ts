@@ -22,7 +22,7 @@ export function createElement(
 ): any {
   const innerHTML = "";
   const tagNameLower = tagName.toLowerCase();
-  const outerHTML = `<${tagNameLower}${Object.entries(attributes)
+  const initialOuterHTML = `<${tagNameLower}${Object.entries(attributes)
     .map(([k, v]) => ` ${k}="${v}"`)
     .join("")}></${tagNameLower}>`;
   const textContent = "";
@@ -37,7 +37,7 @@ export function createElement(
     children: [],
     textContent,
     innerHTML,
-    outerHTML,
+    _internalOuterHTML: initialOuterHTML,
     parentNode: null,
     parentElement: null,
     firstChild: null,
@@ -142,6 +142,18 @@ export function createElement(
     },
     set(value: string) {
       element.attributes.id = value;
+    },
+    enumerable: true,
+    configurable: true,
+  });
+
+  // Add outerHTML property with getter and setter
+  Object.defineProperty(element, "outerHTML", {
+    get() {
+      return element._internalOuterHTML || "";
+    },
+    set(value: string) {
+      setOuterHTML(element, value);
     },
     enumerable: true,
     configurable: true,
@@ -762,7 +774,14 @@ function updateElementContent(element: any): void {
     .map(([k, v]) => ` ${k}="${v}"`)
     .join("");
   const tagNameLower = element.tagName.toLowerCase();
-  element.outerHTML = `<${tagNameLower}${attrs}>${innerHTML}</${tagNameLower}>`;
+  
+  // Update internal outerHTML without triggering the setter
+  Object.defineProperty(element, "_internalOuterHTML", {
+    value: `<${tagNameLower}${attrs}>${innerHTML}</${tagNameLower}>`,
+    writable: true,
+    enumerable: false,
+    configurable: true,
+  });
 
   const computedTextContent = getTextContent(element);
   Object.defineProperty(element, "_internalTextContent", {
@@ -854,7 +873,126 @@ export function setInnerHTML(element: any, html: string): void {
     .map(([k, v]) => ` ${k}="${v}"`)
     .join("");
   const tagNameLower = element.tagName.toLowerCase();
-  element.outerHTML = `<${tagNameLower}${attrs}>${actualInnerHTML}</${tagNameLower}>`;
+  
+  // Update internal outerHTML without triggering the setter
+  Object.defineProperty(element, "_internalOuterHTML", {
+    value: `<${tagNameLower}${attrs}>${actualInnerHTML}</${tagNameLower}>`,
+    writable: true,
+    enumerable: false,
+    configurable: true,
+  });
+}
+
+export function setOuterHTML(element: any, html: string): void {
+  // Cannot replace document root or elements without parent
+  if (!element.parentNode) {
+    throw new Error("Cannot set outerHTML on element without a parent");
+  }
+
+  const parent = element.parentNode;
+  const indexInParent = parent.childNodes.indexOf(element);
+  
+  if (indexInParent === -1) {
+    throw new Error("Element not found in parent's childNodes");
+  }
+
+  // Parse the new HTML
+  let newNodes: any[] = [];
+  
+  if (html.trim()) {
+    const tokens = tokenize(html);
+    const ast = parse(tokens);
+    
+    if (ast.children) {
+      for (const child of ast.children) {
+        const domChild = convertASTNodeToDOM(child);
+        if (domChild) {
+          newNodes.push(domChild);
+        }
+      }
+    }
+  }
+
+  // Store references to siblings
+  const previousSibling = element.previousSibling;
+  const nextSibling = element.nextSibling;
+
+  // Remove the element from parent's childNodes
+  parent.childNodes.splice(indexInParent, 1);
+
+  // Insert new nodes at the same position
+  if (newNodes.length > 0) {
+    // Insert all new nodes at the position where element was
+    parent.childNodes.splice(indexInParent, 0, ...newNodes);
+
+    // Set up parentNode for all new nodes
+    for (const newNode of newNodes) {
+      newNode.parentNode = parent;
+      newNode.parentElement = parent.nodeType === NodeType.ELEMENT_NODE ? parent : null;
+    }
+
+    // Update sibling relationships
+    for (let i = 0; i < newNodes.length; i++) {
+      const currentNode = newNodes[i];
+      
+      // Set previousSibling
+      if (i === 0) {
+        currentNode.previousSibling = previousSibling;
+        if (previousSibling) {
+          previousSibling.nextSibling = currentNode;
+        }
+      } else {
+        currentNode.previousSibling = newNodes[i - 1];
+      }
+
+      // Set nextSibling
+      if (i === newNodes.length - 1) {
+        currentNode.nextSibling = nextSibling;
+        if (nextSibling) {
+          nextSibling.previousSibling = currentNode;
+        }
+      } else {
+        currentNode.nextSibling = newNodes[i + 1];
+      }
+    }
+  } else {
+    // No new nodes, just connect siblings to each other
+    if (previousSibling) {
+      previousSibling.nextSibling = nextSibling;
+    }
+    if (nextSibling) {
+      nextSibling.previousSibling = previousSibling;
+    }
+  }
+
+  // Clear element's relationships
+  element.parentNode = null;
+  element.parentElement = null;
+  element.previousSibling = null;
+  element.nextSibling = null;
+
+  // Update parent's children array (only element nodes)
+  parent.children = parent.childNodes.filter(
+    (child: any) => child.nodeType === NodeType.ELEMENT_NODE
+  );
+
+  // Update firstChild and lastChild
+  parent.firstChild = parent.childNodes.length > 0 ? parent.childNodes[0] : null;
+  parent.lastChild = parent.childNodes.length > 0 ? parent.childNodes[parent.childNodes.length - 1] : null;
+
+  // Update firstElementChild and lastElementChild
+  parent.firstElementChild = parent.children.length > 0 ? parent.children[0] : null;
+  parent.lastElementChild = parent.children.length > 0 ? parent.children[parent.children.length - 1] : null;
+
+  // Update element sibling pointers for all children
+  for (let i = 0; i < parent.children.length; i++) {
+    const child = parent.children[i];
+    child.previousElementSibling = i > 0 ? parent.children[i - 1] : null;
+    child.nextElementSibling = i < parent.children.length - 1 ? parent.children[i + 1] : null;
+  }
+
+  // Update parent's content
+  updateElementContent(parent);
 }
 
 function setTextContent(element: any, text: string): void {
