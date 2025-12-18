@@ -326,7 +326,7 @@ describe('HTML Parser', () => {
       )!;
       expect(htmlElement.type).toBe(ASTNodeType.ELEMENT);
       expect(htmlElement.tagName).toBe('html');
-      expect(htmlElement.attributes!.lang).toBe('es');
+      expect(htmlElement.attributes!.lang).toBe('en');
       const headElement = htmlElement.children!.find(
         child => child.type === ASTNodeType.ELEMENT && child.tagName === 'head'
       )!;

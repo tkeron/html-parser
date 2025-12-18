@@ -28,14 +28,14 @@ describe('HTML Parser & Tokenizer - Advanced Tests', () => {
     });
 
     test('should handle unicode characters', () => {
-      const tokens = tokenize('<div title="测试" data-emoji="🚀" class="café">');
+      const tokens = tokenize('<div title="测试" data-emoji="🚀" class="lorem">');
       expect(tokens.length).toBeGreaterThan(0);
       const tag = tokens[0]!;
       
       expect(tag.attributes).toEqual({
         title: '测试',
         'data-emoji': '🚀',
-        class: 'café'
+        class: 'lorem'
       });
     });
 

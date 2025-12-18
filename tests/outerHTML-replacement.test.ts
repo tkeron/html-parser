@@ -11,7 +11,7 @@ describe("outerHTML replacement - Browser behavior", () => {
       <html>
         <body>
           <div id="mi-prueba" style="border: 2px solid red; padding: 10px;">
-            <strong>¡Hola!</strong> Soy el contenido que se quedará.
+            <strong>Lorem ipsum!</strong> Dolor sit amet consectetur.
           </div>
         </body>
       </html>
@@ -22,8 +22,8 @@ describe("outerHTML replacement - Browser behavior", () => {
     
     
     const innerHTML = elem!.innerHTML;
-    expect(innerHTML).toContain("<strong>¡Hola!</strong>");
-    expect(innerHTML).toContain("Soy el contenido que se quedará.");
+    expect(innerHTML).toContain("<strong>Lorem ipsum!</strong>");
+    expect(innerHTML).toContain("Dolor sit amet consectetur.");
     
     
     const parent = elem!.parentNode;
@@ -39,8 +39,8 @@ describe("outerHTML replacement - Browser behavior", () => {
     
     
     const body = doc.querySelector("body");
-    expect(body!.innerHTML).toContain("<strong>¡Hola!</strong>");
-    expect(body!.innerHTML).toContain("Soy el contenido que se quedará.");
+    expect(body!.innerHTML).toContain("<strong>Lorem ipsum!</strong>");
+    expect(body!.innerHTML).toContain("Dolor sit amet consectetur.");
     
     
     expect(body!.innerHTML).not.toContain('id="mi-prueba"');
