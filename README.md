@@ -21,19 +21,19 @@ A fast and lightweight HTML parser for Bun that converts HTML strings into DOM D
 Once published, it will be available as:
 
 ```bash
-npm install html-parser
+npm install @tkeron/html-parser
 ```
 
 Or with Bun:
 
 ```bash
-bun add html-parser
+bun add @tkeron/html-parser
 ```
 
 ## Usage
 
 ```typescript
-import { parseHTML } from "html-parser";
+import { parseHTML } from "@tkeron/html-parser";
 
 // Parse HTML string into DOM Document
 const html =
@@ -51,7 +51,7 @@ console.log(heading); // "Hello World"
 ### Simple Example
 
 ```typescript
-import { parseHTML } from "html-parser";
+import { parseHTML } from "@tkeron/html-parser";
 
 const html = `
   <div class="container">
@@ -117,4 +117,4 @@ MIT
 
 ## Support
 
-If you encounter any issues or have questions, please file an issue on the [GitHub repository](https://github.com/yourusername/html-parser).
+If you encounter any issues or have questions, please file an issue on the [GitHub repository](https://github.com/tkeron/html-parser).
