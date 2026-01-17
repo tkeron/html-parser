@@ -6,6 +6,11 @@ import {
   querySelectorAll as querySelectorAllFunction,
 } from "./css-selector.js";
 
+const VOID_ELEMENTS = new Set([
+  'area', 'base', 'br', 'col', 'embed', 'hr', 'img', 'input',
+  'link', 'meta', 'param', 'source', 'track', 'wbr'
+]);
+
 export const enum NodeType {
   ELEMENT_NODE = 1,
   TEXT_NODE = 3,
@@ -22,9 +27,13 @@ export function createElement(
 ): any {
   const innerHTML = "";
   const tagNameLower = tagName.toLowerCase();
-  const initialOuterHTML = `<${tagNameLower}${Object.entries(attributes)
+  const isVoid = VOID_ELEMENTS.has(tagNameLower);
+  const attrsStr = Object.entries(attributes)
     .map(([k, v]) => ` ${k}="${v}"`)
-    .join("")}></${tagNameLower}>`;
+    .join("");
+  const initialOuterHTML = isVoid
+    ? `<${tagNameLower}${attrsStr}>`
+    : `<${tagNameLower}${attrsStr}></${tagNameLower}>`;
   const textContent = "";
 
   const element: any = {
@@ -842,9 +851,10 @@ function updateElementContent(element: any): void {
     .map(([k, v]) => ` ${k}="${v}"`)
     .join("");
   const tagNameLower = element.tagName.toLowerCase();
+  const isVoid = VOID_ELEMENTS.has(tagNameLower);
   
   Object.defineProperty(element, "_internalOuterHTML", {
-    value: `<${tagNameLower}${attrs}>${innerHTML}</${tagNameLower}>`,
+    value: isVoid ? `<${tagNameLower}${attrs}>` : `<${tagNameLower}${attrs}>${innerHTML}</${tagNameLower}>`,
     writable: true,
     enumerable: false,
     configurable: true,
@@ -939,9 +949,10 @@ export function setInnerHTML(element: any, html: string): void {
     .map(([k, v]) => ` ${k}="${v}"`)
     .join("");
   const tagNameLower = element.tagName.toLowerCase();
+  const isVoid = VOID_ELEMENTS.has(tagNameLower);
   
   Object.defineProperty(element, "_internalOuterHTML", {
-    value: `<${tagNameLower}${attrs}>${actualInnerHTML}</${tagNameLower}>`,
+    value: isVoid ? `<${tagNameLower}${attrs}>` : `<${tagNameLower}${attrs}>${actualInnerHTML}</${tagNameLower}>`,
     writable: true,
     enumerable: false,
     configurable: true,
