@@ -662,5 +662,91 @@ describe('HTML Tokenizer', () => {
         tokens.some(token => token.value === 'span');
       expect(hasValidElements).toBe(true);
     });
+
+    it('should handle empty angle brackets <>', () => {
+      const html = '<>text<div>content</div>';
+      const tokens = tokenize(html);
+
+      // Should skip the invalid <> and continue parsing
+      expect(tokens[tokens.length - 1]!.type).toBe(TokenType.EOF);
+      const divToken = tokens.find(t => t.value === 'div');
+      expect(divToken).toBeDefined();
+    });
+
+    it('should handle angle bracket with only space < >', () => {
+      const html = '< >text<p>paragraph</p>';
+      const tokens = tokenize(html);
+
+      expect(tokens[tokens.length - 1]!.type).toBe(TokenType.EOF);
+      const pToken = tokens.find(t => t.value === 'p');
+      expect(pToken).toBeDefined();
+    });
+
+    it('should handle tag with no valid name', () => {
+      const html = '<123>text</123><div>ok</div>';
+      const tokens = tokenize(html);
+
+      // Tags starting with numbers are invalid, should be treated as text
+      expect(tokens[tokens.length - 1]!.type).toBe(TokenType.EOF);
+      const divToken = tokens.find(t => t.value === 'div');
+      expect(divToken).toBeDefined();
+    });
+  });
+
+  describe('Entity Edge Cases', () => {
+    it('should handle entity without semicolon with valid prefix', () => {
+      // &nbsp followed by other text (no semicolon) should decode &nbsp
+      const tokens = tokenize('<div>&nbsptext</div>');
+      
+      const textToken = tokens.find(t => t.type === TokenType.TEXT);
+      expect(textToken).toBeDefined();
+      // Should decode &nbsp (non-breaking space) and keep "text"
+      expect(textToken!.value).toContain('text');
+    });
+
+    it('should handle entity without semicolon - lt prefix', () => {
+      const tokens = tokenize('<div>&ltvalue</div>');
+      
+      const textToken = tokens.find(t => t.type === TokenType.TEXT);
+      expect(textToken).toBeDefined();
+      // &lt should decode to < and "value" should follow
+      expect(textToken!.value).toBe('<value');
+    });
+
+    it('should handle entity without semicolon - gt prefix', () => {
+      const tokens = tokenize('<div>&gtvalue</div>');
+      
+      const textToken = tokens.find(t => t.type === TokenType.TEXT);
+      expect(textToken).toBeDefined();
+      // &gt should decode to > and "value" should follow
+      expect(textToken!.value).toBe('>value');
+    });
+
+    it('should handle entity without semicolon - amp prefix', () => {
+      const tokens = tokenize('<div>&ampvalue</div>');
+      
+      const textToken = tokens.find(t => t.type === TokenType.TEXT);
+      expect(textToken).toBeDefined();
+      // &amp should decode to & and "value" should follow
+      expect(textToken!.value).toBe('&value');
+    });
+
+    it('should handle unknown entity gracefully', () => {
+      const tokens = tokenize('<div>&unknownentity;</div>');
+      
+      const textToken = tokens.find(t => t.type === TokenType.TEXT);
+      expect(textToken).toBeDefined();
+      // Unknown entity should be kept as-is
+      expect(textToken!.value).toBe('&unknownentity;');
+    });
+
+    it('should handle partial entity name with no matching prefix', () => {
+      const tokens = tokenize('<div>&xyz</div>');
+      
+      const textToken = tokens.find(t => t.type === TokenType.TEXT);
+      expect(textToken).toBeDefined();
+      // No valid entity prefix, keep as-is
+      expect(textToken!.value).toBe('&xyz');
+    });
   })
 });

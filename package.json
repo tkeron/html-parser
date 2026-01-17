@@ -1,6 +1,6 @@
 {
   "name": "@tkeron/html-parser",
-  "version": "0.1.6",
+  "version": "0.1.7",
   "description": "A fast and lightweight HTML parser for Bun",
   "main": "index.js",
   "module": "index.ts",
@@ -14,10 +14,11 @@
     "typescript": "^5.9.3"
   },
   "keywords": [
-    "cli",
-    "commands",
-    "command-line",
-    "arguments"
+    "html",
+    "parser",
+    "dom",
+    "bun",
+    "tokenizer"
   ],
   "repository": {
     "url": "git@github.com:tkeron/html-parser.git"
