@@ -54,6 +54,18 @@ export function createElement(
       return child;
     },
 
+    prepend(...nodes: any[]): void {
+      prepend(element, ...nodes);
+    },
+
+    append(...nodes: any[]): void {
+      append(element, ...nodes);
+    },
+
+    remove(): void {
+      remove(element);
+    },
+
     removeChild(child: any): any {
       return removeChild(element, child);
     },
@@ -94,6 +106,10 @@ export function createElement(
 
     querySelectorAll(selector: string): any[] {
       return querySelectorAllFunction(element, selector);
+    },
+
+    matches(selector: string): boolean {
+      return matches(element, selector);
     },
 
     cloneNode(deep: boolean = false): any {
@@ -172,6 +188,10 @@ export function createTextNode(content: string): any {
     lastChild: null,
     nextSibling: null,
     previousSibling: null,
+
+    remove(): void {
+      remove(textNode);
+    },
   };
   return textNode;
 }
@@ -189,6 +209,10 @@ export function createComment(content: string): any {
     lastChild: null,
     nextSibling: null,
     previousSibling: null,
+
+    remove(): void {
+      remove(commentNode);
+    },
   };
   return commentNode;
 }
@@ -220,6 +244,14 @@ export function createDocument(): any {
     appendChild(child: any): any {
       appendChild(document, child);
       return child;
+    },
+
+    prepend(...nodes: any[]): void {
+      prepend(document, ...nodes);
+    },
+
+    append(...nodes: any[]): void {
+      append(document, ...nodes);
     },
 
     removeChild(child: any): any {
@@ -393,6 +425,83 @@ function appendChild(parent: any, child: any): void {
   if (parent.nodeType === NodeType.ELEMENT_NODE) {
     updateElementContent(parent);
   }
+}
+
+function prepend(parent: any, ...nodes: any[]): void {
+  if (nodes.length === 0) return;
+
+  for (let i = nodes.length - 1; i >= 0; i--) {
+    const node = nodes[i];
+    let childNode: any;
+
+    if (typeof node === 'string') {
+      childNode = createTextNode(node);
+    } else {
+      childNode = node;
+    }
+
+    if (parent.firstChild) {
+      insertBefore(parent, childNode, parent.firstChild);
+    } else {
+      appendChild(parent, childNode);
+    }
+  }
+}
+
+function append(parent: any, ...nodes: any[]): void {
+  if (nodes.length === 0) return;
+
+  for (const node of nodes) {
+    let childNode: any;
+
+    if (typeof node === 'string') {
+      childNode = createTextNode(node);
+    } else {
+      childNode = node;
+    }
+
+    appendChild(parent, childNode);
+  }
+}
+
+function remove(node: any): void {
+  if (node.parentNode) {
+    removeChild(node.parentNode, node);
+  }
+}
+
+function matches(element: any, selector: string): boolean {
+  if (!selector || element.nodeType !== NodeType.ELEMENT_NODE) {
+    return false;
+  }
+
+  try {
+    // Para selectores complejos con descendientes, necesitamos buscar desde un ancestro
+    if (selector.includes(' ') || selector.includes('>')) {
+      // Buscar desde la raíz del documento
+      let root = element;
+      while (root.parentNode) {
+        root = root.parentNode;
+      }
+      const results = querySelectorAllFunction(root, selector);
+      return results.includes(element);
+    }
+    
+    // Para selectores simples, usar el padre o crear uno temporal
+    const parent = element.parentNode || createTempParent(element);
+    const results = querySelectorAllFunction(parent, selector);
+    return results.includes(element);
+  } catch (error) {
+    return false;
+  }
+}
+
+function createTempParent(element: any): any {
+  const temp = createElement('div');
+  temp.childNodes.push(element);
+  temp.children.push(element);
+  element._tempParent = temp;
+  return temp;
 }
 
 function removeChild(parent: any, child: any): any {

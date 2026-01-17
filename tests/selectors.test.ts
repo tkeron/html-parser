@@ -62,4 +62,67 @@ describe('CSS Selectors', () => {
             expect(nonExistent).toBeNull();
         });
     });
+
+    describe('Element.matches', () => {
+        it('should match by tag name', () => {
+            const p = querySelector(doc, 'p');
+            expect(p?.matches('p')).toBe(true);
+            expect(p?.matches('div')).toBe(false);
+        });
+
+        it('should match by id', () => {
+            const intro = querySelector(doc, '#intro');
+            expect(intro?.matches('#intro')).toBe(true);
+            expect(intro?.matches('#other')).toBe(false);
+        });
+
+        it('should match by class', () => {
+            const first = querySelector(doc, '.first');
+            expect(first?.matches('.first')).toBe(true);
+            expect(first?.matches('.second')).toBe(false);
+        });
+
+        it('should match by multiple classes', () => {
+            const doc2 = parseHTML('<div class="foo bar baz">Test</div>');
+            const div = doc2.querySelector('div');
+            expect(div?.matches('.foo')).toBe(true);
+            expect(div?.matches('.bar')).toBe(true);
+            expect(div?.matches('.foo.bar')).toBe(true);
+            expect(div?.matches('.foo.baz')).toBe(true);
+            expect(div?.matches('.foo.bar.baz')).toBe(true);
+            expect(div?.matches('.foo.missing')).toBe(false);
+        });
+
+        it('should match by attribute', () => {
+            const intro = querySelector(doc, '#intro');
+            expect(intro?.matches('[id]')).toBe(true);
+            expect(intro?.matches('[id="intro"]')).toBe(true);
+            expect(intro?.matches('[class]')).toBe(true);
+            expect(intro?.matches('[title]')).toBe(false);
+        });
+
+        it('should match complex selectors', () => {
+            const intro = querySelector(doc, '#intro');
+            expect(intro?.matches('p#intro')).toBe(true);
+            expect(intro?.matches('p.first')).toBe(true);
+            expect(intro?.matches('div#intro')).toBe(false);
+        });
+
+        it('should match descendant selectors', () => {
+            const span = querySelector(doc, 'span');
+            expect(span?.matches('p span')).toBe(true);
+            expect(span?.matches('body span')).toBe(true);
+            expect(span?.matches('div span')).toBe(false);
+        });
+
+        it('should return false for invalid selector', () => {
+            const p = querySelector(doc, 'p');
+            expect(p?.matches('')).toBe(false);
+        });
+
+        it('should work with universal selector', () => {
+            const p = querySelector(doc, 'p');
+            expect(p?.matches('*')).toBe(true);
+        });
+    });
 });

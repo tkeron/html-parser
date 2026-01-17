@@ -14,33 +14,47 @@ function parseSelector(selector: string): SelectorGroup[] {
 
   return parts.map((part) => {
     const trimmed = part.trim();
-    let tokens: SelectorToken[];
+    let tokens: SelectorToken[] = [];
 
-    if (trimmed.startsWith("#")) {
-      tokens = [{ type: "id", value: trimmed.slice(1) }];
-    } else if (trimmed.startsWith(".")) {
-      tokens = [{ type: "class", value: trimmed.slice(1) }];
-    } else if (trimmed.includes("[") && trimmed.includes("]")) {
-      const attributeMatch = trimmed.match(/^([^[\]]*)\[([^=\]]+)(?:=["']?([^"'\]]*?)["']?)?\]$/);
-      if (attributeMatch) {
-        const [, tagName, attrName, attrValue] = attributeMatch;
-        tokens = [];
-        
-        if (tagName && tagName.trim()) {
-          tokens.push({ type: "tag", value: tagName.trim().toLowerCase() });
-        }
-        
-        tokens.push({ 
-          type: "attribute", 
-          value: (attrName || "").trim(),
-          attributeName: (attrName || "").trim(),
-          attributeValue: attrValue ? attrValue.trim() : undefined
-        });
-      } else {
-        tokens = [{ type: "tag", value: trimmed.toLowerCase() }];
-      }
-    } else {
-      tokens = [{ type: "tag", value: trimmed.toLowerCase() }];
+    // Handle universal selector
+    if (trimmed === '*') {
+      // Match any element - we'll handle this specially
+      return { tokens: [] };
+    }
+
+    // Parse complex selectors like p#intro.first or .foo.bar.baz
+    let remaining = trimmed;
+    
+    // Extract tag name first if present
+    const tagMatch = remaining.match(/^([a-zA-Z][a-zA-Z0-9]*)/);
+    if (tagMatch) {
+      tokens.push({ type: "tag", value: tagMatch[1].toLowerCase() });
+      remaining = remaining.slice(tagMatch[1].length);
+    }
+
+    // Extract all IDs (HTML5 allows IDs starting with digits)
+    const idMatches = remaining.matchAll(/#([a-zA-Z0-9][a-zA-Z0-9_-]*)/g);
+    for (const match of idMatches) {
+      tokens.push({ type: "id", value: match[1] });
+    }
+    remaining = remaining.replace(/#[a-zA-Z0-9][a-zA-Z0-9_-]*/g, '');
+
+    // Extract all classes
+    const classMatches = remaining.matchAll(/\.([a-zA-Z][a-zA-Z0-9_-]*)/g);
+    for (const match of classMatches) {
+      tokens.push({ type: "class", value: match[1] });
+    }
+    remaining = remaining.replace(/\.[a-zA-Z][a-zA-Z0-9_-]*/g, '');
+
+    // Extract attributes
+    const attrMatches = remaining.matchAll(/\[([^=\]]+)(?:=["']?([^"'\]]*?)["']?)?\]/g);
+    for (const match of attrMatches) {
+      tokens.push({
+        type: "attribute",
+        value: match[1].trim(),
+        attributeName: match[1].trim(),
+        attributeValue: match[2] ? match[2].trim() : undefined
+      });
     }
 
     return { tokens };
@@ -74,6 +88,10 @@ function matchesToken(element: any, token: SelectorToken): boolean {
 }
 
 function matchesSelector(element: any, tokens: SelectorToken[]): boolean {
+  // Universal selector - matches any element
+  if (tokens.length === 0) {
+    return true;
+  }
   return tokens.every((token) => matchesToken(element, token));
 }
 
