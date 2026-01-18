@@ -1,7 +1,5 @@
 # HTML Parser - Powered by Bun Native Tokenizer
 
-> ⚠️ **Work in Progress** - This package is currently under active development.
-
 A fast and lightweight HTML parser for Bun that converts HTML strings into DOM Document objects. **Now powered by a native Bun tokenizer** for optimal performance.
 
 ## Features
@@ -15,10 +13,6 @@ A fast and lightweight HTML parser for Bun that converts HTML strings into DOM D
 - 🔄 **100% Compatible**: Drop-in replacement, same API
 
 ## Installation
-
-> **Note**: This package is not yet published to npm. For now, you can clone and build locally.
-
-Once published, it will be available as:
 
 ```bash
 npm install @tkeron/html-parser
