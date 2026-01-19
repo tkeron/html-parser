@@ -138,19 +138,34 @@ export function parse(tokens: Token[]): any {
       appendChild(html, body);
       
       const doctypes: any[] = [];
+      const commentsBeforeHtml: any[] = [];
+      const bodyContent: any[] = [];
       const children = [...state.root.childNodes];
+      
+      let foundElement = false;
       for (const child of children) {
         if (child.nodeType === 10) {
           doctypes.push(child);
+        } else if (child.nodeType === 8 && !foundElement) {
+          commentsBeforeHtml.push(child);
         } else {
-          appendChild(body, child);
+          if (child.nodeType === 1) foundElement = true;
+          bodyContent.push(child);
         }
+      }
+      
+      for (const content of bodyContent) {
+        appendChild(body, content);
       }
       
       state.root.childNodes = [];
       for (const doctype of doctypes) {
         doctype.parentNode = null;
         appendChild(state.root, doctype);
+      }
+      for (const comment of commentsBeforeHtml) {
+        comment.parentNode = null;
+        appendChild(state.root, comment);
       }
       appendChild(state.root, html);
       state.root.documentElement = html;
@@ -417,6 +432,9 @@ function parseTokenInAfterHeadMode(state: ParserState, token: Token): void {
   }
 }
 
+const SVG_NAMESPACE = 'http://www.w3.org/2000/svg';
+const MATHML_NAMESPACE = 'http://www.w3.org/1998/Math/MathML';
+
 function parseTokenInInBodyMode(state: ParserState, token: Token): void {
   if (token.type === TokenType.TAG_OPEN) {
     const tagName = token.value.toLowerCase();
@@ -425,7 +443,14 @@ function parseTokenInInBodyMode(state: ParserState, token: Token): void {
 
     const currentParent = getCurrentParent(state);
 
-    const element = createElement(tagName, token.attributes || {});
+    let namespaceURI: string | undefined;
+    if (tagName === 'svg') {
+      namespaceURI = SVG_NAMESPACE;
+    } else if (tagName === 'math') {
+      namespaceURI = MATHML_NAMESPACE;
+    }
+
+    const element = createElement(tagName, token.attributes || {}, namespaceURI);
 
     appendChild(currentParent, element);
 

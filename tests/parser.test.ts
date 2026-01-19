@@ -18,7 +18,8 @@ function parseToAST(html: string): ASTNode {
   if (htmlEl) {
     const bodyEl = htmlEl.children?.find(c => c.tagName === 'body');
     if (bodyEl && bodyEl.children) {
-      return { type: ASTNodeType.Document, children: bodyEl.children };
+      const nonHtmlChildren = ast.children?.filter(c => c.tagName !== 'html' && c.type !== 'doctype') || [];
+      return { type: ASTNodeType.Document, children: [...nonHtmlChildren, ...bodyEl.children] };
     }
   }
   return ast;

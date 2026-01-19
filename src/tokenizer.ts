@@ -93,16 +93,63 @@ function decodeEntities(text: string): string {
 
 function parseAttributes(attributeString: string): Record<string, string> {
   const attributes: Record<string, string> = {};
+  let i = 0;
   
-  const attrRegex = /([a-zA-Z][a-zA-Z0-9\-_:]*)\s*(?:=\s*(?:"([^"]*)"|'([^']*)'|([^\s>]+)))?/g;
-  let match;
-  
-  while ((match = attrRegex.exec(attributeString)) !== null) {
-    const [, name, doubleQuoted, singleQuoted, unquoted] = match;
-    if (name) {
-      const value = doubleQuoted ?? singleQuoted ?? unquoted ?? '';
-      attributes[name.toLowerCase()] = decodeEntities(value);
+  while (i < attributeString.length) {
+    while (i < attributeString.length && /\s/.test(attributeString[i])) {
+      i++;
     }
+    if (i >= attributeString.length || attributeString[i] === '/' || attributeString[i] === '>') {
+      break;
+    }
+    
+    let name = '';
+    while (i < attributeString.length && !/[\s=\/>]/.test(attributeString[i])) {
+      name += attributeString[i];
+      i++;
+    }
+    
+    if (!name) {
+      i++;
+      continue;
+    }
+    
+    while (i < attributeString.length && /\s/.test(attributeString[i])) {
+      i++;
+    }
+    
+    let value = '';
+    if (i < attributeString.length && attributeString[i] === '=') {
+      i++;
+      while (i < attributeString.length && /\s/.test(attributeString[i])) {
+        i++;
+      }
+      
+      if (i < attributeString.length) {
+        if (attributeString[i] === '"') {
+          i++;
+          while (i < attributeString.length && attributeString[i] !== '"') {
+            value += attributeString[i];
+            i++;
+          }
+          i++;
+        } else if (attributeString[i] === "'") {
+          i++;
+          while (i < attributeString.length && attributeString[i] !== "'") {
+            value += attributeString[i];
+            i++;
+          }
+          i++;
+        } else {
+          while (i < attributeString.length && !/[\s>]/.test(attributeString[i])) {
+            value += attributeString[i];
+            i++;
+          }
+        }
+      }
+    }
+    
+    attributes[name.toLowerCase()] = decodeEntities(value);
   }
   
   return attributes;
@@ -117,79 +164,72 @@ function calculatePosition(text: string, offset: number): Position {
   };
 }
 
+const RAW_TEXT_ELEMENTS = new Set(['script', 'style', 'xmp', 'iframe', 'noembed', 'noframes', 'noscript']);
+const RCDATA_ELEMENTS = new Set(['textarea', 'title']);
+
 export function tokenize(html: string): Token[] {
   const tokens: Token[] = [];
-  let position = 0;
-  
-  const specialCases = [
-    {
-      pattern: /<!DOCTYPE\s+[^>]*>/gi,
-      type: TokenType.DOCTYPE,
-      getValue: (match: string) => {
-        const doctypeMatch = match.match(/<!DOCTYPE\s+([^\s>]+)/i);
-        return doctypeMatch && doctypeMatch[1] ? doctypeMatch[1].toLowerCase() : match;
-      }
-    },
-    {
-      pattern: /<!--([\s\S]*?)(?:-->|$)/g,
-      type: TokenType.COMMENT,
-      getValue: (match: string) => match.slice(4, match.endsWith('-->') ? -3 : match.length)
-    },
-    {
-      pattern: /<!\[CDATA\[([\s\S]*?)\]\]>/g,
-      type: TokenType.CDATA,
-      getValue: (match: string) => match.slice(9, -3)
-    },
-    {
-      pattern: /<\?([^?]*(?:\?(?!>)[^?]*)*)\?>/g,
-      type: TokenType.PROCESSING_INSTRUCTION,
-      getValue: (match: string) => match.slice(0, -2)
-    }
-  ];
-
-  const processedRanges: Array<[number, number]> = [];
-  
-  for (const { pattern, type, getValue } of specialCases) {
-    const regex = new RegExp(pattern);
-    let match;
-    
-    while ((match = regex.exec(html)) !== null) {
-      const start = match.index;
-      const end = start + match[0].length;
-      
-      tokens.push({
-        type,
-        value: getValue(match[0]),
-        position: calculatePosition(html, start)
-      });
-      
-      processedRanges.push([start, end]);
-    }
-  }
-  
-  processedRanges.sort((a, b) => a[0] - b[0]);
-  
   let currentPos = 0;
   
   while (currentPos < html.length) {
-    const inProcessedRange = processedRanges.some(([start, end]) => 
-      currentPos >= start && currentPos < end
-    );
-    
-    if (inProcessedRange) {
-      const range = processedRanges.find(([start, end]) => 
-        currentPos >= start && currentPos < end
-      );
-      if (range) {
-        currentPos = range[1];
-      }
-      continue;
-    }
-    
     const char = html[currentPos];
     
     if (char === '<') {
-      const tagMatch = html.slice(currentPos).match(/^<\/?([a-zA-Z][^\s/>]*)([^>]*)>/);
+      const remaining = html.slice(currentPos);
+      
+      const doctypeMatch = remaining.match(/^<!DOCTYPE\s+[^>]*>/i);
+      if (doctypeMatch) {
+        const match = doctypeMatch[0];
+        const nameMatch = match.match(/<!DOCTYPE\s+([^\s>]+)/i);
+        tokens.push({
+          type: TokenType.DOCTYPE,
+          value: nameMatch && nameMatch[1] ? nameMatch[1].toLowerCase() : match,
+          position: calculatePosition(html, currentPos)
+        });
+        currentPos += match.length;
+        continue;
+      }
+      
+      const commentMatch = remaining.match(/^<!--([\s\S]*?)(?:-->|$)/);
+      if (commentMatch) {
+        const match = commentMatch[0];
+        tokens.push({
+          type: TokenType.COMMENT,
+          value: match.slice(4, match.endsWith('-->') ? -3 : match.length),
+          position: calculatePosition(html, currentPos)
+        });
+        currentPos += match.length;
+        continue;
+      }
+      
+      const cdataMatch = remaining.match(/^<!\[CDATA\[([\s\S]*?)\]\]>/);
+      if (cdataMatch) {
+        const content = cdataMatch[1];
+        tokens.push({
+          type: TokenType.COMMENT,
+          value: '[CDATA[' + content + ']]',
+          position: calculatePosition(html, currentPos)
+        });
+        currentPos += cdataMatch[0].length;
+        continue;
+      }
+      
+      const piMatch = remaining.match(/^<\?([^>]*)/);
+      if (piMatch) {
+        let consumed = piMatch[0].length;
+        if (remaining[consumed] === '>') {
+          consumed++;
+        }
+        tokens.push({
+          type: TokenType.COMMENT,
+          value: '?' + piMatch[1],
+          position: calculatePosition(html, currentPos)
+        });
+        currentPos += consumed;
+        continue;
+      }
+      
+      const tagMatch = remaining.match(/^<\/?([a-zA-Z][^\s/>]*)([^>]*)>/);
       
       if (tagMatch) {
         const fullTag = tagMatch[0];
@@ -222,6 +262,24 @@ export function tokenize(html: string): Token[] {
         });
         
         currentPos += fullTag.length;
+        
+        if (!isClosing && !isSelfClosing && (RAW_TEXT_ELEMENTS.has(tagName) || RCDATA_ELEMENTS.has(tagName))) {
+          const closeTagPattern = new RegExp(`</${tagName}\\s*>`, 'i');
+          const restOfHtml = html.slice(currentPos);
+          const closeMatch = restOfHtml.match(closeTagPattern);
+          
+          if (closeMatch && closeMatch.index !== undefined) {
+            const rawContent = restOfHtml.slice(0, closeMatch.index);
+            if (rawContent) {
+              tokens.push({
+                type: TokenType.TEXT,
+                value: RCDATA_ELEMENTS.has(tagName) ? decodeEntities(rawContent) : rawContent,
+                position: calculatePosition(html, currentPos)
+              });
+            }
+            currentPos += rawContent.length;
+          }
+        }
       } else {
         const textStart = currentPos;
         currentPos++;
@@ -256,8 +314,6 @@ export function tokenize(html: string): Token[] {
       }
     }
   }
-  
-  tokens.sort((a, b) => a.position.offset - b.position.offset);
   
   tokens.push({
     type: TokenType.EOF,

@@ -27,7 +27,7 @@ describe('Tree Adapter Tests', () => {
   it('should serialize comment', () => {
     const doc = parseHTML('<div><!-- comment --></div>');
     const serialized = serializeToHtml5lib(doc);
-    expect(serialized).toContain('<!--  -->');
+    expect(serialized).toContain('<!--  comment  -->');
   });
 
   it('should serialize DOCTYPE', () => {

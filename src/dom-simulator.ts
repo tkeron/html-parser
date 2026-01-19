@@ -28,7 +28,8 @@ export const enum NodeType {
 
 export function createElement(
   tagName: string,
-  attributes: Record<string, string> = {}
+  attributes: Record<string, string> = {},
+  namespaceURI?: string
 ): any {
   const innerHTML = "";
   const tagNameLower = tagName.toLowerCase();
@@ -46,6 +47,7 @@ export function createElement(
     nodeName: tagName.toUpperCase(),
     nodeValue: null,
     tagName: tagName.toUpperCase(),
+    namespaceURI: namespaceURI || null,
     attributes: { ...attributes },
     childNodes: [],
     children: [],

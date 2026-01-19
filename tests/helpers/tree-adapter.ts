@@ -1,6 +1,10 @@
 // tests/helpers/tree-adapter.ts
 
-export function serializeToHtml5lib(doc: any): string {
+export interface SerializeOptions {
+  skipImplicitDoctype?: boolean;
+}
+
+export function serializeToHtml5lib(doc: any, options: SerializeOptions = {}): string {
   const lines: string[] = [];
 
   function serialize(node: any, depth: number): void {
@@ -11,7 +15,17 @@ export function serializeToHtml5lib(doc: any): string {
         serialize(child, depth);
       }
     } else if (node.nodeType === 1) { // ELEMENT
-      lines.push(`${indent}<${node.tagName.toLowerCase()}>`);
+      const tagName = node.tagName.toLowerCase();
+      const ns = node.namespaceURI;
+      
+      let nsPrefix = '';
+      if (ns === 'http://www.w3.org/2000/svg') {
+        nsPrefix = ' svg';
+      } else if (ns === 'http://www.w3.org/1998/Math/MathML') {
+        nsPrefix = ' math';
+      }
+      
+      lines.push(`${indent}<${tagName}${nsPrefix}>`);
       
       // Atributos en orden alfabético
       const attrs = Object.entries(node.attributes || {}).sort(([a], [b]) => a.localeCompare(b));
@@ -32,9 +46,12 @@ export function serializeToHtml5lib(doc: any): string {
     } else if (node.nodeType === 3) { // TEXT
       lines.push(`${indent}"${node.textContent}"`);
     } else if (node.nodeType === 8) { // COMMENT
-      lines.push(`${indent}<!-- ${node.textContent} -->`);
+      const commentData = node.data || node.nodeValue || node.textContent || '';
+      lines.push(`${indent}<!-- ${commentData} -->`);
     } else if (node.nodeType === 10) { // DOCTYPE
-      lines.push(`${indent}<!DOCTYPE ${node.name || 'html'}>`);
+      if (!options.skipImplicitDoctype) {
+        lines.push(`${indent}<!DOCTYPE ${node.name || 'html'}>`);
+      }
     }
   }
   

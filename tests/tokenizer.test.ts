@@ -198,21 +198,21 @@ describe('HTML Tokenizer', () => {
     });
   });
 
-  describe('CDATA Sections', () => {
-    it('should parse CDATA sections', () => {
+  describe('CDATA Sections (HTML5: treated as bogus comments)', () => {
+    it('should parse CDATA sections as bogus comments in HTML5', () => {
       const tokens = tokenize('<![CDATA[Some data]]>');
 
       expect(tokens[0]).toEqual({
-        type: TokenType.CDATA,
-        value: 'Some data',
+        type: TokenType.COMMENT,
+        value: '[CDATA[Some data]]',
         position: expect.any(Object)
       });
     });
 
-    it('should handle CDATA with special characters', () => {
+    it('should handle CDATA with special characters as bogus comment', () => {
       const tokens = tokenize('<![CDATA[<script>alert("test");</script>]]>');
 
-      expect(tokens[0]?.value).toBe('<script>alert("test");</script>');
+      expect(tokens[0]?.value).toBe('[CDATA[<script>alert("test");</script>]]');
     });
   });
 
@@ -235,22 +235,22 @@ describe('HTML Tokenizer', () => {
     });
   });
 
-  describe('Processing Instructions', () => {
-    it('should parse XML processing instruction', () => {
+  describe('Processing Instructions (HTML5: treated as bogus comments)', () => {
+    it('should parse XML processing instruction as bogus comment', () => {
       const tokens = tokenize('<?xml version="1.0" encoding="UTF-8"?>');
 
       expect(tokens[0]).toEqual({
-        type: TokenType.PROCESSING_INSTRUCTION,
-        value: '<?xml version="1.0" encoding="UTF-8"',
+        type: TokenType.COMMENT,
+        value: '?xml version="1.0" encoding="UTF-8"?',
         position: expect.any(Object)
       });
     });
 
-    it('should parse PHP-style processing instruction', () => {
+    it('should parse PHP-style processing instruction as bogus comment', () => {
       const tokens = tokenize('<?php echo "Hello"; ?>');
 
-      expect(tokens[0]?.type).toBe(TokenType.PROCESSING_INSTRUCTION);
-      expect(tokens[0]?.value).toBe('<?php echo "Hello"; ');
+      expect(tokens[0]?.type).toBe(TokenType.COMMENT);
+      expect(tokens[0]?.value).toBe('?php echo "Hello"; ?');
     });
   });
 
@@ -429,7 +429,7 @@ describe('HTML Tokenizer', () => {
       });
     });
 
-    it('should handle CDATA with complex content', () => {
+    it('should handle CDATA as bogus comment with complex content', () => {
       const complexContent = `
         function it() {
           return "<div>HTML inside JS</div>";
@@ -440,11 +440,11 @@ describe('HTML Tokenizer', () => {
       const tokens = tokenize(`<![CDATA[${complexContent}]]>`);
       const cdataToken = tokens[0]!;
 
-      expect(cdataToken.type).toBe(TokenType.CDATA);
-      expect(cdataToken.value).toBe(complexContent);
+      expect(cdataToken.type).toBe(TokenType.COMMENT);
+      expect(cdataToken.value).toBe('[CDATA[' + complexContent + ']]');
     });
 
-    it('should handle processing instructions with various formats', () => {
+    it('should handle processing instructions as bogus comments', () => {
       const tests = [
         { input: '<?xml version="1.0" encoding="UTF-8"?>', expected: 'xml' },
         { input: '<?xml-stylesheet type="text/xsl" href="style.xsl"?>', expected: 'xml' },
@@ -456,7 +456,7 @@ describe('HTML Tokenizer', () => {
         const tokens = tokenize(test.input);
         const piToken = tokens[0]!;
 
-        expect(piToken.type).toBe(TokenType.PROCESSING_INSTRUCTION);
+        expect(piToken.type).toBe(TokenType.COMMENT);
         expect(piToken.value.toLowerCase()).toContain(test.expected);
       });
     });
@@ -478,15 +478,13 @@ describe('HTML Tokenizer', () => {
       });
     });
 
-    it('should handle mixed content with all token types', () => {
+    it('should handle mixed content with all token types (HTML5 mode)', () => {
       const html = `
-        <?xml version="1.0"?>
         <!DOCTYPE html>
         <!-- Main document -->
         <html lang="en">
           <head>
             <title>Test &amp; Demo</title>
-            <![CDATA[Some raw data]]>
           </head>
           <body>
             <h1>Hello World</h1>
@@ -500,27 +498,25 @@ describe('HTML Tokenizer', () => {
       const tokens = tokenize(html);
 
       const tokenCounts = {
-        [TokenType.PROCESSING_INSTRUCTION]: 0,
         [TokenType.DOCTYPE]: 0,
         [TokenType.COMMENT]: 0,
         [TokenType.TAG_OPEN]: 0,
         [TokenType.TAG_CLOSE]: 0,
         [TokenType.TEXT]: 0,
-        [TokenType.CDATA]: 0,
         [TokenType.EOF]: 0
       };
 
       tokens.forEach(token => {
-        tokenCounts[token.type]++;
+        if (token.type in tokenCounts) {
+          tokenCounts[token.type]++;
+        }
       });
 
-      expect(tokenCounts[TokenType.PROCESSING_INSTRUCTION]).toBeGreaterThan(0);
       expect(tokenCounts[TokenType.DOCTYPE]).toBeGreaterThan(0);
       expect(tokenCounts[TokenType.COMMENT]).toBeGreaterThan(0);
       expect(tokenCounts[TokenType.TAG_OPEN]).toBeGreaterThan(0);
       expect(tokenCounts[TokenType.TAG_CLOSE]).toBeGreaterThan(0);
       expect(tokenCounts[TokenType.TEXT]).toBeGreaterThan(0);
-      expect(tokenCounts[TokenType.CDATA]).toBeGreaterThan(0);
       expect(tokenCounts[TokenType.EOF]).toBe(1);
     });
   })

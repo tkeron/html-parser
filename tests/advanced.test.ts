@@ -60,7 +60,7 @@ describe('HTML Parser & Tokenizer - Advanced Tests', () => {
       });
     });
 
-    it('should handle complex CDATA content', () => {
+    it('should handle complex CDATA content as bogus comment', () => {
       const complexContent = `
         function test() {
           return "<div>HTML inside JS</div>";
@@ -71,8 +71,8 @@ describe('HTML Parser & Tokenizer - Advanced Tests', () => {
       expect(tokens.length).toBeGreaterThan(0);
       const cdataToken = tokens[0]!;
       
-      expect(cdataToken.type).toBe(TokenType.CDATA);
-      expect(cdataToken.value).toBe(complexContent);
+      expect(cdataToken.type).toBe(TokenType.COMMENT);
+      expect(cdataToken.value).toBe('[CDATA[' + complexContent + ']]');
     });
 
     it('should handle performance with large documents', () => {
