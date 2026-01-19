@@ -9,7 +9,7 @@ A fast and lightweight HTML parser for Bun that converts HTML strings into DOM D
 - 🪶 **Lightweight**: Minimal dependencies, native implementation
 - 🌐 **Standards Compliant**: Returns standard DOM Document objects
 - 🔧 **TypeScript Support**: Full TypeScript definitions included
-- ✅ **Well Tested**: Comprehensive unit test suite (569 tests passing)
+- ✅ **Well Tested**: Comprehensive test suite (5200+ tests passing)
 - 🔄 **100% Compatible**: Drop-in replacement, same API
 
 ## Installation

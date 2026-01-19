@@ -7,6 +7,10 @@ import {
 export function parseHTML(html: string = ""): Document {
   const tokens = tokenize(html);
   const ast = parse(tokens);
+  // If parse already returns a DOM document, return it directly
+  if (ast && typeof ast.nodeType === 'number' && ast.nodeType === 9) {
+    return ast;
+  }
   return astToDOM(ast);
 }
 

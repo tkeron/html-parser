@@ -8,28 +8,28 @@ describe('DOM Extended Functionality', () => {
   describe('innerHTML and outerHTML', () => {
     it('should generate correct innerHTML for simple elements', () => {
       const doc = parseHTML('<div>Hello World</div>') as Document;
-      const div = doc.childNodes[0] as HTMLElement;
+      const div = doc.body?.firstChild as HTMLElement;
 
       expect(div.innerHTML).toBe('Hello World');
     });
 
     it('should generate correct innerHTML for nested elements', () => {
       const doc = parseHTML('<div><p>Hello</p><span>World</span></div>') as Document;
-      const div = doc.childNodes[0] as HTMLElement;
+      const div = doc.body?.firstChild as HTMLElement;
 
       expect(div.innerHTML).toBe('<p>Hello</p><span>World</span>');
     });
 
     it('should generate correct outerHTML for elements', () => {
       const doc = parseHTML('<div class="test">Hello</div>') as Document;
-      const div = doc.childNodes[0] as HTMLElement;
+      const div = doc.body?.firstChild as HTMLElement;
 
       expect(div.outerHTML).toBe('<div class="test">Hello</div>');
     });
 
     it('should generate correct outerHTML for elements with multiple attributes', () => {
       const doc = parseHTML('<input type="text" name="username" value="test">') as Document;
-      const input = doc.childNodes[0] as HTMLElement;
+      const input = doc.body?.firstChild as HTMLElement;
 
       expect(input.outerHTML).toContain('type="text"');
       expect(input.outerHTML).toContain('name="username"');
@@ -38,7 +38,7 @@ describe('DOM Extended Functionality', () => {
 
     it('should handle comments in innerHTML', () => {
       const doc = parseHTML('<div><!-- comment -->text</div>') as Document;
-      const div = doc.childNodes[0] as HTMLElement;
+      const div = doc.body?.firstChild as HTMLElement;
 
       expect(div.innerHTML).toBe('<!-- comment -->text');
     });
@@ -47,21 +47,21 @@ describe('DOM Extended Functionality', () => {
   describe('textContent property', () => {
     it('should provide textContent on elements', () => {
       const doc = parseHTML('<div>Hello <span>World</span></div>') as Document;
-      const div = doc.childNodes[0] as HTMLElement;
+      const div = doc.body?.firstChild as HTMLElement;
 
       expect(div.textContent).toBe('Hello World');
     });
 
     it('should provide textContent for deeply nested elements', () => {
       const doc = parseHTML('<div><p><em>Hello</em> <strong>Beautiful</strong></p> <span>World</span></div>') as Document;
-      const div = doc.childNodes[0] as HTMLElement;
+      const div = doc.body?.firstChild as HTMLElement;
 
       expect(div.textContent).toBe('Hello Beautiful World');
     });
 
     it('should ignore comments in textContent', () => {
       const doc = parseHTML('<div>Hello <!-- comment --> World</div>') as Document;
-      const div = doc.childNodes[0] as HTMLElement;
+      const div = doc.body?.firstChild as HTMLElement;
 
       expect(div.textContent).toBe('Hello  World');
     });
@@ -70,7 +70,7 @@ describe('DOM Extended Functionality', () => {
   describe('element navigation properties', () => {
     it('should provide parentElement property', () => {
       const doc = parseHTML('<div><p>Hello</p></div>') as Document;
-      const div = doc.childNodes[0] as HTMLElement;
+      const div = doc.body?.firstChild as HTMLElement;
       const p = div.children[0];
 
       expect(p).toBeDefined();
@@ -79,7 +79,7 @@ describe('DOM Extended Functionality', () => {
 
     it('should provide firstElementChild and lastElementChild', () => {
       const doc = parseHTML('<div><span>First</span><p>Second</p><em>Last</em></div>') as Document;
-      const div = doc.childNodes[0] as HTMLElement;
+      const div = doc.body?.firstChild as HTMLElement;
 
       expect(div.firstElementChild?.tagName).toBe('SPAN');
       expect(div.lastElementChild?.tagName).toBe('EM');
@@ -87,7 +87,7 @@ describe('DOM Extended Functionality', () => {
 
     it('should provide nextElementSibling and previousElementSibling', () => {
       const doc = parseHTML('<div><span>First</span><p>Second</p><em>Last</em></div>') as Document;
-      const div = doc.childNodes[0] as HTMLElement;
+      const div = doc.body?.firstChild as HTMLElement;
       const span = div.children[0];
       const p = div.children[1];
       const em = div.children[2];
@@ -111,7 +111,7 @@ describe('DOM Extended Functionality', () => {
   describe('setInnerHTML functionality', () => {
     it('should clear existing content when setting innerHTML', () => {
       const doc = parseHTML('<div><p>Old content</p></div>') as Document;
-      const div = doc.childNodes[0] as HTMLElement;
+      const div = doc.body?.firstChild as HTMLElement;
 
       setInnerHTML(div, 'New content');
 

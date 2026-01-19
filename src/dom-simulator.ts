@@ -6,6 +6,11 @@ import {
   querySelectorAll as querySelectorAllFunction,
 } from "./css-selector.js";
 
+// Escape special HTML characters in text content
+function escapeTextContent(text: string): string {
+  return text.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+}
+
 const VOID_ELEMENTS = new Set([
   'area', 'base', 'br', 'col', 'embed', 'hr', 'img', 'input',
   'link', 'meta', 'param', 'source', 'track', 'wbr'
@@ -226,6 +231,25 @@ export function createComment(content: string): any {
   return commentNode;
 }
 
+export function createDoctype(name: string = 'html'): any {
+  const doctypeNode: any = {
+    nodeType: NodeType.DOCUMENT_TYPE_NODE,
+    nodeName: name.toUpperCase(),
+    name: name.toLowerCase(),
+    nodeValue: null,
+    textContent: "",
+    publicId: null,
+    systemId: null,
+    childNodes: [],
+    parentNode: null,
+    firstChild: null,
+    lastChild: null,
+    nextSibling: null,
+    previousSibling: null,
+  };
+  return doctypeNode;
+}
+
 export function createDocument(): any {
   const document: any = {
     nodeType: NodeType.DOCUMENT_NODE,
@@ -375,7 +399,7 @@ function convertASTNodeToDOM(astNode: ASTNode): any {
   }
 }
 
-function appendChild(parent: any, child: any): void {
+export function appendChild(parent: any, child: any): void {
   if (child.nodeType === NodeType.ELEMENT_NODE || child.nodeType === NodeType.DOCUMENT_NODE) {
     let ancestor = parent;
     while (ancestor) {
@@ -918,13 +942,13 @@ export function setInnerHTML(element: any, html: string): void {
 
   if (html.trim()) {
     const tokens = tokenize(html);
-    const ast = parse(tokens);
-    if (ast.children) {
-      for (const child of ast.children) {
-        const domChild = convertASTNodeToDOM(child);
-        if (domChild) {
-          appendChild(element, domChild);
-        }
+    const doc = parse(tokens);
+    const body = doc.body;
+    if (body && body.childNodes) {
+      const nodesToMove = [...body.childNodes];
+      for (const child of nodesToMove) {
+        child.parentNode = null;
+        appendChild(element, child);
       }
     }
   }
@@ -975,14 +999,12 @@ export function setOuterHTML(element: any, html: string): void {
   
   if (html.trim()) {
     const tokens = tokenize(html);
-    const ast = parse(tokens);
-    
-    if (ast.children) {
-      for (const child of ast.children) {
-        const domChild = convertASTNodeToDOM(child);
-        if (domChild) {
-          newNodes.push(domChild);
-        }
+    const doc = parse(tokens);
+    const body = doc.body;
+    if (body && body.childNodes) {
+      for (const child of body.childNodes) {
+        child.parentNode = null;
+        newNodes.push(child);
       }
     }
   }

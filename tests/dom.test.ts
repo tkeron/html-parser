@@ -10,6 +10,10 @@ import {
 } from "../src/dom-simulator";
 import { parse } from "../src/parser";
 
+function getBodyContent(doc: any): any {
+  return doc.body?.firstChild;
+}
+
 describe("DOM Simulator - Phase 1: Structure and Conversion", () => {
   describe("parseHTML basic functionality", () => {
     it("should return a Document object", () => {
@@ -21,8 +25,7 @@ describe("DOM Simulator - Phase 1: Structure and Conversion", () => {
     it("should parse simple HTML elements", () => {
       const doc = parseHTML("<p>Hello World</p>");
 
-      expect(doc.childNodes.length).toBe(1);
-      const paragraph = doc.childNodes[0]!;
+      const paragraph = getBodyContent(doc);
 
       expect(paragraph.nodeType).toBe(NodeType.ELEMENT_NODE);
       expect(paragraph.nodeName).toBe("P");
@@ -31,7 +34,7 @@ describe("DOM Simulator - Phase 1: Structure and Conversion", () => {
 
     it("should parse text content correctly", () => {
       const doc = parseHTML("<p>Hello World</p>");
-      const paragraph = doc.childNodes[0]!;
+      const paragraph = getBodyContent(doc);
 
       expect(paragraph.childNodes.length).toBe(1);
       const textNode = paragraph.childNodes[0]!;
@@ -44,7 +47,7 @@ describe("DOM Simulator - Phase 1: Structure and Conversion", () => {
     it("should parse nested elements", () => {
       const doc = parseHTML("<div><p>Hello</p><span>World</span></div>");
 
-      const div = doc.childNodes[0]!;
+      const div = getBodyContent(doc);
       expect(div.nodeName).toBe("DIV");
       expect(div.childNodes.length).toBe(2);
 
@@ -57,17 +60,19 @@ describe("DOM Simulator - Phase 1: Structure and Conversion", () => {
 
     it("should handle attributes correctly", () => {
       const doc = parseHTML('<p id="test" class="highlight">Content</p>');
-      const paragraph = doc.childNodes[0]! as any;
+      const paragraph = getBodyContent(doc) as any;
 
       expect(paragraph.attributes.id).toBe("test");
       expect(paragraph.attributes.class).toBe("highlight");
     });
 
     it("should parse comments", () => {
-      const doc = parseHTML("<!-- This is a comment --><p>Hello</p>");
+      const doc = parseHTML("<div><!-- This is a comment --></div><p>Hello</p>");
 
-      expect(doc.childNodes.length).toBe(2);
-      const comment = doc.childNodes[0]!;
+      const body = doc.body;
+      expect(body.childNodes.length).toBe(2);
+      const div = body.childNodes[0]!;
+      const comment = div.childNodes[0]!;
 
       expect(comment.nodeType).toBe(NodeType.COMMENT_NODE);
       expect(comment.nodeName).toBe("#comment");
@@ -77,11 +82,11 @@ describe("DOM Simulator - Phase 1: Structure and Conversion", () => {
     it("should set parent-child relationships correctly", () => {
       const doc = parseHTML("<div><p>Hello</p></div>");
 
-      const div = doc.childNodes[0]!;
+      const div = getBodyContent(doc);
       const p = div.childNodes[0]!;
 
       expect(p.parentNode).toBe(<any>div);
-      expect(div.parentNode).toBe(doc);
+      expect(div.parentNode).toBe(doc.body);
       expect(div.firstChild).toBe(p);
       expect(div.lastChild).toBe(p);
     });
@@ -91,7 +96,7 @@ describe("DOM Simulator - Phase 1: Structure and Conversion", () => {
         "<div><p>First</p><span>Second</span><em>Third</em></div>"
       );
 
-      const div = doc.childNodes[0]!;
+      const div = getBodyContent(doc);
       const p = div.childNodes[0]!;
       const span = div.childNodes[1]!;
       const em = div.childNodes[2]!;
@@ -108,7 +113,7 @@ describe("DOM Simulator - Phase 1: Structure and Conversion", () => {
     it("should handle self-closing elements", () => {
       const doc = parseHTML("<p>Before<br/>After</p>");
 
-      const p = doc.childNodes[0]!;
+      const p = getBodyContent(doc);
       expect(p.childNodes.length).toBe(3);
 
       const br = p.childNodes[1]!;
@@ -119,7 +124,7 @@ describe("DOM Simulator - Phase 1: Structure and Conversion", () => {
     it("should handle empty elements", () => {
       const doc = parseHTML("<div></div>");
 
-      const div = doc.childNodes[0]!;
+      const div = getBodyContent(doc);
       expect(div.childNodes.length).toBe(0);
       expect(div.firstChild).toBeNull();
       expect(div.lastChild).toBeNull();
@@ -154,7 +159,7 @@ describe("DOM Simulator - Phase 2: Navigation and Attributes", () => {
   describe("getTextContent", () => {
     it("should get text content from a simple text node", () => {
       const doc = parseHTML("<p>Hello World</p>");
-      const p = doc.childNodes[0]!;
+      const p = getBodyContent(doc);
       const textNode = p.childNodes[0]!;
 
       expect(getTextContent(textNode)).toBe("Hello World");
@@ -162,14 +167,14 @@ describe("DOM Simulator - Phase 2: Navigation and Attributes", () => {
 
     it("should get text content from an element with text", () => {
       const doc = parseHTML("<p>Hello World</p>");
-      const p = doc.childNodes[0]!;
+      const p = getBodyContent(doc);
 
       expect(getTextContent(p)).toBe("Hello World");
     });
 
     it("should get concatenated text from nested elements", () => {
       const doc = parseHTML("<div>Hello <span>beautiful</span> world</div>");
-      const div = doc.childNodes[0]!;
+      const div = getBodyContent(doc);
 
       expect(getTextContent(div)).toBe("Hello beautiful world");
     });
@@ -178,28 +183,28 @@ describe("DOM Simulator - Phase 2: Navigation and Attributes", () => {
       const doc = parseHTML(
         "<div>Start <p>Middle <em>Deep <strong>Deeper</strong></em></p> End</div>"
       );
-      const div = doc.childNodes[0]!;
+      const div = getBodyContent(doc);
 
       expect(getTextContent(div)).toBe("Start Middle Deep Deeper End");
     });
 
     it("should return empty string for elements with no text", () => {
       const doc = parseHTML("<div></div>");
-      const div = doc.childNodes[0]!;
+      const div = getBodyContent(doc);
 
       expect(getTextContent(div)).toBe("");
     });
 
     it("should ignore comments when getting text content", () => {
       const doc = parseHTML("<div>Before<!-- comment -->After</div>");
-      const div = doc.childNodes[0]!;
+      const div = getBodyContent(doc);
 
       expect(getTextContent(div)).toBe("BeforeAfter");
     });
 
     it("should handle mixed content with self-closing elements", () => {
       const doc = parseHTML("<p>Before<br/>After</p>");
-      const p = doc.childNodes[0]!;
+      const p = getBodyContent(doc);
 
       expect(getTextContent(p)).toBe("BeforeAfter");
     });
@@ -210,7 +215,7 @@ describe("DOM Simulator - Phase 2: Navigation and Attributes", () => {
       const doc = parseHTML(
         '<div id="test" class="highlight" data-value="123">Content</div>'
       );
-      const div = doc.childNodes[0]! as any;
+      const div = getBodyContent(doc) as any;
 
       expect(getAttribute(div, "id")).toBe("test");
       expect(getAttribute(div, "class")).toBe("highlight");
@@ -219,7 +224,7 @@ describe("DOM Simulator - Phase 2: Navigation and Attributes", () => {
 
     it("should return null for non-existing attributes", () => {
       const doc = parseHTML('<div id="test">Content</div>');
-      const div = doc.childNodes[0]! as any;
+      const div = getBodyContent(doc) as any;
 
       expect(getAttribute(div, "nonexistent")).toBeNull();
       expect(getAttribute(div, "class")).toBeNull();
@@ -227,7 +232,7 @@ describe("DOM Simulator - Phase 2: Navigation and Attributes", () => {
 
     it("should check if attributes exist", () => {
       const doc = parseHTML('<div id="test" class="highlight">Content</div>');
-      const div = doc.childNodes[0]! as any;
+      const div = getBodyContent(doc) as any;
 
       expect(hasAttribute(div, "id")).toBe(true);
       expect(hasAttribute(div, "class")).toBe(true);
@@ -236,7 +241,7 @@ describe("DOM Simulator - Phase 2: Navigation and Attributes", () => {
 
     it("should set new attributes", () => {
       const doc = parseHTML("<div>Content</div>");
-      const div = doc.childNodes[0]! as any;
+      const div = getBodyContent(doc) as any;
 
       setAttribute(div, "id", "new-id");
       setAttribute(div, "class", "new-class");
@@ -249,7 +254,7 @@ describe("DOM Simulator - Phase 2: Navigation and Attributes", () => {
 
     it("should update existing attributes", () => {
       const doc = parseHTML('<div id="old-id" class="old-class">Content</div>');
-      const div = doc.childNodes[0]! as any;
+      const div = getBodyContent(doc) as any;
 
       setAttribute(div, "id", "new-id");
       setAttribute(div, "class", "new-class");
@@ -262,7 +267,7 @@ describe("DOM Simulator - Phase 2: Navigation and Attributes", () => {
       const doc = parseHTML(
         '<div id="test" class="highlight" data-value="123">Content</div>'
       );
-      const div = doc.childNodes[0]! as any;
+      const div = getBodyContent(doc) as any;
 
       removeAttribute(div, "class");
       removeAttribute(div, "data-value");
@@ -276,7 +281,7 @@ describe("DOM Simulator - Phase 2: Navigation and Attributes", () => {
 
     it("should handle removing non-existing attributes gracefully", () => {
       const doc = parseHTML('<div id="test">Content</div>');
-      const div = doc.childNodes[0]! as any;
+      const div = getBodyContent(doc) as any;
 
       removeAttribute(div, "nonexistent");
 

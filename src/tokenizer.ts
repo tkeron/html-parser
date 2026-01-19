@@ -24,55 +24,71 @@ export interface Token {
   isClosing?: boolean;
 }
 
-const HTML_ENTITIES: Record<string, string> = {
-  '&amp;': '&',
-  '&lt;': '<',
-  '&gt;': '>',
-  '&quot;': '"',
-  '&apos;': "'",
-  '&nbsp;': '\u00A0',
-  '&copy;': '©',
-  '&reg;': '®',
-  '&trade;': '™',
-  '&hellip;': '…',
-  '&mdash;': '—',
-  '&ndash;': '–',
-  '&lsquo;': '\u2018',
-  '&rsquo;': '\u2019',
-  '&ldquo;': '\u201C',
-  '&rdquo;': '\u201D',
-  '&not;': '¬'
-};
+import { allNamedEntities } from 'all-named-html-entities';
+
+const HTML_ENTITIES: Record<string, string> = allNamedEntities;
 
 function decodeEntities(text: string): string {
-  let result = text.replace(/\u0000/g, '\uFFFD');
-  
-  return result.replace(/&(?:#x([0-9a-fA-F]+);?|#([0-9]+);?|([a-zA-Z][a-zA-Z0-9]*);?)/g, (match, hex, decimal, named) => {
-    if (hex) {
-      return String.fromCharCode(parseInt(hex, 16));
-    }
-    if (decimal) {
-      return String.fromCharCode(parseInt(decimal, 10));
-    }
-    if (named) {
-      if (HTML_ENTITIES[`&${named};`]) {
-        return HTML_ENTITIES[`&${named};`];
-      }
-      
-      if (!match.endsWith(';')) {
-        for (let i = named.length; i > 0; i--) {
-          const prefix = named.substring(0, i);
-          if (HTML_ENTITIES[`&${prefix};`]) {
-            const remainder = named.substring(i);
-            return HTML_ENTITIES[`&${prefix};`] + remainder;
+  let result = '';
+  let i = 0;
+  while (i < text.length) {
+    if (text[i] === '&') {
+      let match = '';
+      let j = i + 1;
+      if (text[j] === '#') {
+        j++;
+        if (text[j] === 'x' || text[j] === 'X') {
+          j++;
+          while (j < text.length && /[0-9a-fA-F]/.test(text[j])) {
+            j++;
+          }
+        } else {
+          while (j < text.length && /[0-9]/.test(text[j])) {
+            j++;
+          }
+        }
+        if (text[j] === ';') {
+          j++;
+        }
+        match = text.substring(i, j);
+        const entity = match;
+        if (entity.startsWith('&#x') && entity.endsWith(';')) {
+          const hex = entity.slice(3, -1);
+          result += String.fromCharCode(parseInt(hex, 16));
+          i = j;
+          continue;
+        } else if (entity.startsWith('&#') && entity.endsWith(';')) {
+          const decimal = entity.slice(2, -1);
+          result += String.fromCharCode(parseInt(decimal, 10));
+          i = j;
+          continue;
+        }
+      } else {
+        while (j < text.length && /[a-zA-Z0-9]/.test(text[j])) {
+          j++;
+        }
+        const hasSemi = text[j] === ';';
+        if (hasSemi) {
+          j++;
+        }
+        match = text.substring(i, j);
+        const named = match.slice(1, hasSemi ? -1 : undefined);
+        if (HTML_ENTITIES[named]) {
+          if (hasSemi || (j < text.length && !/[a-zA-Z0-9]/.test(text[j]))) {
+            result += HTML_ENTITIES[named];
+            i = j;
+            continue;
           }
         }
       }
-      
-      return match;
+      result += text[i];
+      i++;
+    } else {
+      result += text[i];
+      i++;
     }
-    return match;
-  });
+  }
+  return result.replace(/\u0000/g, '\uFFFD');
 }
 
 function parseAttributes(attributeString: string): Record<string, string> {

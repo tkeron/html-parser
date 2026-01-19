@@ -897,18 +897,18 @@ describe("DOM Manipulation - prepend", () => {
 
   describe("prepend on document", () => {
     it("should prepend to document", () => {
-      const doc = parseHTML("<!-- Comment --><div>Content</div>");
-      const comment = doc.childNodes[0];
-      const div = doc.childNodes[1];
+      const doc = parseHTML("<div>Content</div>");
+      const initialChildCount = doc.childNodes.length;
+      const firstChild = doc.firstChild;
 
       const newDiv = doc.createElement("div");
-      newDiv.textContent = "First";
+      newDiv.textContent = "Prepended";
 
       doc.prepend(newDiv);
 
       expect(doc.firstChild).toBe(newDiv);
-      expect(newDiv.nextSibling).toBe(comment);
-      expect(doc.childNodes.length).toBe(3);
+      expect(newDiv.nextSibling).toBe(firstChild);
+      expect(doc.childNodes.length).toBe(initialChildCount + 1);
     });
   });
 });
@@ -1121,16 +1121,15 @@ describe("DOM Manipulation - append", () => {
   describe("append on document", () => {
     it("should append to document", () => {
       const doc = parseHTML("<div>Content</div>");
-      const div = doc.childNodes[0];
+      const initialChildCount = doc.childNodes.length;
 
       const newDiv = doc.createElement("div");
-      newDiv.textContent = "Last";
+      newDiv.textContent = "Appended";
 
       doc.append(newDiv);
 
       expect(doc.lastChild).toBe(newDiv);
-      expect(div.nextSibling).toBe(newDiv);
-      expect(doc.childNodes.length).toBe(2);
+      expect(doc.childNodes.length).toBe(initialChildCount + 1);
     });
   });
 });

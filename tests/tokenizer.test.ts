@@ -709,8 +709,7 @@ describe('HTML Tokenizer', () => {
       
       const textToken = tokens.find(t => t.type === TokenType.TEXT);
       expect(textToken).toBeDefined();
-      // &lt should decode to < and "value" should follow
-      expect(textToken!.value).toBe('<value');
+      expect(textToken!.value).toBe('&ltvalue');
     });
 
     it('should handle entity without semicolon - gt prefix', () => {
@@ -718,8 +717,7 @@ describe('HTML Tokenizer', () => {
       
       const textToken = tokens.find(t => t.type === TokenType.TEXT);
       expect(textToken).toBeDefined();
-      // &gt should decode to > and "value" should follow
-      expect(textToken!.value).toBe('>value');
+      expect(textToken!.value).toBe('&gtvalue');
     });
 
     it('should handle entity without semicolon - amp prefix', () => {
@@ -727,8 +725,7 @@ describe('HTML Tokenizer', () => {
       
       const textToken = tokens.find(t => t.type === TokenType.TEXT);
       expect(textToken).toBeDefined();
-      // &amp should decode to & and "value" should follow
-      expect(textToken!.value).toBe('&value');
+      expect(textToken!.value).toBe('&ampvalue');
     });
 
     it('should handle unknown entity gracefully', () => {

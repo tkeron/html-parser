@@ -26,7 +26,7 @@ function parseSelector(selector: string): SelectorGroup[] {
     let remaining = trimmed;
     
     // Extract tag name first if present
-    const tagMatch = remaining.match(/^([a-zA-Z][a-zA-Z0-9]*)/);
+    const tagMatch = remaining.match(/^([a-zA-Z][a-zA-Z0-9-]*)/);
     if (tagMatch) {
       tokens.push({ type: "tag", value: tagMatch[1].toLowerCase() });
       remaining = remaining.slice(tagMatch[1].length);
