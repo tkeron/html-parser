@@ -364,6 +364,10 @@ function parseTokenInInHeadMode(state: ParserState, token: Token): void {
     } else if (tagName === 'meta' || tagName === 'link' || tagName === 'base') {
       parseOpenTag(state, token);
     } else if (tagName === 'head') {
+      // Ignore duplicate <head> tags
+    } else if (tagName.includes('-')) {
+      // Custom elements (tags with hyphens) are valid in <head>
+      parseOpenTag(state, token);
     } else {
       state.stack.pop();
       state.insertionMode = InsertionMode.AfterHead;
@@ -378,6 +382,9 @@ function parseTokenInInHeadMode(state: ParserState, token: Token): void {
       if (currentTagName === tagName) {
         state.stack.pop();
       }
+    } else if (tagName.includes('-') && currentTagName === tagName) {
+      // Handle closing tags for custom elements in <head>
+      state.stack.pop();
     }
   } else if (token.type === TokenType.COMMENT) {
     parseComment(state, token);
