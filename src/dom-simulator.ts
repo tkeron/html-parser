@@ -943,11 +943,12 @@ export function setInnerHTML(element: any, html: string): void {
   element.lastElementChild = null;
 
   if (html.trim()) {
-    const tokens = tokenize(html);
+    const wrappedHtml = '<div>' + html + '</div>';
+    const tokens = tokenize(wrappedHtml);
     const doc = parse(tokens);
-    const body = doc.body;
-    if (body && body.childNodes) {
-      const nodesToMove = [...body.childNodes];
+    const div = doc.querySelector('div');
+    if (div && div.childNodes) {
+      const nodesToMove = [...div.childNodes];
       for (const child of nodesToMove) {
         child.parentNode = null;
         appendChild(element, child);
