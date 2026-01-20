@@ -856,7 +856,7 @@ function updateElementContent(element: any): void {
   const innerHTML = element.childNodes
     .map((child: any) => {
       if (child.nodeType === NodeType.TEXT_NODE) {
-        return child.textContent;
+        return escapeTextContent(child.textContent || "");
       } else if (child.nodeType === NodeType.ELEMENT_NODE) {
         return child.outerHTML;
       } else if (child.nodeType === NodeType.COMMENT_NODE) {
@@ -1153,7 +1153,7 @@ export function getInnerHTML(element: any): string {
     if (child.nodeType === NodeType.ELEMENT_NODE) {
       innerHTML += child.outerHTML;
     } else if (child.nodeType === NodeType.TEXT_NODE) {
-      innerHTML += child.textContent || "";
+      innerHTML += escapeTextContent(child.textContent || "");
     } else if (child.nodeType === NodeType.COMMENT_NODE) {
       innerHTML += `<!--${child.data || ""}-->`;
     }
