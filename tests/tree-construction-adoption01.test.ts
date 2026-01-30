@@ -31,7 +31,10 @@ describe("Tree Construction Adoption01 Tests", () => {
       }
     }
 
-    it.skip(`Adoption test ${index + 1}`, () => {
+    const passingTests = [1, 2, 3, 7, 16];
+    const testFn = passingTests.includes(index + 1) ? it : it.skip;
+
+    testFn(`Adoption test ${index + 1}`, () => {
       const doc = parseHTML(data);
       const hasExplicitDoctype = data.toLowerCase().includes("<!doctype");
       const serialized = serializeToHtml5lib(doc, {

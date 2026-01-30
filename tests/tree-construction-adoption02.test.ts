@@ -9,29 +9,37 @@ describe("Tree Construction Adoption02 Tests", () => {
     "utf8",
   );
   const sections = content.split("#data\n").slice(1);
+  const passingTests = [1];
 
   sections.forEach((section, index) => {
     const lines = section.trim().split("\n");
     let data = "";
     let document = "";
     let inDocument = false;
+    let inData = true;
 
     for (const line of lines) {
       if (line.startsWith("#document")) {
         inDocument = true;
-      } else if (line.startsWith("#data")) {
-        // next section
+        inData = false;
+      } else if (line.startsWith("#errors")) {
+        inData = false;
+        inDocument = false;
       } else if (inDocument) {
-        document += line.slice(2) + "\n";
-      } else if (!line.startsWith("#")) {
+        document += line + "\n";
+      } else if (inData) {
         data += line;
       }
     }
 
-    it.skip(`Adoption02 test ${index + 1}`, () => {
+    const testFn = passingTests.includes(index + 1) ? it : it.skip;
+    testFn(`Adoption02 test ${index + 1}`, () => {
       const doc = parseHTML(data);
-      const serialized = serializeToHtml5lib(doc);
-      expect(serialized).toBe(document.trim());
+      const hasExplicitDoctype = data.toLowerCase().includes("<!doctype");
+      const serialized = serializeToHtml5lib(doc, {
+        skipImplicitDoctype: !hasExplicitDoctype,
+      });
+      expect(serialized).toBe(document);
     });
   });
 });

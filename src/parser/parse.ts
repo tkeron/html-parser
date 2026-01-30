@@ -18,6 +18,13 @@ import {
   AUTO_CLOSE_RULES,
   FORMATTING_ELEMENTS,
 } from "./constants";
+import {
+  findFormattingElementInStack,
+  findFurthestBlock,
+  getCommonAncestor,
+  cloneFormattingElement,
+  reparentChildren,
+} from "./adoption-agency-helpers.js";
 
 export const parse = (tokens: Token[]): any => {
   const state = createParserState(tokens);
@@ -396,109 +403,17 @@ const parseTokenInInBodyMode = (state: ParserState, token: Token): void => {
   }
 };
 
-const SPECIAL_ELEMENTS = new Set([
-  "address",
-  "applet",
-  "area",
-  "article",
-  "aside",
-  "base",
-  "basefont",
-  "bgsound",
-  "blockquote",
-  "body",
-  "br",
-  "button",
-  "caption",
-  "center",
-  "col",
-  "colgroup",
-  "dd",
-  "details",
-  "dir",
-  "div",
-  "dl",
-  "dt",
-  "embed",
-  "fieldset",
-  "figcaption",
-  "figure",
-  "footer",
-  "form",
-  "frame",
-  "frameset",
-  "h1",
-  "h2",
-  "h3",
-  "h4",
-  "h5",
-  "h6",
-  "head",
-  "header",
-  "hgroup",
-  "hr",
-  "html",
-  "iframe",
-  "img",
-  "input",
-  "li",
-  "link",
-  "listing",
-  "main",
-  "marquee",
-  "menu",
-  "meta",
-  "nav",
-  "noembed",
-  "noframes",
-  "noscript",
-  "object",
-  "ol",
-  "p",
-  "param",
-  "plaintext",
-  "pre",
-  "script",
-  "section",
-  "select",
-  "source",
-  "style",
-  "summary",
-  "table",
-  "tbody",
-  "td",
-  "template",
-  "textarea",
-  "tfoot",
-  "th",
-  "thead",
-  "title",
-  "tr",
-  "track",
-  "ul",
-  "wbr",
-  "xmp",
-]);
-
 const runAdoptionAgencyAlgorithm = (
   state: ParserState,
   tagName: string,
 ): void => {
-  let formattingElement: any = null;
-  let formattingElementIndex = -1;
+  const result = findFormattingElementInStack(state.stack, tagName);
 
-  for (let i = state.stack.length - 1; i >= 0; i--) {
-    const element = state.stack[i];
-    if (element.tagName && element.tagName.toLowerCase() === tagName) {
-      formattingElement = element;
-      formattingElementIndex = i;
-      break;
-    }
-  }
-
-  if (!formattingElement) {
+  if (!result) {
     return;
   }
+
+  const { element: formattingElement, index: formattingElementIndex } = result;
 
   const currentElement = getCurrentElement(state);
   if (currentElement === formattingElement) {
@@ -506,85 +421,56 @@ const runAdoptionAgencyAlgorithm = (
     return;
   }
 
-  let furthestBlock: any = null;
-  let furthestBlockIndex = -1;
+  const fbResult = findFurthestBlock(state.stack, formattingElementIndex);
 
-  for (let i = formattingElementIndex + 1; i < state.stack.length; i++) {
-    const element = state.stack[i];
-    if (SPECIAL_ELEMENTS.has(element.tagName?.toLowerCase())) {
-      furthestBlock = element;
-      furthestBlockIndex = i;
-      break;
-    }
-  }
-
-  if (!furthestBlock) {
+  if (!fbResult) {
     while (state.stack.length > formattingElementIndex) {
       state.stack.pop();
     }
     return;
   }
 
-  const commonAncestor = state.stack[formattingElementIndex - 1];
+  const { element: furthestBlock, index: furthestBlockIndex } = fbResult;
+  const commonAncestor = getCommonAncestor(state.stack, formattingElementIndex);
 
-  if (formattingElement.parentNode) {
-    const parent = formattingElement.parentNode;
-    const idx = parent.childNodes.indexOf(formattingElement);
-    if (idx !== -1) {
-      const nodesToMove = formattingElement.childNodes.filter(
-        (c: any) => c !== furthestBlock && !isDescendantOf(furthestBlock, c),
-      );
-      for (const child of nodesToMove) {
-        const childIdx = formattingElement.childNodes.indexOf(child);
-        if (childIdx !== -1) {
-          formattingElement.childNodes.splice(childIdx, 1);
-          child.parentNode = null;
-        }
-      }
+  if (!commonAncestor) {
+    return;
+  }
 
-      const fbIdx = formattingElement.childNodes.indexOf(furthestBlock);
-      if (fbIdx !== -1) {
-        formattingElement.childNodes.splice(fbIdx, 1);
-        furthestBlock.parentNode = null;
-      }
+  let lastNode = furthestBlock;
+  const clonedNodes: any[] = [];
 
-      parent.childNodes.splice(idx + 1, 0, furthestBlock);
-      furthestBlock.parentNode = parent;
+  for (let i = furthestBlockIndex - 1; i > formattingElementIndex; i--) {
+    const node = state.stack[i];
+    const nodeClone = cloneFormattingElement(node);
+    clonedNodes.unshift(nodeClone);
+
+    const nodeChildIdx = node.childNodes.indexOf(lastNode);
+    if (nodeChildIdx !== -1) {
+      node.childNodes.splice(nodeChildIdx, 1);
     }
+
+    appendChild(nodeClone, lastNode);
+    lastNode = nodeClone;
   }
 
-  const newFormattingElement = createElement(
-    formattingElement.tagName.toLowerCase(),
-    { ...formattingElement.attributes },
-  );
-
-  while (furthestBlock.childNodes.length > 0) {
-    const child = furthestBlock.childNodes[0];
-    furthestBlock.childNodes.splice(0, 1);
-    child.parentNode = null;
-    appendChild(newFormattingElement, child);
+  const fbIdx = formattingElement.childNodes.indexOf(furthestBlock);
+  if (fbIdx !== -1) {
+    formattingElement.childNodes.splice(fbIdx, 1);
+    furthestBlock.parentNode = null;
   }
 
+  appendChild(commonAncestor, lastNode);
+
+  const newFormattingElement = cloneFormattingElement(formattingElement);
+  reparentChildren(furthestBlock, newFormattingElement);
   appendChild(furthestBlock, newFormattingElement);
 
-  const feIdx = state.stack.indexOf(formattingElement);
-  if (feIdx !== -1) {
-    state.stack.splice(feIdx, 1);
+  state.stack.length = formattingElementIndex;
+  for (const clonedNode of clonedNodes) {
+    state.stack.push(clonedNode);
   }
-
-  const fbIdx = state.stack.indexOf(furthestBlock);
-  if (fbIdx !== -1) {
-    state.stack.splice(fbIdx + 1, 0, newFormattingElement);
-  }
-};
-
-const isDescendantOf = (ancestor: any, node: any): boolean => {
-  let current = node;
-  while (current) {
-    if (current === ancestor) return true;
-    current = current.parentNode;
-  }
-  return false;
+  state.stack.push(furthestBlock);
 };
 
 const parseText = (state: ParserState, token: Token): void => {
