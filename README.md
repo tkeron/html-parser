@@ -1,16 +1,16 @@
-# HTML Parser - Powered by Bun Native Tokenizer
+# HTML Parser
 
-A fast and lightweight HTML parser for Bun that converts HTML strings into DOM Document objects. **Now powered by a native Bun tokenizer** for optimal performance.
+A fast and lightweight HTML parser for Bun that converts HTML strings into DOM Document objects. Built with a custom tokenizer optimized for Bun runtime.
 
 ## Features
 
-- ⚡ **Bun Native Tokenizer**: Optimized specifically for Bun runtime
-- 🚀 **Ultra Fast**: Leverages Bun's native optimizations
-- 🪶 **Lightweight**: Minimal dependencies, native implementation
-- 🌐 **Standards Compliant**: Returns standard DOM Document objects
-- 🔧 **TypeScript Support**: Full TypeScript definitions included
-- ✅ **Well Tested**: Comprehensive test suite (5200+ tests passing)
-- 🔄 **100% Compatible**: Drop-in replacement, same API
+- ⚡ **Custom Tokenizer**: Tokenizer optimizado específicamente para Bun runtime
+- 🚀 **Ultra Fast**: Aprovecha las optimizaciones nativas de Bun
+- 🪶 **Lightweight**: Cero dependencias externas
+- 🌐 **Standards Compliant**: Retorna objetos DOM Document estándar
+- 🔧 **TypeScript Support**: Definiciones TypeScript completas incluidas
+- ✅ **Well Tested**: Suite de tests comprehensiva (5200+ tests passing)
+- 🔄 **100% Compatible**: Replacement directo, misma API
 
 ## Installation
 

@@ -24,9 +24,7 @@ export interface Token {
   isClosing?: boolean;
 }
 
-import { allNamedEntities } from "all-named-html-entities";
-
-const HTML_ENTITIES: Record<string, string> = allNamedEntities;
+import { HTML_ENTITIES } from "./html-entities.js";
 
 const decodeEntities = (text: string): string => {
   let result = "";
