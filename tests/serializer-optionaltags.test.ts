@@ -1,9 +1,12 @@
-import { expect, it, describe } from 'bun:test';
-import { serializeTokens } from '../src/serializer';
-import { readFileSync } from 'fs';
+import { expect, it, describe } from "bun:test";
+import { serializeTokens } from "../src/serializer";
+import { readFileSync } from "fs";
 
-describe('Serializer Optional Tags Tests', () => {
-  const content = readFileSync('tests/serializer-data/optionaltags.test', 'utf8');
+describe("Serializer Optional Tags Tests", () => {
+  const content = readFileSync(
+    "tests/serializer-data/optionaltags.test",
+    "utf8",
+  );
   const data = JSON.parse(content);
   const tests = data.tests;
 

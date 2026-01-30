@@ -3,7 +3,10 @@ import { readFileSync } from "fs";
 import { parse } from "../src/index.ts";
 
 describe("Tree Construction DomjsUnsafe Tests", () => {
-  const data = readFileSync("tests/html5lib-data/tree-construction/domjs-unsafe.dat", "utf8");
+  const data = readFileSync(
+    "tests/html5lib-data/tree-construction/domjs-unsafe.dat",
+    "utf8",
+  );
   const sections = data.split("#data\n").slice(1);
 
   for (const section of sections) {

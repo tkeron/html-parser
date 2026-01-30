@@ -8,12 +8,27 @@ import {
 
 // Escape special HTML characters in text content
 function escapeTextContent(text: string): string {
-  return text.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+  return text
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;");
 }
 
 const VOID_ELEMENTS = new Set([
-  'area', 'base', 'br', 'col', 'embed', 'hr', 'img', 'input',
-  'link', 'meta', 'param', 'source', 'track', 'wbr'
+  "area",
+  "base",
+  "br",
+  "col",
+  "embed",
+  "hr",
+  "img",
+  "input",
+  "link",
+  "meta",
+  "param",
+  "source",
+  "track",
+  "wbr",
 ]);
 
 export const enum NodeType {
@@ -29,7 +44,7 @@ export const enum NodeType {
 export function createElement(
   tagName: string,
   attributes: Record<string, string> = {},
-  namespaceURI?: string
+  namespaceURI?: string,
 ): any {
   const innerHTML = "";
   const tagNameLower = tagName.toLowerCase();
@@ -233,7 +248,7 @@ export function createComment(content: string): any {
   return commentNode;
 }
 
-export function createDoctype(name: string = 'html'): any {
+export function createDoctype(name: string = "html"): any {
   const doctypeNode: any = {
     nodeType: NodeType.DOCUMENT_TYPE_NODE,
     nodeName: name.toUpperCase(),
@@ -402,11 +417,16 @@ function convertASTNodeToDOM(astNode: ASTNode): any {
 }
 
 export function appendChild(parent: any, child: any): void {
-  if (child.nodeType === NodeType.ELEMENT_NODE || child.nodeType === NodeType.DOCUMENT_NODE) {
+  if (
+    child.nodeType === NodeType.ELEMENT_NODE ||
+    child.nodeType === NodeType.DOCUMENT_NODE
+  ) {
     let ancestor = parent;
     while (ancestor) {
       if (ancestor === child) {
-        throw new Error("HierarchyRequestError: Cannot insert a node as a descendant of itself");
+        throw new Error(
+          "HierarchyRequestError: Cannot insert a node as a descendant of itself",
+        );
       }
       ancestor = ancestor.parentNode;
     }
@@ -469,7 +489,7 @@ function prepend(parent: any, ...nodes: any[]): void {
     const node = nodes[i];
     let childNode: any;
 
-    if (typeof node === 'string') {
+    if (typeof node === "string") {
       childNode = createTextNode(node);
     } else {
       childNode = node;
@@ -489,7 +509,7 @@ function append(parent: any, ...nodes: any[]): void {
   for (const node of nodes) {
     let childNode: any;
 
-    if (typeof node === 'string') {
+    if (typeof node === "string") {
       childNode = createTextNode(node);
     } else {
       childNode = node;
@@ -512,7 +532,7 @@ function matches(element: any, selector: string): boolean {
 
   try {
     // Para selectores complejos con descendientes, necesitamos buscar desde un ancestro
-    if (selector.includes(' ') || selector.includes('>')) {
+    if (selector.includes(" ") || selector.includes(">")) {
       // Buscar desde la raíz del documento
       let root = element;
       while (root.parentNode) {
@@ -521,7 +541,7 @@ function matches(element: any, selector: string): boolean {
       const results = querySelectorAllFunction(root, selector);
       return results.includes(element);
     }
-    
+
     // Para selectores simples, usar el padre o crear uno temporal
     const parent = element.parentNode || createTempParent(element);
     const results = querySelectorAllFunction(parent, selector);
@@ -532,7 +552,7 @@ function matches(element: any, selector: string): boolean {
 }
 
 function createTempParent(element: any): any {
-  const temp = createElement('div');
+  const temp = createElement("div");
   temp.childNodes.push(element);
   temp.children.push(element);
   element._tempParent = temp;
@@ -561,7 +581,10 @@ function removeChild(parent: any, child: any): any {
     parent.lastChild = child.previousSibling;
   }
 
-  if (parent.nodeType === NodeType.ELEMENT_NODE && child.nodeType === NodeType.ELEMENT_NODE) {
+  if (
+    parent.nodeType === NodeType.ELEMENT_NODE &&
+    child.nodeType === NodeType.ELEMENT_NODE
+  ) {
     const childElement = child;
     const elemIndex = parent.children.indexOf(childElement);
     if (elemIndex !== -1) {
@@ -613,11 +636,16 @@ function insertBefore(parent: any, newNode: any, referenceNode: any): any {
     throw new Error("Reference node is not a child of this node");
   }
 
-  if (newNode.nodeType === NodeType.ELEMENT_NODE || newNode.nodeType === NodeType.DOCUMENT_NODE) {
+  if (
+    newNode.nodeType === NodeType.ELEMENT_NODE ||
+    newNode.nodeType === NodeType.DOCUMENT_NODE
+  ) {
     let ancestor = parent;
     while (ancestor) {
       if (ancestor === newNode) {
-        throw new Error("HierarchyRequestError: Cannot insert a node as a descendant of itself");
+        throw new Error(
+          "HierarchyRequestError: Cannot insert a node as a descendant of itself",
+        );
       }
       ancestor = ancestor.parentNode;
     }
@@ -632,7 +660,7 @@ function insertBefore(parent: any, newNode: any, referenceNode: any): any {
 
   newNode.previousSibling = referenceNode.previousSibling;
   newNode.nextSibling = referenceNode;
-  
+
   if (referenceNode.previousSibling) {
     referenceNode.previousSibling.nextSibling = newNode;
   }
@@ -703,11 +731,16 @@ function replaceChild(parent: any, newChild: any, oldChild: any): any {
     throw new Error("Old child is not a child of this node");
   }
 
-  if (newChild.nodeType === NodeType.ELEMENT_NODE || newChild.nodeType === NodeType.DOCUMENT_NODE) {
+  if (
+    newChild.nodeType === NodeType.ELEMENT_NODE ||
+    newChild.nodeType === NodeType.DOCUMENT_NODE
+  ) {
     let ancestor = parent;
     while (ancestor) {
       if (ancestor === newChild) {
-        throw new Error("HierarchyRequestError: Cannot insert a node as a descendant of itself");
+        throw new Error(
+          "HierarchyRequestError: Cannot insert a node as a descendant of itself",
+        );
       }
       ancestor = ancestor.parentNode;
     }
@@ -878,9 +911,11 @@ function updateElementContent(element: any): void {
     .join("");
   const tagNameLower = element.tagName.toLowerCase();
   const isVoid = VOID_ELEMENTS.has(tagNameLower);
-  
+
   Object.defineProperty(element, "_internalOuterHTML", {
-    value: isVoid ? `<${tagNameLower}${attrs}>` : `<${tagNameLower}${attrs}>${innerHTML}</${tagNameLower}>`,
+    value: isVoid
+      ? `<${tagNameLower}${attrs}>`
+      : `<${tagNameLower}${attrs}>${innerHTML}</${tagNameLower}>`,
     writable: true,
     enumerable: false,
     configurable: true,
@@ -943,10 +978,10 @@ export function setInnerHTML(element: any, html: string): void {
   element.lastElementChild = null;
 
   if (html.trim()) {
-    const wrappedHtml = '<div>' + html + '</div>';
+    const wrappedHtml = "<div>" + html + "</div>";
     const tokens = tokenize(wrappedHtml);
     const doc = parse(tokens);
-    const div = doc.querySelector('div');
+    const div = doc.querySelector("div");
     if (div && div.childNodes) {
       const nodesToMove = [...div.childNodes];
       for (const child of nodesToMove) {
@@ -977,9 +1012,11 @@ export function setInnerHTML(element: any, html: string): void {
     .join("");
   const tagNameLower = element.tagName.toLowerCase();
   const isVoid = VOID_ELEMENTS.has(tagNameLower);
-  
+
   Object.defineProperty(element, "_internalOuterHTML", {
-    value: isVoid ? `<${tagNameLower}${attrs}>` : `<${tagNameLower}${attrs}>${actualInnerHTML}</${tagNameLower}>`,
+    value: isVoid
+      ? `<${tagNameLower}${attrs}>`
+      : `<${tagNameLower}${attrs}>${actualInnerHTML}</${tagNameLower}>`,
     writable: true,
     enumerable: false,
     configurable: true,
@@ -993,13 +1030,13 @@ export function setOuterHTML(element: any, html: string): void {
 
   const parent = element.parentNode;
   const indexInParent = parent.childNodes.indexOf(element);
-  
+
   if (indexInParent === -1) {
     throw new Error("Element not found in parent's childNodes");
   }
 
   let newNodes: any[] = [];
-  
+
   if (html.trim()) {
     const tokens = tokenize(html);
     const doc = parse(tokens);
@@ -1022,12 +1059,13 @@ export function setOuterHTML(element: any, html: string): void {
 
     for (const newNode of newNodes) {
       newNode.parentNode = parent;
-      newNode.parentElement = parent.nodeType === NodeType.ELEMENT_NODE ? parent : null;
+      newNode.parentElement =
+        parent.nodeType === NodeType.ELEMENT_NODE ? parent : null;
     }
 
     for (let i = 0; i < newNodes.length; i++) {
       const currentNode = newNodes[i];
-      
+
       if (i === 0) {
         currentNode.previousSibling = previousSibling;
         if (previousSibling) {
@@ -1061,19 +1099,28 @@ export function setOuterHTML(element: any, html: string): void {
   element.nextSibling = null;
 
   parent.children = parent.childNodes.filter(
-    (child: any) => child.nodeType === NodeType.ELEMENT_NODE
+    (child: any) => child.nodeType === NodeType.ELEMENT_NODE,
   );
 
-  parent.firstChild = parent.childNodes.length > 0 ? parent.childNodes[0] : null;
-  parent.lastChild = parent.childNodes.length > 0 ? parent.childNodes[parent.childNodes.length - 1] : null;
+  parent.firstChild =
+    parent.childNodes.length > 0 ? parent.childNodes[0] : null;
+  parent.lastChild =
+    parent.childNodes.length > 0
+      ? parent.childNodes[parent.childNodes.length - 1]
+      : null;
 
-  parent.firstElementChild = parent.children.length > 0 ? parent.children[0] : null;
-  parent.lastElementChild = parent.children.length > 0 ? parent.children[parent.children.length - 1] : null;
+  parent.firstElementChild =
+    parent.children.length > 0 ? parent.children[0] : null;
+  parent.lastElementChild =
+    parent.children.length > 0
+      ? parent.children[parent.children.length - 1]
+      : null;
 
   for (let i = 0; i < parent.children.length; i++) {
     const child = parent.children[i];
     child.previousElementSibling = i > 0 ? parent.children[i - 1] : null;
-    child.nextElementSibling = i < parent.children.length - 1 ? parent.children[i + 1] : null;
+    child.nextElementSibling =
+      i < parent.children.length - 1 ? parent.children[i + 1] : null;
   }
 
   updateElementContent(parent);

@@ -1,14 +1,17 @@
-import { readFileSync } from 'fs';
-import { parse } from '../src/index.ts';
+import { readFileSync } from "fs";
+import { parse } from "../src/index.ts";
 
-describe('Tree Construction Noscript01 Tests', () => {
-  const content = readFileSync('tests/html5lib-data/tree-construction/noscript01.dat', 'utf8');
-  const tests = content.split('#data\n').slice(1);
+describe("Tree Construction Noscript01 Tests", () => {
+  const content = readFileSync(
+    "tests/html5lib-data/tree-construction/noscript01.dat",
+    "utf8",
+  );
+  const tests = content.split("#data\n").slice(1);
 
   tests.forEach((test, index) => {
-    const parts = test.split('#document\n');
+    const parts = test.split("#document\n");
     const input = parts[0].trim();
-    const expected = parts[1]?.split('#errors\n')[0]?.trim() || '';
+    const expected = parts[1]?.split("#errors\n")[0]?.trim() || "";
 
     it.skip(`Noscript01 test ${index + 1}`, () => {
       const doc = parse(input);

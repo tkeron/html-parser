@@ -17,14 +17,14 @@ function parseSelector(selector: string): SelectorGroup[] {
     let tokens: SelectorToken[] = [];
 
     // Handle universal selector
-    if (trimmed === '*') {
+    if (trimmed === "*") {
       // Match any element - we'll handle this specially
       return { tokens: [] };
     }
 
     // Parse complex selectors like p#intro.first or .foo.bar.baz
     let remaining = trimmed;
-    
+
     // Extract tag name first if present
     const tagMatch = remaining.match(/^([a-zA-Z][a-zA-Z0-9-]*)/);
     if (tagMatch) {
@@ -37,23 +37,25 @@ function parseSelector(selector: string): SelectorGroup[] {
     for (const match of idMatches) {
       tokens.push({ type: "id", value: match[1] });
     }
-    remaining = remaining.replace(/#[a-zA-Z0-9][a-zA-Z0-9_-]*/g, '');
+    remaining = remaining.replace(/#[a-zA-Z0-9][a-zA-Z0-9_-]*/g, "");
 
     // Extract all classes
     const classMatches = remaining.matchAll(/\.([a-zA-Z][a-zA-Z0-9_-]*)/g);
     for (const match of classMatches) {
       tokens.push({ type: "class", value: match[1] });
     }
-    remaining = remaining.replace(/\.[a-zA-Z][a-zA-Z0-9_-]*/g, '');
+    remaining = remaining.replace(/\.[a-zA-Z][a-zA-Z0-9_-]*/g, "");
 
     // Extract attributes
-    const attrMatches = remaining.matchAll(/\[([^=\]]+)(?:=["']?([^"'\]]*?)["']?)?\]/g);
+    const attrMatches = remaining.matchAll(
+      /\[([^=\]]+)(?:=["']?([^"'\]]*?)["']?)?\]/g,
+    );
     for (const match of attrMatches) {
       tokens.push({
         type: "attribute",
         value: match[1].trim(),
         attributeName: match[1].trim(),
-        attributeValue: match[2] ? match[2].trim() : undefined
+        attributeValue: match[2] ? match[2].trim() : undefined,
       });
     }
 
@@ -99,7 +101,7 @@ function findElementsDescendant(
   node: any,
   selectorGroups: SelectorGroup[],
   groupIndex: number,
-  results: any[]
+  results: any[],
 ): void {
   if (groupIndex >= selectorGroups.length) {
     return;
@@ -124,7 +126,7 @@ function findElementsDescendant(
             element,
             selectorGroups,
             groupIndex + 1,
-            results
+            results,
           );
         }
       }
@@ -143,7 +145,7 @@ function findElementsDescendant(
 function findElements(
   node: any,
   selectorGroups: SelectorGroup[],
-  results: any[]
+  results: any[],
 ): void {
   if (selectorGroups.length === 1) {
     const firstGroup = selectorGroups[0];
@@ -159,7 +161,7 @@ function findElements(
 function findElementsSimple(
   node: any,
   tokens: SelectorToken[],
-  results: any[]
+  results: any[],
 ): void {
   if (node.nodeType === 1) {
     const element = node;

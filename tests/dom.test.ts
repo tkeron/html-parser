@@ -67,7 +67,9 @@ describe("DOM Simulator - Phase 1: Structure and Conversion", () => {
     });
 
     it("should parse comments", () => {
-      const doc = parseHTML("<div><!-- This is a comment --></div><p>Hello</p>");
+      const doc = parseHTML(
+        "<div><!-- This is a comment --></div><p>Hello</p>",
+      );
 
       const body = doc.body;
       expect(body.childNodes.length).toBe(2);
@@ -93,7 +95,7 @@ describe("DOM Simulator - Phase 1: Structure and Conversion", () => {
 
     it("should set sibling relationships correctly", () => {
       const doc = parseHTML(
-        "<div><p>First</p><span>Second</span><em>Third</em></div>"
+        "<div><p>First</p><span>Second</span><em>Third</em></div>",
       );
 
       const div = getBodyContent(doc);
@@ -181,7 +183,7 @@ describe("DOM Simulator - Phase 2: Navigation and Attributes", () => {
 
     it("should get text from deeply nested elements", () => {
       const doc = parseHTML(
-        "<div>Start <p>Middle <em>Deep <strong>Deeper</strong></em></p> End</div>"
+        "<div>Start <p>Middle <em>Deep <strong>Deeper</strong></em></p> End</div>",
       );
       const div = getBodyContent(doc);
 
@@ -213,7 +215,7 @@ describe("DOM Simulator - Phase 2: Navigation and Attributes", () => {
   describe("Attribute functions", () => {
     it("should get existing attributes", () => {
       const doc = parseHTML(
-        '<div id="test" class="highlight" data-value="123">Content</div>'
+        '<div id="test" class="highlight" data-value="123">Content</div>',
       );
       const div = getBodyContent(doc) as any;
 
@@ -265,7 +267,7 @@ describe("DOM Simulator - Phase 2: Navigation and Attributes", () => {
 
     it("should remove attributes", () => {
       const doc = parseHTML(
-        '<div id="test" class="highlight" data-value="123">Content</div>'
+        '<div id="test" class="highlight" data-value="123">Content</div>',
       );
       const div = getBodyContent(doc) as any;
 
@@ -370,7 +372,7 @@ describe("DOM extra tests", () => {
 
     expect(doc.head?.querySelector("title")?.textContent).toBe("Sample Page");
     expect(doc.head?.querySelector("meta")?.getAttribute("charset")).toBe(
-      "UTF-8"
+      "UTF-8",
     );
   });
 
@@ -387,7 +389,7 @@ describe("DOM extra tests", () => {
     expect(paragraphs.length).toBe(2);
     expect(paragraphs[0]?.textContent).toBe("First paragraph.");
     expect(paragraphs[1]?.textContent).toBe(
-      "Second paragraph with formatting."
+      "Second paragraph with formatting.",
     );
 
     const strong = section.querySelector("strong")!;
@@ -408,7 +410,7 @@ describe("DOM extra tests", () => {
 
     const main = doc.body?.querySelector("main")!;
     const commentNode = (main.childNodes as any).find(
-      (n: any) => n.nodeType === NodeType.COMMENT_NODE
+      (n: any) => n.nodeType === NodeType.COMMENT_NODE,
     );
     expect(commentNode).toBeTruthy();
     expect(commentNode?.nodeValue?.trim()).toBe("Footer note");
@@ -425,7 +427,7 @@ describe("DOM extra tests", () => {
     const header = doc.body?.querySelector("#main-header")!;
 
     const clonedFooter = (doc.body?.querySelector("footer") as any).cloneNode(
-      true
+      true,
     );
     expect(clonedFooter.nodeName).toBe("FOOTER");
     expect(clonedFooter.querySelector("a")?.textContent).toBe("Email us");
@@ -480,7 +482,7 @@ describe("DOM extra tests", () => {
 
     expect(container.querySelector("h2")?.textContent).toBe("Dynamic Content");
     expect(container.querySelector("p")?.textContent).toBe(
-      "This is a dynamically added paragraph."
+      "This is a dynamically added paragraph.",
     );
     expect(container.querySelectorAll("li").length).toBe(2);
   });

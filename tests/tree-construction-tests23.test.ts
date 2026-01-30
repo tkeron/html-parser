@@ -2,7 +2,10 @@ import { readFileSync } from "fs";
 import { parse } from "../src/index.ts";
 
 describe("Tree Construction Tests23 Tests", () => {
-  const data = readFileSync("tests/html5lib-data/tree-construction/tests23.dat", "utf8");
+  const data = readFileSync(
+    "tests/html5lib-data/tree-construction/tests23.dat",
+    "utf8",
+  );
   const tests = data.split("#data\n").slice(1);
 
   for (const test of tests) {

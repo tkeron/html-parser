@@ -3,10 +3,6 @@ import { parseHTML } from "../index";
 
 describe("outerHTML replacement - Browser behavior", () => {
   it("should replace element with its innerHTML when setting outerHTML = innerHTML", () => {
-    
-    
-    
-    
     const doc = parseHTML(`
       <html>
         <body>
@@ -16,35 +12,29 @@ describe("outerHTML replacement - Browser behavior", () => {
         </body>
       </html>
     `);
-    
+
     const elem = doc.querySelector("#mi-prueba");
     expect(elem).not.toBeNull();
-    
-    
+
     const innerHTML = elem!.innerHTML;
     expect(innerHTML).toContain("<strong>Lorem ipsum!</strong>");
     expect(innerHTML).toContain("Dolor sit amet consectetur.");
-    
-    
+
     const parent = elem!.parentNode;
     expect(parent).not.toBeNull();
     expect(parent!.childNodes).toContain(elem);
-    
-    
+
     elem!.outerHTML = innerHTML;
-    
-    
+
     const elemAfter = doc.querySelector("#mi-prueba");
     expect(elemAfter).toBeNull();
-    
-    
+
     const body = doc.querySelector("body");
     expect(body!.innerHTML).toContain("<strong>Lorem ipsum!</strong>");
     expect(body!.innerHTML).toContain("Dolor sit amet consectetur.");
-    
-    
+
     expect(body!.innerHTML).not.toContain('id="mi-prueba"');
-    expect(body!.innerHTML).not.toContain('style=');
+    expect(body!.innerHTML).not.toContain("style=");
   });
 
   it("should replace element with simple text content", () => {
@@ -53,20 +43,17 @@ describe("outerHTML replacement - Browser behavior", () => {
         <p id="paragraph" class="styled">Simple text</p>
       </div>
     `);
-    
+
     const paragraph = doc.querySelector("#paragraph");
     expect(paragraph).not.toBeNull();
-    
+
     const parent = paragraph!.parentNode;
     const innerHTML = paragraph!.innerHTML;
-    
-    
+
     paragraph!.outerHTML = innerHTML;
-    
-    
+
     expect(doc.querySelector("#paragraph")).toBeNull();
-    
-    
+
     expect(parent!.textContent).toContain("Simple text");
   });
 
@@ -79,20 +66,17 @@ describe("outerHTML replacement - Browser behavior", () => {
         </li>
       </ul>
     `);
-    
+
     const container = doc.querySelector("#item-container");
     expect(container).not.toBeNull();
-    
+
     const ul = doc.querySelector("ul");
     const innerHTML = container!.innerHTML;
-    
-    
+
     container!.outerHTML = innerHTML;
-    
-    
+
     expect(doc.querySelector("#item-container")).toBeNull();
-    
-    
+
     const spans = ul!.querySelectorAll("span");
     expect(spans.length).toBe(2);
     expect(spans[0]?.textContent).toBe("Item 1");
@@ -105,20 +89,17 @@ describe("outerHTML replacement - Browser behavior", () => {
         <span id="to-remove"></span>
       </div>
     `);
-    
+
     const span = doc.querySelector("#to-remove");
     expect(span).not.toBeNull();
-    
+
     const parent = span!.parentNode;
     const childCountBefore = parent!.childNodes.length;
-    
-    
+
     span!.outerHTML = "";
-    
-    
+
     expect(doc.querySelector("#to-remove")).toBeNull();
-    
-    
+
     expect(parent!.childNodes.length).toBe(childCountBefore - 1);
   });
 
@@ -128,19 +109,16 @@ describe("outerHTML replacement - Browser behavior", () => {
         <p id="old">Old content</p>
       </div>
     `);
-    
+
     const oldParagraph = doc.querySelector("#old");
     expect(oldParagraph).not.toBeNull();
-    
+
     const parent = oldParagraph!.parentNode;
-    
-    
+
     oldParagraph!.outerHTML = '<div id="new">New content</div>';
-    
-    
+
     expect(doc.querySelector("#old")).toBeNull();
-    
-    
+
     const newDiv = doc.querySelector("#new");
     expect(newDiv).not.toBeNull();
     expect(newDiv!.textContent).toBe("New content");
@@ -155,19 +133,16 @@ describe("outerHTML replacement - Browser behavior", () => {
         <span>Last</span>
       </div>
     `);
-    
+
     const middle = doc.querySelector("#middle");
     const firstSpan = doc.querySelectorAll("span")[0];
     const lastSpan = doc.querySelectorAll("span")[1];
-    
-    
+
     middle!.outerHTML = middle!.innerHTML;
-    
-    
+
     expect(firstSpan!.nextSibling).not.toBe(middle);
     expect(lastSpan!.previousSibling).not.toBe(middle);
-    
-    
+
     const parent = firstSpan!.parentNode;
     expect(parent!.textContent).toContain("Middle");
   });
@@ -185,21 +160,18 @@ describe("outerHTML replacement - Browser behavior", () => {
         </section>
       </article>
     `);
-    
+
     const wrapper = doc.querySelector("#wrapper");
     expect(wrapper).not.toBeNull();
-    
+
     const article = doc.querySelector("article");
     const innerHTML = wrapper!.innerHTML;
-    
-    
+
     wrapper!.outerHTML = innerHTML;
-    
-    
+
     expect(doc.querySelector("#wrapper")).toBeNull();
     expect(doc.querySelector("section")).toBeNull();
-    
-    
+
     expect(article!.querySelector("h2")).not.toBeNull();
     expect(article!.querySelector("h2")!.textContent).toBe("Title");
     expect(article!.querySelector("strong")).not.toBeNull();

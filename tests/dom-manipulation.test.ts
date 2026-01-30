@@ -255,7 +255,7 @@ describe("DOM Manipulation - insertBefore", () => {
   describe("insertBefore with node relocation", () => {
     it("should remove node from previous parent when inserting", () => {
       const doc = parseHTML(
-        "<div id='parent1'><span>Child</span></div><div id='parent2'></div>"
+        "<div id='parent1'><span>Child</span></div><div id='parent2'></div>",
       );
       const parent1 = doc.querySelector("#parent1");
       const parent2 = doc.querySelector("#parent2");
@@ -270,7 +270,7 @@ describe("DOM Manipulation - insertBefore", () => {
 
     it("should update all relationships when moving node between parents", () => {
       const doc = parseHTML(
-        "<div id='p1'><span>A</span><span>B</span></div><div id='p2'><span>C</span></div>"
+        "<div id='p1'><span>A</span><span>B</span></div><div id='p2'><span>C</span></div>",
       );
       const parent1 = doc.querySelector("#p1");
       const parent2 = doc.querySelector("#p2");
@@ -319,7 +319,7 @@ describe("DOM Manipulation - replaceChild", () => {
 
     it("should replace middle child in multiple children", () => {
       const doc = parseHTML(
-        "<div><span>First</span><span>Old</span><span>Third</span></div>"
+        "<div><span>First</span><span>Old</span><span>Third</span></div>",
       );
       const div = doc.querySelector("div");
       const oldSpan = div.childNodes[1];
@@ -383,7 +383,7 @@ describe("DOM Manipulation - replaceChild", () => {
   describe("replaceChild sibling relationships", () => {
     it("should transfer sibling relationships to new node", () => {
       const doc = parseHTML(
-        "<div><span>A</span><span>Old</span><span>C</span></div>"
+        "<div><span>A</span><span>Old</span><span>C</span></div>",
       );
       const div = doc.querySelector("div");
       const spanA = div.childNodes[0];
@@ -430,7 +430,9 @@ describe("DOM Manipulation - replaceChild", () => {
     });
 
     it("should clear old child's relationships", () => {
-      const doc = parseHTML("<div><span>A</span><span>Old</span><span>C</span></div>");
+      const doc = parseHTML(
+        "<div><span>A</span><span>Old</span><span>C</span></div>",
+      );
       const div = doc.querySelector("div");
       const oldSpan = div.childNodes[1];
 
@@ -447,7 +449,7 @@ describe("DOM Manipulation - replaceChild", () => {
   describe("replaceChild element-specific relationships", () => {
     it("should update children array when replacing element with element", () => {
       const doc = parseHTML(
-        "<div><span>A</span><span>Old</span><span>C</span></div>"
+        "<div><span>A</span><span>Old</span><span>C</span></div>",
       );
       const div = doc.querySelector("div");
       const oldSpan = div.children[1];
@@ -464,7 +466,7 @@ describe("DOM Manipulation - replaceChild", () => {
 
     it("should update element sibling relationships", () => {
       const doc = parseHTML(
-        "<div><span>A</span><span>Old</span><span>C</span></div>"
+        "<div><span>A</span><span>Old</span><span>C</span></div>",
       );
       const div = doc.querySelector("div");
       const spanA = div.children[0];
@@ -504,7 +506,7 @@ describe("DOM Manipulation - replaceChild", () => {
 
     it("should remove from children array when replacing element with text", () => {
       const doc = parseHTML(
-        "<div><span>A</span><span>Old</span><span>C</span></div>"
+        "<div><span>A</span><span>Old</span><span>C</span></div>",
       );
       const div = doc.querySelector("div");
       const spanA = div.children[0];
@@ -582,7 +584,7 @@ describe("DOM Manipulation - replaceChild", () => {
   describe("replaceChild with node relocation", () => {
     it("should remove node from previous parent before replacing", () => {
       const doc = parseHTML(
-        "<div id='p1'><span>Moving</span></div><div id='p2'><span>Old</span></div>"
+        "<div id='p1'><span>Moving</span></div><div id='p2'><span>Old</span></div>",
       );
       const parent1 = doc.querySelector("#p1");
       const parent2 = doc.querySelector("#p2");
@@ -830,7 +832,9 @@ describe("DOM Manipulation - prepend", () => {
 
   describe("prepend with parent relocation", () => {
     it("should move node from another parent when prepending", () => {
-      const doc = parseHTML("<div id='a'><span>Child</span></div><div id='b'><span>Other</span></div>");
+      const doc = parseHTML(
+        "<div id='a'><span>Child</span></div><div id='b'><span>Other</span></div>",
+      );
       const divA = doc.querySelector("#a");
       const divB = doc.querySelector("#b");
       const child = divA.querySelector("span");
@@ -844,7 +848,9 @@ describe("DOM Manipulation - prepend", () => {
     });
 
     it("should remove from old parent before prepending", () => {
-      const doc = parseHTML("<div id='a'><span id='1'>1</span><span id='2'>2</span></div><div id='b'></div>");
+      const doc = parseHTML(
+        "<div id='a'><span id='1'>1</span><span id='2'>2</span></div><div id='b'></div>",
+      );
       const divA = doc.querySelector("#a");
       const divB = doc.querySelector("#b");
       const span1 = doc.querySelector("#1");
@@ -1053,7 +1059,9 @@ describe("DOM Manipulation - append", () => {
 
   describe("append with parent relocation", () => {
     it("should move node from another parent when appending", () => {
-      const doc = parseHTML("<div id='a'><span>Child</span></div><div id='b'><span>Other</span></div>");
+      const doc = parseHTML(
+        "<div id='a'><span>Child</span></div><div id='b'><span>Other</span></div>",
+      );
       const divA = doc.querySelector("#a");
       const divB = doc.querySelector("#b");
       const child = divA.querySelector("span");
@@ -1067,7 +1075,9 @@ describe("DOM Manipulation - append", () => {
     });
 
     it("should remove from old parent before appending", () => {
-      const doc = parseHTML("<div id='a'><span id='1'>1</span><span id='2'>2</span></div><div id='b'></div>");
+      const doc = parseHTML(
+        "<div id='a'><span id='1'>1</span><span id='2'>2</span></div><div id='b'></div>",
+      );
       const divA = doc.querySelector("#a");
       const divB = doc.querySelector("#b");
       const span2 = doc.querySelector("#2");
@@ -1137,7 +1147,9 @@ describe("DOM Manipulation - append", () => {
 describe("DOM Manipulation - remove", () => {
   describe("Basic remove functionality", () => {
     it("should remove an element from its parent", () => {
-      const doc = parseHTML("<div><span id='1'>First</span><span id='2'>Second</span></div>");
+      const doc = parseHTML(
+        "<div><span id='1'>First</span><span id='2'>Second</span></div>",
+      );
       const div = doc.querySelector("div");
       const span1 = doc.querySelector("#1");
 
@@ -1170,7 +1182,9 @@ describe("DOM Manipulation - remove", () => {
     });
 
     it("should remove first child", () => {
-      const doc = parseHTML("<div><span>First</span><span>Second</span><span>Third</span></div>");
+      const doc = parseHTML(
+        "<div><span>First</span><span>Second</span><span>Third</span></div>",
+      );
       const div = doc.querySelector("div");
       const first = div.childNodes[0];
 
@@ -1182,7 +1196,9 @@ describe("DOM Manipulation - remove", () => {
     });
 
     it("should remove last child", () => {
-      const doc = parseHTML("<div><span>First</span><span>Second</span><span>Third</span></div>");
+      const doc = parseHTML(
+        "<div><span>First</span><span>Second</span><span>Third</span></div>",
+      );
       const div = doc.querySelector("div");
       const last = div.childNodes[2];
 
@@ -1194,7 +1210,9 @@ describe("DOM Manipulation - remove", () => {
     });
 
     it("should remove middle child", () => {
-      const doc = parseHTML("<div><span>First</span><span>Second</span><span>Third</span></div>");
+      const doc = parseHTML(
+        "<div><span>First</span><span>Second</span><span>Third</span></div>",
+      );
       const div = doc.querySelector("div");
       const middle = div.childNodes[1];
 
@@ -1208,7 +1226,9 @@ describe("DOM Manipulation - remove", () => {
 
   describe("remove sibling relationships", () => {
     it("should update nextSibling and previousSibling correctly", () => {
-      const doc = parseHTML("<div><span>A</span><span>B</span><span>C</span></div>");
+      const doc = parseHTML(
+        "<div><span>A</span><span>B</span><span>C</span></div>",
+      );
       const div = doc.querySelector("div");
       const spanA = div.childNodes[0];
       const spanB = div.childNodes[1];
@@ -1223,7 +1243,9 @@ describe("DOM Manipulation - remove", () => {
     });
 
     it("should update element sibling relationships", () => {
-      const doc = parseHTML("<div><span>A</span><span>B</span><span>C</span></div>");
+      const doc = parseHTML(
+        "<div><span>A</span><span>B</span><span>C</span></div>",
+      );
       const div = doc.querySelector("div");
       const spanA = div.childNodes[0];
       const spanB = div.childNodes[1];
@@ -1276,7 +1298,9 @@ describe("DOM Manipulation - remove", () => {
 
   describe("remove synchronization", () => {
     it("should update innerHTML correctly", () => {
-      const doc = parseHTML("<div><span>A</span><span>B</span><span>C</span></div>");
+      const doc = parseHTML(
+        "<div><span>A</span><span>B</span><span>C</span></div>",
+      );
       const div = doc.querySelector("div");
       const spanB = div.childNodes[1];
 
@@ -1296,7 +1320,9 @@ describe("DOM Manipulation - remove", () => {
     });
 
     it("should update children array correctly", () => {
-      const doc = parseHTML("<div><span>A</span><span>B</span><span>C</span></div>");
+      const doc = parseHTML(
+        "<div><span>A</span><span>B</span><span>C</span></div>",
+      );
       const div = doc.querySelector("div");
       const spanB = div.children[1];
 
@@ -1310,7 +1336,9 @@ describe("DOM Manipulation - remove", () => {
 
   describe("remove multiple elements", () => {
     it("should remove multiple elements sequentially", () => {
-      const doc = parseHTML("<div><span>A</span><span>B</span><span>C</span></div>");
+      const doc = parseHTML(
+        "<div><span>A</span><span>B</span><span>C</span></div>",
+      );
       const div = doc.querySelector("div");
       const spanA = div.childNodes[0];
       const spanB = div.childNodes[1];

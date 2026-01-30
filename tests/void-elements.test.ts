@@ -3,10 +3,10 @@ import { parseHTML } from "../index";
 
 /**
  * Test suite for HTML void elements serialization
- * 
+ *
  * Void elements should NOT have closing tags according to HTML spec:
  * https://html.spec.whatwg.org/multipage/syntax.html#void-elements
- * 
+ *
  * List: area, base, br, col, embed, hr, img, input, link, meta, source, track, wbr
  */
 
@@ -52,73 +52,101 @@ describe("Void Elements - outerHTML serialization", () => {
 
   describe("Individual void elements with attributes", () => {
     it("should serialize <img> with attributes without closing tag", () => {
-      const doc = parseHTML('<html><body><img src="test.jpg" alt="test image"></body></html>');
+      const doc = parseHTML(
+        '<html><body><img src="test.jpg" alt="test image"></body></html>',
+      );
       const img = doc.querySelector("img");
       expect(img).not.toBeNull();
       expect(img!.outerHTML).toBe('<img src="test.jpg" alt="test image">');
     });
 
     it("should serialize <input> with type attribute without closing tag", () => {
-      const doc = parseHTML('<html><body><input type="text" name="username"></body></html>');
+      const doc = parseHTML(
+        '<html><body><input type="text" name="username"></body></html>',
+      );
       const input = doc.querySelector("input");
       expect(input).not.toBeNull();
       expect(input!.outerHTML).toBe('<input type="text" name="username">');
     });
 
     it("should serialize <meta> with attributes without closing tag", () => {
-      const doc = parseHTML('<html><head><meta charset="utf-8"></head><body></body></html>');
+      const doc = parseHTML(
+        '<html><head><meta charset="utf-8"></head><body></body></html>',
+      );
       const meta = doc.querySelector("meta");
       expect(meta).not.toBeNull();
       expect(meta!.outerHTML).toBe('<meta charset="utf-8">');
     });
 
     it("should serialize <link> with attributes without closing tag", () => {
-      const doc = parseHTML('<html><head><link rel="stylesheet" href="style.css"></head><body></body></html>');
+      const doc = parseHTML(
+        '<html><head><link rel="stylesheet" href="style.css"></head><body></body></html>',
+      );
       const link = doc.querySelector("link");
       expect(link).not.toBeNull();
       expect(link!.outerHTML).toBe('<link rel="stylesheet" href="style.css">');
     });
 
     it("should serialize <base> with href without closing tag", () => {
-      const doc = parseHTML('<html><head><base href="https://example.com/"></head><body></body></html>');
+      const doc = parseHTML(
+        '<html><head><base href="https://example.com/"></head><body></body></html>',
+      );
       const base = doc.querySelector("base");
       expect(base).not.toBeNull();
       expect(base!.outerHTML).toBe('<base href="https://example.com/">');
     });
 
     it("should serialize <col> with attributes without closing tag", () => {
-      const doc = parseHTML('<html><body><table><colgroup><col span="2" style="background:red"></colgroup></table></body></html>');
+      const doc = parseHTML(
+        '<html><body><table><colgroup><col span="2" style="background:red"></colgroup></table></body></html>',
+      );
       const col = doc.querySelector("col");
       expect(col).not.toBeNull();
       expect(col!.outerHTML).toBe('<col span="2" style="background:red">');
     });
 
     it("should serialize <embed> with attributes without closing tag", () => {
-      const doc = parseHTML('<html><body><embed src="video.swf" type="application/x-shockwave-flash"></body></html>');
+      const doc = parseHTML(
+        '<html><body><embed src="video.swf" type="application/x-shockwave-flash"></body></html>',
+      );
       const embed = doc.querySelector("embed");
       expect(embed).not.toBeNull();
-      expect(embed!.outerHTML).toBe('<embed src="video.swf" type="application/x-shockwave-flash">');
+      expect(embed!.outerHTML).toBe(
+        '<embed src="video.swf" type="application/x-shockwave-flash">',
+      );
     });
 
     it("should serialize <source> with attributes without closing tag", () => {
-      const doc = parseHTML('<html><body><video><source src="video.mp4" type="video/mp4"></video></body></html>');
+      const doc = parseHTML(
+        '<html><body><video><source src="video.mp4" type="video/mp4"></video></body></html>',
+      );
       const source = doc.querySelector("source");
       expect(source).not.toBeNull();
-      expect(source!.outerHTML).toBe('<source src="video.mp4" type="video/mp4">');
+      expect(source!.outerHTML).toBe(
+        '<source src="video.mp4" type="video/mp4">',
+      );
     });
 
     it("should serialize <track> with attributes without closing tag", () => {
-      const doc = parseHTML('<html><body><video><track kind="subtitles" src="subs.vtt" srclang="en"></video></body></html>');
+      const doc = parseHTML(
+        '<html><body><video><track kind="subtitles" src="subs.vtt" srclang="en"></video></body></html>',
+      );
       const track = doc.querySelector("track");
       expect(track).not.toBeNull();
-      expect(track!.outerHTML).toBe('<track kind="subtitles" src="subs.vtt" srclang="en">');
+      expect(track!.outerHTML).toBe(
+        '<track kind="subtitles" src="subs.vtt" srclang="en">',
+      );
     });
 
     it("should serialize <area> with attributes without closing tag", () => {
-      const doc = parseHTML('<html><body><map name="test"><area shape="rect" coords="0,0,100,100" href="link.html"></map></body></html>');
+      const doc = parseHTML(
+        '<html><body><map name="test"><area shape="rect" coords="0,0,100,100" href="link.html"></map></body></html>',
+      );
       const area = doc.querySelector("area");
       expect(area).not.toBeNull();
-      expect(area!.outerHTML).toBe('<area shape="rect" coords="0,0,100,100" href="link.html">');
+      expect(area!.outerHTML).toBe(
+        '<area shape="rect" coords="0,0,100,100" href="link.html">',
+      );
     });
   });
 
@@ -136,22 +164,25 @@ describe("Void Elements - outerHTML serialization", () => {
 
   describe("Multiple void elements in same document", () => {
     it("should serialize multiple void elements correctly", () => {
-      const doc = parseHTML('<html><body><img src="test.jpg"><br><input type="text"></body></html>');
-      
+      const doc = parseHTML(
+        '<html><body><img src="test.jpg"><br><input type="text"></body></html>',
+      );
+
       const img = doc.querySelector("img");
       const br = doc.querySelector("br");
       const input = doc.querySelector("input");
-      
+
       expect(img!.outerHTML).toBe('<img src="test.jpg">');
       expect(br!.outerHTML).toBe("<br>");
       expect(input!.outerHTML).toBe('<input type="text">');
     });
 
     it("should serialize document with multiple void elements without closing tags", () => {
-      const html = '<html><body><img src="test.jpg"><br><input type="text"></body></html>';
+      const html =
+        '<html><body><img src="test.jpg"><br><input type="text"></body></html>';
       const doc = parseHTML(html);
       const outerHTML = doc.documentElement.outerHTML;
-      
+
       expect(outerHTML).not.toContain("</img>");
       expect(outerHTML).not.toContain("</br>");
       expect(outerHTML).not.toContain("</input>");
@@ -170,11 +201,11 @@ describe("Void Elements - outerHTML serialization", () => {
         <body></body>
       </html>`;
       const doc = parseHTML(html);
-      
+
       const metas = doc.querySelectorAll("meta");
       const link = doc.querySelector("link");
       const base = doc.querySelector("base");
-      
+
       metas.forEach((meta: any) => {
         expect(meta.outerHTML).not.toContain("</meta>");
       });
@@ -210,7 +241,9 @@ describe("Void Elements - outerHTML serialization", () => {
       const meta = doc.createElement("meta");
       meta.setAttribute("name", "description");
       meta.setAttribute("content", "Test page");
-      expect(meta.outerHTML).toBe('<meta name="description" content="Test page">');
+      expect(meta.outerHTML).toBe(
+        '<meta name="description" content="Test page">',
+      );
     });
 
     it("should serialize dynamically created <hr> without closing tag", () => {
@@ -285,14 +318,18 @@ describe("Void Elements - outerHTML serialization", () => {
     });
 
     it("should serialize <style> with closing tag", () => {
-      const doc = parseHTML("<html><head><style></style></head><body></body></html>");
+      const doc = parseHTML(
+        "<html><head><style></style></head><body></body></html>",
+      );
       const style = doc.querySelector("style");
       expect(style).not.toBeNull();
       expect(style!.outerHTML).toBe("<style></style>");
     });
 
     it("should serialize <iframe> with closing tag", () => {
-      const doc = parseHTML('<html><body><iframe src="page.html"></iframe></body></html>');
+      const doc = parseHTML(
+        '<html><body><iframe src="page.html"></iframe></body></html>',
+      );
       const iframe = doc.querySelector("iframe");
       expect(iframe).not.toBeNull();
       expect(iframe!.outerHTML).toBe('<iframe src="page.html"></iframe>');
@@ -336,7 +373,7 @@ describe("Void Elements - outerHTML serialization", () => {
     });
 
     it("should not include innerHTML content in void element", () => {
-      const doc = parseHTML("<html><body><img src=\"test.jpg\"></body></html>");
+      const doc = parseHTML('<html><body><img src="test.jpg"></body></html>');
       const img = doc.querySelector("img");
       expect(img).not.toBeNull();
       expect(img!.innerHTML).toBe("");
@@ -357,11 +394,11 @@ describe("Void Elements - outerHTML serialization", () => {
           </form>
         </div>
       </body></html>`;
-      
+
       const doc = parseHTML(html);
       const inputs = doc.querySelectorAll("input");
       const br = doc.querySelector("br");
-      
+
       expect(inputs.length).toBe(2);
       inputs.forEach((input: any) => {
         expect(input.outerHTML).not.toContain("</input>");
@@ -379,11 +416,11 @@ describe("Void Elements - outerHTML serialization", () => {
           <tr><td><img src="icon.png"></td></tr>
         </table>
       </body></html>`;
-      
+
       const doc = parseHTML(html);
       const cols = doc.querySelectorAll("col");
       const img = doc.querySelector("img");
-      
+
       expect(cols.length).toBe(2);
       cols.forEach((col: any) => {
         expect(col.outerHTML).not.toContain("</col>");
@@ -394,24 +431,30 @@ describe("Void Elements - outerHTML serialization", () => {
 
   describe("Edge cases", () => {
     it("should handle void element with boolean attributes", () => {
-      const doc = parseHTML('<html><body><input type="checkbox" checked disabled></body></html>');
+      const doc = parseHTML(
+        '<html><body><input type="checkbox" checked disabled></body></html>',
+      );
       const input = doc.querySelector("input");
       expect(input).not.toBeNull();
       expect(input!.outerHTML).not.toContain("</input>");
     });
 
     it("should handle void element with empty attribute value", () => {
-      const doc = parseHTML('<html><body><input type="text" value=""></body></html>');
+      const doc = parseHTML(
+        '<html><body><input type="text" value=""></body></html>',
+      );
       const input = doc.querySelector("input");
       expect(input).not.toBeNull();
       expect(input!.outerHTML).not.toContain("</input>");
     });
 
     it("should handle uppercase void element tag names", () => {
-      const doc = parseHTML("<html><body><BR><IMG SRC=\"test.jpg\"></body></html>");
+      const doc = parseHTML(
+        '<html><body><BR><IMG SRC="test.jpg"></body></html>',
+      );
       const br = doc.querySelector("br");
       const img = doc.querySelector("img");
-      
+
       expect(br).not.toBeNull();
       expect(img).not.toBeNull();
       expect(br!.outerHTML).not.toContain("</br>");
@@ -421,10 +464,12 @@ describe("Void Elements - outerHTML serialization", () => {
     });
 
     it("should handle mixed case void element tag names", () => {
-      const doc = parseHTML("<html><body><Br><ImG src=\"test.jpg\"></body></html>");
+      const doc = parseHTML(
+        '<html><body><Br><ImG src="test.jpg"></body></html>',
+      );
       const br = doc.querySelector("br");
       const img = doc.querySelector("img");
-      
+
       expect(br).not.toBeNull();
       expect(img).not.toBeNull();
       expect(br!.outerHTML.toLowerCase()).not.toContain("</br>");
@@ -449,10 +494,10 @@ describe("Void Elements - outerHTML serialization", () => {
           </form>
         </body>
       </html>`;
-      
+
       const doc = parseHTML(html);
       const fullHTML = doc.documentElement.outerHTML;
-      
+
       // Check no void elements have closing tags
       expect(fullHTML).not.toContain("</meta>");
       expect(fullHTML).not.toContain("</link>");
@@ -460,7 +505,7 @@ describe("Void Elements - outerHTML serialization", () => {
       expect(fullHTML).not.toContain("</hr>");
       expect(fullHTML).not.toContain("</input>");
       expect(fullHTML).not.toContain("</br>");
-      
+
       // Check non-void elements still have closing tags
       expect(fullHTML).toContain("</head>");
       expect(fullHTML).toContain("</body>");

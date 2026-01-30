@@ -9,7 +9,9 @@ describe("HTML entities in text content", () => {
   });
 
   it("should preserve &lt; and &gt; in code elements", () => {
-    const doc = parseHTML("<code>&lt;script&gt;alert('xss')&lt;/script&gt;</code>");
+    const doc = parseHTML(
+      "<code>&lt;script&gt;alert('xss')&lt;/script&gt;</code>",
+    );
     const code = doc.querySelector("code");
     expect(code.innerHTML).toBe("&lt;script&gt;alert('xss')&lt;/script&gt;");
   });
@@ -21,7 +23,9 @@ describe("HTML entities in text content", () => {
   });
 
   it("should preserve mixed entities in text", () => {
-    const doc = parseHTML("<div>&lt;a href=&quot;test&quot;&gt;link&lt;/a&gt;</div>");
+    const doc = parseHTML(
+      "<div>&lt;a href=&quot;test&quot;&gt;link&lt;/a&gt;</div>",
+    );
     const div = doc.querySelector("div");
     expect(div.innerHTML).toBe('&lt;a href="test"&gt;link&lt;/a&gt;');
   });
