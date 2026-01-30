@@ -72,3 +72,20 @@ export const AUTO_CLOSE_RULES: Record<string, string[]> = {
   td: ["td", "th"],
   th: ["td", "th"],
 };
+
+export const FORMATTING_ELEMENTS = new Set([
+  "a",
+  "b",
+  "big",
+  "code",
+  "em",
+  "font",
+  "i",
+  "nobr",
+  "s",
+  "small",
+  "strike",
+  "strong",
+  "tt",
+  "u",
+]);

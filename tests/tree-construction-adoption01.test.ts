@@ -33,7 +33,10 @@ describe("Tree Construction Adoption01 Tests", () => {
 
     it.skip(`Adoption test ${index + 1}`, () => {
       const doc = parseHTML(data);
-      const serialized = serializeToHtml5lib(doc);
+      const hasExplicitDoctype = data.toLowerCase().includes("<!doctype");
+      const serialized = serializeToHtml5lib(doc, {
+        skipImplicitDoctype: !hasExplicitDoctype,
+      });
       expect(serialized).toBe(document);
     });
   });
