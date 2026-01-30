@@ -51,18 +51,14 @@ export const tokenize = (html: string): Token[] => {
         continue;
       }
 
-      const piMatch = remaining.match(/^<\?([^>]*)/);
+      const piMatch = remaining.match(/^<(\?[\s\S]*?)>/);
       if (piMatch) {
-        let consumed = piMatch[0].length;
-        if (remaining[consumed] === ">") {
-          consumed++;
-        }
         tokens.push({
           type: TokenType.COMMENT,
-          value: "?" + piMatch[1],
+          value: piMatch[1],
           position: calculatePosition(html, currentPos),
         });
-        currentPos += consumed;
+        currentPos += piMatch[0].length;
         continue;
       }
 

@@ -16,6 +16,8 @@ import {
   insertAfter,
   replaceChild,
   insertBefore,
+  removeChild,
+  matches,
 } from "./index.js";
 import { updateElementContent } from "./update-element-content.js";
 

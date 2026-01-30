@@ -2,6 +2,8 @@ export { NodeType, VOID_ELEMENTS } from "./node-types.js";
 export { createElement } from "./create-element.js";
 export { createTextNode } from "./create-text-node.js";
 export { createComment } from "./create-comment.js";
+export { createCDATA } from "./create-cdata.js";
+export { createProcessingInstruction } from "./create-processing-instruction.js";
 export { createDoctype } from "./create-doctype.js";
 export { createDocument } from "./create-document.js";
 export { appendChild } from "./append-child.js";

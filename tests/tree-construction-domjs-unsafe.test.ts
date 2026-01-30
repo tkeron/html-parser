@@ -16,7 +16,7 @@ describe("Tree Construction DomjsUnsafe Tests", () => {
     const input = inputWithErrors.split("#errors\n")[0].trim();
 
     const testName = input.split("\n")[0] || "DomjsUnsafe test";
-    it.skip(testName, () => {
+    it(testName, () => {
       const doc = parse(input);
       // TODO: Implement DOM tree comparison with expected
       // For now, just ensure parsing doesn't throw

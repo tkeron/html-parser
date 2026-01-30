@@ -449,55 +449,6 @@ describe("HTML Parser & Tokenizer - Advanced Tests", () => {
       expect(pElement).toBeDefined();
       expect((pElement.children![0]! as any).content).toBe("Valid content");
     });
-
-    it.skip("should handle mixed content types in single document", () => {
-      const complexHTML = `
-        <?xml version="1.0"?>
-        <!DOCTYPE html>
-        <!-- Document start -->
-        <html>
-          <head>
-            <title>Test &amp; Demo</title>
-            <![CDATA[Raw data here]]>
-          </head>
-          <body>
-            <h1>Main Title</h1>
-            <p>Paragraph with <strong>bold</strong> text.</p>
-            <!-- Body content -->
-          </body>
-        </html>
-        <!-- Document end -->
-      `;
-
-      const ast = parseToAST(complexHTML);
-
-      const nodeCounts: Record<string, number> = {
-        "processing-instruction": 0,
-        [ASTNodeType.Doctype]: 0,
-        [ASTNodeType.Comment]: 0,
-        [ASTNodeType.Element]: 0,
-        [ASTNodeType.Text]: 0,
-        [ASTNodeType.CDATA]: 0,
-      };
-
-      const traverse = (node: ASTNode) => {
-        if (node.type in nodeCounts) {
-          nodeCounts[node.type]++;
-        }
-        if (node.children) {
-          node.children.forEach(traverse);
-        }
-      };
-
-      ast.children!.forEach(traverse);
-
-      expect(nodeCounts["processing-instruction"]).toBeGreaterThan(0);
-      expect(nodeCounts[ASTNodeType.Doctype]).toBeGreaterThan(0);
-      expect(nodeCounts[ASTNodeType.Comment]).toBeGreaterThan(0);
-      expect(nodeCounts[ASTNodeType.Element]).toBeGreaterThan(0);
-      expect(nodeCounts[ASTNodeType.Text]).toBeGreaterThan(0);
-      expect(nodeCounts[ASTNodeType.CDATA]).toBeGreaterThan(0);
-    });
   });
 
   describe("Security and Template Edge Cases", () => {

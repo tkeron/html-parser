@@ -5,6 +5,8 @@ import {
   createElement,
   createTextNode,
   createComment,
+  createCDATA,
+  createProcessingInstruction,
   createDoctype,
   appendChild,
 } from "../dom-simulator/index.js";
@@ -182,6 +184,7 @@ const parseTokenInBeforeHeadMode = (state: ParserState, token: Token): void => {
     state.root.head = head;
     state.stack.push(head);
     state.insertionMode = InsertionMode.InHead;
+    state.explicitHead = true;
   } else if (token.type === TokenType.COMMENT) {
     parseComment(state, token);
   } else if (token.type === TokenType.TEXT && token.value.trim() === "") {
@@ -191,6 +194,7 @@ const parseTokenInBeforeHeadMode = (state: ParserState, token: Token): void => {
     state.root.head = head;
     state.stack.push(head);
     state.insertionMode = InsertionMode.InHead;
+    state.explicitHead = false;
     parseToken(state, token);
   }
 };
@@ -241,7 +245,13 @@ const parseTokenInInHeadMode = (state: ParserState, token: Token): void => {
       parseOpenTag(state, token);
     } else if (tagName === "head") {
     } else if (tagName.includes("-")) {
-      parseOpenTag(state, token);
+      if (state.explicitHead) {
+        parseOpenTag(state, token);
+      } else {
+        state.stack.pop();
+        state.insertionMode = InsertionMode.AfterHead;
+        parseToken(state, token);
+      }
     } else {
       state.stack.pop();
       state.insertionMode = InsertionMode.AfterHead;
@@ -399,7 +409,11 @@ const parseComment = (state: ParserState, token: Token): void => {
   appendChild(currentParent, commentNode);
 };
 
-const parseCDATA = (state: ParserState, token: Token): void => {};
+const parseCDATA = (state: ParserState, token: Token): void => {
+  const currentParent = getCurrentParent(state);
+  const cdataNode = createCDATA(token.value);
+  appendChild(currentParent, cdataNode);
+};
 
 const parseDoctype = (state: ParserState, token: Token): void => {
   const doctype = createDoctype(token.value || "html");
@@ -407,10 +421,11 @@ const parseDoctype = (state: ParserState, token: Token): void => {
   state.root.doctype = doctype;
 };
 
-const parseProcessingInstruction = (
-  state: ParserState,
-  token: Token,
-): void => {};
+const parseProcessingInstruction = (state: ParserState, token: Token): void => {
+  const currentParent = getCurrentParent(state);
+  const piNode = createProcessingInstruction(token.value);
+  appendChild(currentParent, piNode);
+};
 
 const handleAutoClosing = (state: ParserState, tagName: string): void => {
   const autoCloseList = AUTO_CLOSE_RULES[tagName];

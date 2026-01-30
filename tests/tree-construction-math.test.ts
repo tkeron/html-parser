@@ -12,7 +12,7 @@ describe("Tree Construction Math Tests", () => {
     const parts = test.split("#document\n");
     const input = parts[0].trim();
 
-    it.skip(`Math test ${index + 1}`, () => {
+    it(`Math test ${index + 1}`, () => {
       const doc = parse(input);
       expect(doc).toBeDefined();
     });

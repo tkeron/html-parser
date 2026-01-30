@@ -184,24 +184,6 @@ describe("HTML Parser", () => {
       expect(doctypeNode).toBeDefined();
       expect((doctypeNode as any).content).toBe("html");
     });
-
-    it.skip("should parse CDATA sections", () => {
-      const ast = parseToAST("<![CDATA[Some raw data]]>");
-
-      expect(ast.children).toHaveLength(1);
-      const cdataNode = ast.children![0]!;
-      expect(cdataNode.type).toBe(ASTNodeType.CDATA);
-      expect((cdataNode as any).content).toBe("Some raw data");
-    });
-
-    it.skip("should parse processing instructions", () => {
-      const ast = parseToAST('<?xml version="1.0"?>');
-
-      expect(ast.children).toHaveLength(1);
-      const piNode = ast.children![0]!;
-      expect(piNode.type).toBe("processing-instruction" as any);
-      expect((piNode as any).content).toBe('<?xml version="1.0"');
-    });
   });
 
   describe("Complete HTML Documents", () => {

@@ -13,7 +13,7 @@ describe("Tree Construction Tests24 Tests", () => {
     const title = input.trim().split("\n")[0] || "Unnamed test";
     const html = input.trim();
 
-    it.skip(title, () => {
+    it(title, () => {
       const doc = parse(html);
       expect(doc).toBeDefined();
     });

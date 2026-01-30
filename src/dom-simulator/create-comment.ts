@@ -1,4 +1,5 @@
 import { NodeType } from "./node-types.js";
+import { remove } from "./index.js";
 
 export const createComment = (content: string): any => {
   const commentNode: any = {

@@ -1,7 +1,15 @@
 import { NodeType } from "./node-types.js";
 import { createElement } from "./create-element.js";
 import { createTextNode } from "./create-text-node.js";
-import { prepend, append } from "./index.js";
+import {
+  prepend,
+  append,
+  appendChild,
+  removeChild,
+  insertBefore,
+  insertAfter,
+  replaceChild,
+} from "./index.js";
 import { querySelector, querySelectorAll } from "../selectors/index.js";
 
 export const createDocument = (): any => {

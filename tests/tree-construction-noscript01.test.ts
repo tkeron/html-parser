@@ -12,7 +12,7 @@ describe("Tree Construction Noscript01 Tests", () => {
     const parts = test.split("#document\n");
     const input = parts[0].trim();
 
-    it.skip(`Noscript01 test ${index + 1}`, () => {
+    it(`Noscript01 test ${index + 1}`, () => {
       const doc = parse(input);
       expect(doc).toBeDefined();
     });

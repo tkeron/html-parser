@@ -65,6 +65,13 @@ export const domToAST = (dom: any): ASTNode => {
     };
   }
 
+  if (dom.nodeType === 7) {
+    return {
+      type: "processing-instruction" as any,
+      content: dom.data || dom.textContent || "",
+    };
+  }
+
   return {
     type: ASTNodeType.Text,
     content: "",

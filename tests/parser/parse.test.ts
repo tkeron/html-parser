@@ -130,10 +130,10 @@ it("should handle whitespace", () => {
   expect(div.childNodes[0].textContent).toBe("  content  ");
 });
 
-it.skip("should parse custom elements", () => {
+it("should parse custom elements", () => {
   const tokens = tokenize("<my-element>content</my-element>");
   const result = parse(tokens);
-  const element = result.body.childNodes[0];
-  expect(element.tagName).toBe("MY-ELEMENT");
-  expect(element.childNodes[0].textContent).toBe("content");
+  const element = result.body?.childNodes[0] as any;
+  expect(element?.tagName).toBe("MY-ELEMENT");
+  expect(element?.childNodes[0]?.textContent).toBe("content");
 });

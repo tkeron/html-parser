@@ -8,6 +8,7 @@ export interface ParserState {
   root: any;
   insertionMode: InsertionMode;
   errors: ParseError[];
+  explicitHead?: boolean;
 }
 
 export interface ParseError {
