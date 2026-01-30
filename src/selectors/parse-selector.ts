@@ -1,4 +1,4 @@
-import { SelectorGroup, SelectorToken } from "./types.ts";
+import type { SelectorGroup, SelectorToken } from "./types.js";
 
 export const parseSelector = (selector: string): SelectorGroup[] => {
   const parts = selector.trim().split(/\s+/);

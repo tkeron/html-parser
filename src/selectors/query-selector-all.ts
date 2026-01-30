@@ -1,7 +1,7 @@
-import { SelectorGroup, SelectorToken } from "./types.ts";
-import { parseSelector } from "./parse-selector.ts";
-import { matchesSelector } from "./matches-selector.ts";
-import { findElementsDescendant } from "./find-elements-descendant.ts";
+import type { SelectorGroup, SelectorToken } from "./types.js";
+import { parseSelector } from "./parse-selector.js";
+import { matchesSelector } from "./matches-selector.js";
+import { findElementsDescendant } from "./find-elements-descendant.js";
 
 const findElementsSimple = (
   node: any,

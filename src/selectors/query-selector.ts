@@ -1,4 +1,4 @@
-import { querySelectorAll } from "./query-selector-all.ts";
+import { querySelectorAll } from "./query-selector-all.js";
 
 export const querySelector = (root: any, selector: string): any | null => {
   const results = querySelectorAll(root, selector);

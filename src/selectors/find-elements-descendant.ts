@@ -1,5 +1,5 @@
-import { SelectorGroup } from "./types.ts";
-import { matchesSelector } from "./matches-selector.ts";
+import type { SelectorGroup } from "./types.js";
+import { matchesSelector } from "./matches-selector.js";
 
 export const findElementsDescendant = (
   node: any,

@@ -1,3 +1,4 @@
+import { describe, it, expect } from "bun:test";
 import { serializeTokens } from "../../src/serializer/serialize-tokens.js";
 
 describe("serializeTokens", () => {

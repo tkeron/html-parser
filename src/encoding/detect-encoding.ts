@@ -1,4 +1,4 @@
-import { normalizeEncoding } from "./normalize-encoding.ts";
+import { normalizeEncoding } from "./normalize-encoding.js";
 
 export const detectEncoding = (html: string): string | null => {
   const prefix = html.substring(0, 1024);

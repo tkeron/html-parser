@@ -1,4 +1,4 @@
-import { SelectorToken } from "./types.ts";
+import type { SelectorToken } from "./types.js";
 
 export const matchesToken = (element: any, token: SelectorToken): boolean => {
   if (!element || !element.tagName) {

@@ -1,5 +1,5 @@
-import { SelectorToken } from "./types.ts";
-import { matchesToken } from "./matches-token.ts";
+import type { SelectorToken } from "./types.js";
+import { matchesToken } from "./matches-token.js";
 
 export const matchesSelector = (
   element: any,
