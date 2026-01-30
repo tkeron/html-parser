@@ -1,6 +1,6 @@
 // tests/helpers/tokenizer-adapter.ts
 
-import type { Token } from "../../src/tokenizer";
+import type { Token } from "../../src/tokenizer/index.js";
 
 export type Html5libToken =
   | ["StartTag", string, Record<string, string>]

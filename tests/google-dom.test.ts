@@ -100,8 +100,8 @@ describe("Google DOM Parsing Test", () => {
       for (let i = 0; i < Math.min(navLinks.length, 5); i++) {
         const link = navLinks[i];
         if (link) {
-          const href = link.getAttribute("href");
-          const text = link.textContent?.trim();
+          link.getAttribute("href");
+          link.textContent?.trim();
         }
       }
     }

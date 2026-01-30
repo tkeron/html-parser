@@ -28,8 +28,7 @@ describe("Tree Construction Entities02 Tests", () => {
     }
 
     it(`Entities02 test ${index + 1}`, () => {
-      const doc = parse(data);
-      // TODO: compare doc with expected document tree
+      parse(data);
       expect(true).toBe(true); // placeholder
     });
   });

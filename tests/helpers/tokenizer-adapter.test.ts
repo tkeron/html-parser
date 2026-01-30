@@ -1,5 +1,5 @@
-import { tokenize } from "../../src/tokenizer";
-import { adaptTokens, type Html5libToken } from "./tokenizer-adapter.ts";
+import { tokenize } from "../../src/tokenizer/index.js";
+import { adaptTokens } from "./tokenizer-adapter.ts";
 
 describe("Tokenizer Adapter Tests", () => {
   it("should adapt simple start tag", () => {

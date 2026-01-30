@@ -1,7 +1,12 @@
 // @ts-nocheck
 import { expect, test, describe, it } from "bun:test";
-import { tokenize, TokenType } from "../src/tokenizer";
-import { parse, ASTNodeType, domToAST, type ASTNode } from "../src/parser";
+import { tokenize, TokenType } from "../src/tokenizer/index.js";
+import {
+  parse,
+  ASTNodeType,
+  domToAST,
+  type ASTNode,
+} from "../src/parser/index";
 
 function parseToAST(html: string): ASTNode {
   const tokens = tokenize(html);

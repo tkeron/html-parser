@@ -1,5 +1,5 @@
 import { expect, it, describe } from "bun:test";
-import { tokenize } from "../src/tokenizer";
+import { tokenize } from "../src/tokenizer/index.js";
 import { readFileSync } from "fs";
 import { adaptTokens } from "./helpers/tokenizer-adapter";
 

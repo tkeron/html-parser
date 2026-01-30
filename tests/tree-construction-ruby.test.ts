@@ -10,9 +10,8 @@ describe("Tree Construction Ruby Tests", () => {
   const sections = content.split(/^#data$/gm).slice(1);
 
   for (const section of sections) {
-    const [data, document] = section.split(/^#document$/gm);
+    const [data] = section.split(/^#document$/gm);
     const input = data.trim();
-    const expected = document.trim();
 
     it(`Ruby test: ${input.slice(0, 50)}${input.length > 50 ? "..." : ""}`, () => {
       const doc = parse(input);

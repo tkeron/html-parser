@@ -1,9 +1,9 @@
-import { tokenize } from "./tokenizer.js";
-import { parse } from "./parser.js";
+import { tokenize } from "./tokenizer/index.js";
+import { parse } from "./parser/index.js";
 
-export function parseHTML(html: string): any {
+export const parseHTML = (html: string): any => {
   const tokens = tokenize(html);
   return parse(tokens);
-}
+};
 
-export { parse } from "./parser";
+export { parse } from "./parser/index.js";

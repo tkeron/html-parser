@@ -1,6 +1,6 @@
 import { describe, it, expect } from "bun:test";
 import { parseHTML } from "../index";
-import { NodeType } from "../src/dom-simulator";
+import { NodeType } from "../src/dom-simulator/index.js";
 
 describe("DOM Manipulation - insertBefore", () => {
   describe("Basic insertBefore functionality", () => {
@@ -1011,7 +1011,6 @@ describe("DOM Manipulation - append", () => {
     it("should append text node after elements", () => {
       const doc = parseHTML("<div><span>Element</span></div>");
       const div = doc.querySelector("div");
-      const span = div.childNodes[0];
 
       const textNode = doc.createTextNode(" Text");
 

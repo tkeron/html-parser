@@ -11,7 +11,6 @@ describe("Tree Construction Math Tests", () => {
   tests.forEach((test, index) => {
     const parts = test.split("#document\n");
     const input = parts[0].trim();
-    const expected = parts[1]?.split("#errors\n")[0]?.trim() || "";
 
     it.skip(`Math test ${index + 1}`, () => {
       const doc = parse(input);

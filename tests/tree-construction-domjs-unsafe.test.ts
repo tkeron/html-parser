@@ -13,7 +13,6 @@ describe("Tree Construction DomjsUnsafe Tests", () => {
     const parts = section.split("#document\n");
     if (parts.length < 2) continue;
     const inputWithErrors = parts[0];
-    const expected = parts[1];
     const input = inputWithErrors.split("#errors\n")[0].trim();
 
     const testName = input.split("\n")[0] || "DomjsUnsafe test";

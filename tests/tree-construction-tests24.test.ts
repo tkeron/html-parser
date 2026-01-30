@@ -9,7 +9,7 @@ describe("Tree Construction Tests24 Tests", () => {
   const tests = data.split("#data\n").slice(1);
 
   for (const test of tests) {
-    const [input, expected] = test.split("#document\n");
+    const [input] = test.split("#document\n");
     const title = input.trim().split("\n")[0] || "Unnamed test";
     const html = input.trim();
 

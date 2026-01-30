@@ -1,5 +1,5 @@
-import { tokenize } from "./src/tokenizer.js";
-import { parse } from "./src/parser.js";
+import { tokenize } from "./src/tokenizer/index.js";
+import { parse } from "./src/parser/index.js";
 import { astToDOM } from "./src/dom-simulator.js";
 
 export function parseHTML(html: string = ""): Document {

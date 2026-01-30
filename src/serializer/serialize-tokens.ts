@@ -1,94 +1,7 @@
-/**
- * Serializes a list of HTML5 tokens to an HTML string.
- * Based on HTML5 serialization algorithm.
- */
+import { serializeAttributes } from "./attributes.js";
+import { escapeText } from "./escape.js";
 
-function escapeText(text: string): string {
-  return text
-    .replace(/&/g, "&amp;")
-    .replace(/</g, "&lt;")
-    .replace(/>/g, "&gt;");
-}
-
-function escapeAttributeValue(value: string): string {
-  return value
-    .replace(/&/g, "&amp;")
-    .replace(/"/g, "&quot;")
-    .replace(/'/g, "&#39;");
-}
-
-function needsQuotes(value: string): boolean {
-  return value === "" || /[\t\n\r\f "'=`>]/.test(value);
-}
-
-function serializeAttribute(
-  name: string,
-  value: string,
-  options?: {
-    quote_char?: string;
-    quote_attr_values?: boolean;
-    minimize_boolean_attributes?: boolean;
-    escape_lt_in_attrs?: boolean;
-    escape_rcdata?: boolean;
-  },
-): string {
-  if (options?.minimize_boolean_attributes !== false && value === name) {
-    return name;
-  }
-  const needsQuote = needsQuotes(value) || options?.quote_attr_values;
-  if (!needsQuote) {
-    return `${name}=${value}`;
-  }
-  let escaped = value.replace(/&/g, "&amp;");
-  if (options?.escape_lt_in_attrs) {
-    escaped = escaped.replace(/</g, "&lt;");
-  }
-  const forcedQuote = options?.quote_char;
-  if (forcedQuote) {
-    if (forcedQuote === "'") {
-      escaped = escaped.replace(/'/g, "&#39;");
-    } else {
-      escaped = escaped.replace(/"/g, "&quot;");
-    }
-    return `${name}=${forcedQuote}${escaped}${forcedQuote}`;
-  } else {
-    // Auto choose quote
-    if (value.includes('"') && value.includes("'")) {
-      escaped = escaped.replace(/"/g, "&quot;");
-      return `${name}="${escaped}"`;
-    } else if (value.includes('"')) {
-      return `${name}='${escaped}'`;
-    } else {
-      escaped = escaped.replace(/"/g, "&quot;");
-      return `${name}="${escaped}"`;
-    }
-  }
-}
-
-function serializeAttributes(
-  attrs: any,
-  options?: {
-    quote_char?: string;
-    quote_attr_values?: boolean;
-    minimize_boolean_attributes?: boolean;
-    escape_lt_in_attrs?: boolean;
-    use_trailing_solidus?: boolean;
-    escape_rcdata?: boolean;
-  },
-): string {
-  let attrList: [string, string][];
-  if (Array.isArray(attrs)) {
-    attrList = attrs.map((attr: any) => [attr.name, attr.value]);
-  } else {
-    attrList = attrs ? Object.entries(attrs) : [];
-  }
-  attrList.sort(([a], [b]) => a.localeCompare(b));
-  return attrList
-    .map(([name, value]) => " " + serializeAttribute(name, value, options))
-    .join("");
-}
-
-export function serializeTokens(
+export const serializeTokens = (
   tokens: any[],
   options?: {
     inject_meta_charset?: boolean;
@@ -101,7 +14,7 @@ export function serializeTokens(
     escape_rcdata?: boolean;
     strip_whitespace?: boolean;
   },
-): string {
+): string => {
   const encoding = options?.encoding || "utf-8";
   let result = "";
   let inScript = false;
@@ -110,14 +23,12 @@ export function serializeTokens(
   let inStyle = false;
   let serializingHead = true;
 
-  // If inject_meta_charset, modify tokens
   let processedTokens = tokens;
   if (options?.inject_meta_charset) {
     let hasCharset = false;
     let modifiedTokens: any[] = [];
     let inHead = false;
 
-    // First pass: check if has charset
     for (const token of tokens) {
       const type = token[0];
       if (type === "StartTag" && token[2] === "head") {
@@ -144,7 +55,6 @@ export function serializeTokens(
       }
     }
 
-    // Second pass: modify
     inHead = false;
     for (const token of tokens) {
       const type = token[0];
@@ -192,20 +102,14 @@ export function serializeTokens(
     processedTokens = modifiedTokens;
   }
 
-  // Serialize
   let omitHtml = false;
   let omitHead = false;
   let omitBody = false;
   let omitColgroup = false;
-  let omitTbody = false;
-  let headHasContent = false;
-  let inHead = false;
-  // First pass to detect optional tags
   let htmlStartIndex = -1;
   let headStartIndex = -1;
   let bodyStartIndex = -1;
   let colgroupStartIndex = -1;
-  let tbodyStartIndex = -1;
   let tbodyCount = 0;
   let colgroupCount = 0;
   for (let i = 0; i < processedTokens.length; i++) {
@@ -227,12 +131,10 @@ export function serializeTokens(
         colgroupCount++;
       }
       if (name === "tbody") {
-        tbodyStartIndex = i;
         tbodyCount++;
       }
     }
   }
-  // Check if html should be omitted
   if (htmlStartIndex >= 0) {
     const htmlToken = processedTokens[htmlStartIndex];
     const attrs = htmlToken[3];
@@ -267,7 +169,6 @@ export function serializeTokens(
       }
     }
   }
-  // Check if head should be omitted
   if (headStartIndex >= 0) {
     let firstToken = null;
     for (let j = headStartIndex + 1; j < processedTokens.length; j++) {
@@ -288,7 +189,6 @@ export function serializeTokens(
       }
     }
   }
-  // Check if body should be omitted
   if (bodyStartIndex >= 0) {
     let firstToken = null;
     for (let j = bodyStartIndex + 1; j < processedTokens.length; j++) {
@@ -311,7 +211,6 @@ export function serializeTokens(
       omitBody = true;
     }
   }
-  // Check if colgroup should be omitted
   if (colgroupStartIndex >= 0) {
     const colgroupToken = processedTokens[colgroupStartIndex];
     const attrs = colgroupToken[3];
@@ -334,8 +233,6 @@ export function serializeTokens(
       (firstToken[0] === "StartTag" || firstToken[0] === "EmptyTag") &&
       (firstToken[0] === "StartTag" ? firstToken[2] : firstToken[1]) === "col";
   }
-  // Check if tbody should be omitted - we'll check this per tbody in the loop
-  // omitTbody is now calculated per element
 
   for (let i = 0; i < processedTokens.length; i++) {
     const token = processedTokens[i];
@@ -344,13 +241,7 @@ export function serializeTokens(
     switch (type) {
       case "StartTag":
         const [, , name, attrs] = token;
-        const attrCount = Array.isArray(attrs)
-          ? attrs.length
-          : attrs
-            ? Object.keys(attrs).length
-            : 0;
 
-        // Check if tbody should be omitted for this specific tbody
         let omitThisTbody = false;
         if (name === "tbody") {
           const hasAttributes = Array.isArray(attrs)
@@ -359,7 +250,6 @@ export function serializeTokens(
               ? Object.keys(attrs).length > 0
               : false;
           if (!hasAttributes) {
-            // Check if first significant token after tbody is a tr
             let firstToken = null;
             for (let j = i + 1; j < processedTokens.length; j++) {
               const t = processedTokens[j];
@@ -374,8 +264,6 @@ export function serializeTokens(
               firstToken[2] === "tr";
 
             if (hasTrChild) {
-              // Check if not preceded by tbody, thead, or tfoot
-              // This is indicated by whether the fragment starts with EndTag of those elements
               let isPreceded = false;
               for (let j = 0; j < i; j++) {
                 const t = processedTokens[j];
@@ -386,7 +274,7 @@ export function serializeTokens(
                 ) {
                   isPreceded = true;
                 }
-                break; // Only check the first significant token
+                break;
               }
               omitThisTbody = !isPreceded;
             }
@@ -422,7 +310,6 @@ export function serializeTokens(
         break;
       case "EndTag":
         const [, , name3] = token;
-        // Check if end-tag should be omitted
         let omitEndTag = false;
         if (["html", "head", "body"].includes(name3)) {
           if (
@@ -540,7 +427,6 @@ export function serializeTokens(
             omitEndTag = true;
           }
         } else {
-          // At EOF, omit certain end-tags
           omitEndTag = [
             "p",
             "li",
@@ -617,10 +503,9 @@ export function serializeTokens(
         }
         break;
       default:
-        // Ignore unknown tokens
         break;
     }
   }
 
   return result;
-}
+};

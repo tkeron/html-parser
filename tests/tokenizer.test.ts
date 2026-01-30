@@ -1,5 +1,5 @@
 import { expect, it, describe } from "bun:test";
-import { tokenize, TokenType, type Token } from "../src/tokenizer";
+import { tokenize, TokenType } from "../src/tokenizer/index.js";
 
 describe("HTML Tokenizer", () => {
   describe("Basic Tags", () => {

@@ -1,6 +1,6 @@
 // @ts-nocheck
 import { expect, it, describe } from "bun:test";
-import { tokenize } from "../src/tokenizer";
+import { tokenize } from "../src/tokenizer/index.js";
 import { parse, domToAST, ASTNodeType, type ASTNode } from "../src/parser";
 import { file } from "bun";
 

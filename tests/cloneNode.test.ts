@@ -1,6 +1,6 @@
 import { describe, it, expect } from "vitest";
 import { parseHTML } from "../index.js";
-import { NodeType } from "../src/dom-simulator.js";
+import { NodeType } from "../src/dom-simulator/index.js";
 
 describe("cloneNode functionality", () => {
   describe("cloneNode(true) - deep cloning", () => {

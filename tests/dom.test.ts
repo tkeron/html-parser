@@ -7,8 +7,8 @@ import {
   hasAttribute,
   setAttribute,
   removeAttribute,
-} from "../src/dom-simulator";
-import { parse } from "../src/parser";
+  createDocument,
+} from "../src/dom-simulator/index.js";
 
 function getBodyContent(doc: any): any {
   return doc.body?.firstChild;
@@ -355,7 +355,7 @@ describe("DOM extra tests", () => {
   });
 
   it("should create a new Document", () => {
-    const doc = parseHTML();
+    const doc = createDocument();
     expect(doc).toBeTruthy();
     expect(doc.nodeType).toBe(NodeType.DOCUMENT_NODE);
     expect(doc.nodeName).toBe("#document");

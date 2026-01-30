@@ -1,6 +1,6 @@
 import { describe, it, expect } from "bun:test";
 import { parseHTML } from "../index";
-import { setInnerHTML } from "../src/dom-simulator";
+import { setInnerHTML } from "../src/dom-simulator/index.js";
 
 describe("DOM Extended Functionality", () => {
   describe("innerHTML and outerHTML", () => {
