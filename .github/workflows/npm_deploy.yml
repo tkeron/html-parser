@@ -16,9 +16,19 @@ jobs:
 
       - uses: oven-sh/setup-bun@v2
 
-      - run: |
-          bun i
-          bun test
-          npm publish --access public
+      - name: Install dependencies
+        run: bun i
+
+      - name: Run tests
+        run: bun test --concurrent
+
+      - name: Check version
+        id: check
+        run: bun check-versions.ts
+        continue-on-error: true
+
+      - name: Publish to npm
+        if: steps.check.outcome == 'success'
+        run: npm publish --access public
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
