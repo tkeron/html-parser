@@ -25,12 +25,7 @@ describe("Tree Construction Html5testCom Tests", () => {
 
     const testName = input.split("\n")[0] || "Html5testCom test";
 
-    const isFosterParenting = input.includes(
-      "<table><form><input type=hidden><input></form><div></div></table>",
-    );
-    const isAdoptionAgency = input.includes("<i>A<b>B<p></i>C</b>D");
-
-    const testFn = isFosterParenting || isAdoptionAgency ? it.skip : it;
+    const testFn = it;
 
     testFn(testName, () => {
       const doc = parseHTML(input);

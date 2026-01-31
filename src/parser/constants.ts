@@ -89,3 +89,49 @@ export const FORMATTING_ELEMENTS = new Set([
   "tt",
   "u",
 ]);
+
+export const TABLE_SCOPE_ELEMENTS = new Set([
+  "table",
+  "tbody",
+  "thead",
+  "tfoot",
+  "tr",
+  "template",
+  "html",
+]);
+
+export const TABLE_CONTEXT_ELEMENTS = new Set([
+  "table",
+  "tbody",
+  "thead",
+  "tfoot",
+  "tr",
+]);
+
+export const VALID_TABLE_CHILDREN = new Set([
+  "caption",
+  "colgroup",
+  "col",
+  "tbody",
+  "thead",
+  "tfoot",
+  "tr",
+  "script",
+  "template",
+  "style",
+]);
+
+export const VALID_TABLE_SECTION_CHILDREN = new Set([
+  "tr",
+  "script",
+  "template",
+  "style",
+]);
+
+export const VALID_TR_CHILDREN = new Set([
+  "td",
+  "th",
+  "script",
+  "template",
+  "style",
+]);

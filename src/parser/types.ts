@@ -9,6 +9,8 @@ export interface ParserState {
   insertionMode: InsertionMode;
   errors: ParseError[];
   explicitHead?: boolean;
+  activeFormattingElements: any[];
+  formElementPointer?: any;
 }
 
 export interface ParseError {

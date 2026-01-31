@@ -7,10 +7,10 @@ A fast and lightweight HTML parser for Bun that converts HTML strings into DOM D
 - ⚡ **Custom Tokenizer**: Tokenizer specifically optimized for Bun runtime
 - 🚀 **Ultra Fast**: Leverages Bun's native optimizations
 - 🪶 **Lightweight**: Zero external dependencies
-- 🌐 **Standards Compliant**: Retorna objetos DOM Document estándar
-- 🔧 **TypeScript Support**: Definiciones TypeScript completas incluidas
-- ✅ **Well Tested**: Suite de tests comprehensiva (5200+ tests passing)
-- 🔄 **100% Compatible**: Replacement directo, misma API
+- 🌐 **Standards Compliant**: Returns standard DOM Document objects
+- 🔧 **TypeScript Support**: Full TypeScript definitions included
+- ✅ **Well Tested**: Comprehensive test suite (5600+ tests passing)
+- 🎯 **HTML5 Spec**: Implements Adoption Agency Algorithm for proper formatting element handling
 
 ## Installation
 

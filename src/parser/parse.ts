@@ -17,6 +17,10 @@ import {
   RAW_TEXT_ELEMENTS,
   AUTO_CLOSE_RULES,
   FORMATTING_ELEMENTS,
+  TABLE_CONTEXT_ELEMENTS,
+  VALID_TABLE_CHILDREN,
+  VALID_TABLE_SECTION_CHILDREN,
+  VALID_TR_CHILDREN,
 } from "./constants";
 import {
   findFormattingElementInStack,
@@ -115,6 +119,7 @@ const createParserState = (tokens: Token[]): ParserState => {
     root,
     insertionMode: InsertionMode.Initial,
     errors: [],
+    activeFormattingElements: [],
   };
 };
 
@@ -324,6 +329,8 @@ const parseTokenInInBodyMode = (state: ParserState, token: Token): void => {
 
     handleAutoClosing(state, tagName);
 
+    reconstructActiveFormattingElements(state);
+
     const currentParent = getCurrentParent(state);
 
     let namespaceURI: string | undefined;
@@ -339,10 +346,36 @@ const parseTokenInInBodyMode = (state: ParserState, token: Token): void => {
       namespaceURI,
     );
 
-    appendChild(currentParent, element);
+    const inTableContext = isInTableContext(state);
+    const parentTagName = currentParent.tagName || "";
+    const isValidForParent = isValidChildForTableParent(parentTagName, tagName);
+    const isHiddenInput =
+      tagName === "input" &&
+      token.attributes &&
+      token.attributes.type &&
+      token.attributes.type.toLowerCase() === "hidden";
+    const isFormInTable = tagName === "form" && inTableContext;
+    const needsFosterParenting =
+      inTableContext &&
+      TABLE_CONTEXT_ELEMENTS.has(parentTagName.toLowerCase()) &&
+      !isValidForParent &&
+      !isHiddenInput &&
+      !isFormInTable;
+
+    if (needsFosterParenting) {
+      insertWithFosterParenting(state, element);
+    } else {
+      appendChild(currentParent, element);
+    }
 
     if (!token.isSelfClosing && !VOID_ELEMENTS.has(tagName)) {
-      state.stack.push(element);
+      if (!isFormInTable) {
+        state.stack.push(element);
+      }
+
+      if (FORMATTING_ELEMENTS.has(tagName)) {
+        state.activeFormattingElements.push(element);
+      }
     }
   } else if (token.type === TokenType.TAG_CLOSE) {
     const tagName = token.value.toLowerCase();
@@ -418,6 +451,7 @@ const runAdoptionAgencyAlgorithm = (
   const currentElement = getCurrentElement(state);
   if (currentElement === formattingElement) {
     state.stack.pop();
+    removeFromActiveFormattingElements(state, formattingElement);
     return;
   }
 
@@ -427,6 +461,7 @@ const runAdoptionAgencyAlgorithm = (
     while (state.stack.length > formattingElementIndex) {
       state.stack.pop();
     }
+    removeFromActiveFormattingElements(state, formattingElement);
     return;
   }
 
@@ -444,6 +479,8 @@ const runAdoptionAgencyAlgorithm = (
     const node = state.stack[i];
     const nodeClone = cloneFormattingElement(node);
     clonedNodes.unshift(nodeClone);
+
+    replaceInActiveFormattingElements(state, node, nodeClone);
 
     const nodeChildIdx = node.childNodes.indexOf(lastNode);
     if (nodeChildIdx !== -1) {
@@ -466,6 +503,8 @@ const runAdoptionAgencyAlgorithm = (
   reparentChildren(furthestBlock, newFormattingElement);
   appendChild(furthestBlock, newFormattingElement);
 
+  removeFromActiveFormattingElements(state, formattingElement);
+
   state.stack.length = formattingElementIndex;
   for (const clonedNode of clonedNodes) {
     state.stack.push(clonedNode);
@@ -473,16 +512,50 @@ const runAdoptionAgencyAlgorithm = (
   state.stack.push(furthestBlock);
 };
 
+const removeFromActiveFormattingElements = (
+  state: ParserState,
+  element: any,
+): void => {
+  const index = state.activeFormattingElements.indexOf(element);
+  if (index !== -1) {
+    state.activeFormattingElements.splice(index, 1);
+  }
+};
+
+const replaceInActiveFormattingElements = (
+  state: ParserState,
+  oldElement: any,
+  newElement: any,
+): void => {
+  const index = state.activeFormattingElements.indexOf(oldElement);
+  if (index !== -1) {
+    state.activeFormattingElements[index] = newElement;
+  }
+};
+
 const parseText = (state: ParserState, token: Token): void => {
   const content = token.value;
-  const currentParent = getCurrentParent(state);
 
-  if (content.trim() === "" && shouldSkipWhitespace(currentParent)) {
+  const preParent = getCurrentParent(state);
+  if (content.trim() === "" && shouldSkipWhitespace(preParent)) {
     return;
   }
 
+  reconstructActiveFormattingElements(state);
+
   const textNode = createTextNode(content);
-  appendChild(currentParent, textNode);
+
+  const inTableContext = isInTableContext(state);
+  const currentParent = getCurrentParent(state);
+  if (
+    inTableContext &&
+    currentParent.tagName &&
+    TABLE_CONTEXT_ELEMENTS.has(currentParent.tagName.toLowerCase())
+  ) {
+    insertWithFosterParenting(state, textNode);
+  } else {
+    appendChild(currentParent, textNode);
+  }
 };
 
 const parseComment = (state: ParserState, token: Token): void => {
@@ -578,4 +651,122 @@ const shouldSkipWhitespace = (parent: any): boolean => {
   ]);
 
   return parent.tagName ? skipWhitespaceIn.has(parent.tagName) : false;
+};
+
+const reconstructActiveFormattingElements = (state: ParserState): void => {
+  const list = state.activeFormattingElements;
+  if (list.length === 0) {
+    return;
+  }
+
+  let entryIndex = list.length - 1;
+  let entry = list[entryIndex];
+
+  if (entry === null || isInStack(state.stack, entry)) {
+    return;
+  }
+
+  while (entryIndex > 0) {
+    entryIndex--;
+    entry = list[entryIndex];
+    if (entry === null || isInStack(state.stack, entry)) {
+      entryIndex++;
+      break;
+    }
+  }
+
+  for (; entryIndex < list.length; entryIndex++) {
+    entry = list[entryIndex];
+    if (entry === null) {
+      continue;
+    }
+
+    const newElement = cloneFormattingElement(entry);
+    appendChild(getCurrentParent(state), newElement);
+    state.stack.push(newElement);
+    list[entryIndex] = newElement;
+  }
+};
+
+const isInStack = (stack: any[], element: any): boolean => {
+  for (let i = stack.length - 1; i >= 0; i--) {
+    if (stack[i] === element) {
+      return true;
+    }
+  }
+  return false;
+};
+
+const isInTableContext = (state: ParserState): boolean => {
+  for (let i = state.stack.length - 1; i >= 0; i--) {
+    const el = state.stack[i];
+    if (el.tagName && TABLE_CONTEXT_ELEMENTS.has(el.tagName.toLowerCase())) {
+      return true;
+    }
+    if (el.tagName && el.tagName.toLowerCase() === "html") {
+      return false;
+    }
+  }
+  return false;
+};
+
+const isValidChildForTableParent = (
+  parentTagName: string,
+  childTagName: string,
+): boolean => {
+  const parent = parentTagName.toLowerCase();
+  const child = childTagName.toLowerCase();
+
+  if (parent === "table") {
+    return VALID_TABLE_CHILDREN.has(child);
+  }
+  if (parent === "tbody" || parent === "thead" || parent === "tfoot") {
+    return VALID_TABLE_SECTION_CHILDREN.has(child);
+  }
+  if (parent === "tr") {
+    return VALID_TR_CHILDREN.has(child);
+  }
+  return true;
+};
+
+const findFosterParentTarget = (
+  state: ParserState,
+): { parent: any; before: any } | null => {
+  for (let i = state.stack.length - 1; i >= 0; i--) {
+    const el = state.stack[i];
+    if (el.tagName && el.tagName.toLowerCase() === "table") {
+      if (el.parentNode) {
+        return { parent: el.parentNode, before: el };
+      }
+      return { parent: state.stack[i - 1] || state.root, before: null };
+    }
+  }
+  return null;
+};
+
+const insertWithFosterParenting = (state: ParserState, node: any): void => {
+  const currentParent = getCurrentParent(state);
+  const inTableContext = isInTableContext(state);
+
+  if (
+    inTableContext &&
+    currentParent.tagName &&
+    TABLE_CONTEXT_ELEMENTS.has(currentParent.tagName.toLowerCase())
+  ) {
+    const target = findFosterParentTarget(state);
+    if (target) {
+      if (target.before) {
+        const idx = target.parent.childNodes.indexOf(target.before);
+        if (idx !== -1) {
+          node.parentNode = target.parent;
+          target.parent.childNodes.splice(idx, 0, node);
+          return;
+        }
+      }
+      appendChild(target.parent, node);
+      return;
+    }
+  }
+
+  appendChild(currentParent, node);
 };
