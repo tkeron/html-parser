@@ -29,6 +29,12 @@ import {
   cloneFormattingElement,
   reparentChildren,
 } from "./adoption-agency-helpers.js";
+import {
+  shouldCreateImplicitTableStructure,
+  createImplicitTableStructure,
+  CELL_ELEMENTS,
+} from "./implicit-table-structure.js";
+import { mergeAdjacentTextNodes } from "./foster-parenting-helpers.js";
 
 export const parse = (tokens: Token[]): any => {
   const state = createParserState(tokens);
@@ -329,9 +335,30 @@ const parseTokenInInBodyMode = (state: ParserState, token: Token): void => {
 
     handleAutoClosing(state, tagName);
 
-    reconstructActiveFormattingElements(state);
+    const inTableContext = isInTableContext(state);
+    const isTableStructureElement =
+      CELL_ELEMENTS.has(tagName) ||
+      tagName === "tr" ||
+      tagName === "tbody" ||
+      tagName === "thead" ||
+      tagName === "tfoot";
+    const currentStackParent = getCurrentParent(state);
+    const currentStackParentTag =
+      currentStackParent.tagName?.toLowerCase() || "";
+    const parentIsTableContext = TABLE_CONTEXT_ELEMENTS.has(
+      currentStackParentTag,
+    );
 
-    const currentParent = getCurrentParent(state);
+    if (inTableContext && isTableStructureElement) {
+      const tableParent = findTableContextParent(state);
+      if (tableParent) {
+        popStackUntilTableContext(state);
+      }
+    } else if (!parentIsTableContext) {
+      reconstructActiveFormattingElements(state);
+    }
+
+    let currentParent = getCurrentParent(state);
 
     let namespaceURI: string | undefined;
     if (tagName === "svg") {
@@ -346,8 +373,8 @@ const parseTokenInInBodyMode = (state: ParserState, token: Token): void => {
       namespaceURI,
     );
 
-    const inTableContext = isInTableContext(state);
-    const parentTagName = currentParent.tagName || "";
+    let parentTagName = currentParent.tagName || "";
+
     const isValidForParent = isValidChildForTableParent(parentTagName, tagName);
     const isHiddenInput =
       tagName === "input" &&
@@ -355,25 +382,37 @@ const parseTokenInInBodyMode = (state: ParserState, token: Token): void => {
       token.attributes.type &&
       token.attributes.type.toLowerCase() === "hidden";
     const isFormInTable = tagName === "form" && inTableContext;
+
+    const needsImplicitStructure =
+      inTableContext &&
+      shouldCreateImplicitTableStructure(parentTagName, tagName);
+
     const needsFosterParenting =
       inTableContext &&
       TABLE_CONTEXT_ELEMENTS.has(parentTagName.toLowerCase()) &&
       !isValidForParent &&
       !isHiddenInput &&
-      !isFormInTable;
+      !isFormInTable &&
+      !needsImplicitStructure;
 
-    if (needsFosterParenting) {
+    if (needsImplicitStructure) {
+      createImplicitTableStructure(state.stack, parentTagName, tagName);
+      appendChild(getCurrentParent(state), element);
+    } else if (needsFosterParenting) {
       insertWithFosterParenting(state, element);
     } else {
       appendChild(currentParent, element);
     }
 
+    const wasFosterParented = needsFosterParenting;
+    const isFormattingElement = FORMATTING_ELEMENTS.has(tagName);
+
     if (!token.isSelfClosing && !VOID_ELEMENTS.has(tagName)) {
-      if (!isFormInTable) {
+      if (!isFormInTable && !(wasFosterParented && isFormattingElement)) {
         state.stack.push(element);
       }
 
-      if (FORMATTING_ELEMENTS.has(tagName)) {
+      if (isFormattingElement) {
         state.activeFormattingElements.push(element);
       }
     }
@@ -541,8 +580,6 @@ const parseText = (state: ParserState, token: Token): void => {
     return;
   }
 
-  reconstructActiveFormattingElements(state);
-
   const textNode = createTextNode(content);
 
   const inTableContext = isInTableContext(state);
@@ -552,9 +589,10 @@ const parseText = (state: ParserState, token: Token): void => {
     currentParent.tagName &&
     TABLE_CONTEXT_ELEMENTS.has(currentParent.tagName.toLowerCase())
   ) {
-    insertWithFosterParenting(state, textNode);
+    insertWithFosterParentingAndReconstruct(state, textNode);
   } else {
-    appendChild(currentParent, textNode);
+    reconstructActiveFormattingElements(state);
+    appendChild(getCurrentParent(state), textNode);
   }
 };
 
@@ -710,6 +748,31 @@ const isInTableContext = (state: ParserState): boolean => {
   return false;
 };
 
+const findTableContextParent = (state: ParserState): any | null => {
+  for (let i = state.stack.length - 1; i >= 0; i--) {
+    const el = state.stack[i];
+    if (el.tagName && TABLE_CONTEXT_ELEMENTS.has(el.tagName.toLowerCase())) {
+      return el;
+    }
+  }
+  return null;
+};
+
+const popStackUntilTableContext = (state: ParserState): void => {
+  while (state.stack.length > 1) {
+    const el = getCurrentElement(state);
+    if (
+      el &&
+      el.tagName &&
+      TABLE_CONTEXT_ELEMENTS.has(el.tagName.toLowerCase())
+    ) {
+      break;
+    }
+    state.stack.pop();
+  }
+  state.activeFormattingElements.push(null);
+};
+
 const isValidChildForTableParent = (
   parentTagName: string,
   childTagName: string,
@@ -760,13 +823,102 @@ const insertWithFosterParenting = (state: ParserState, node: any): void => {
         if (idx !== -1) {
           node.parentNode = target.parent;
           target.parent.childNodes.splice(idx, 0, node);
+          if (node.nodeType === 3) {
+            mergeAdjacentTextNodes(target.parent, idx);
+          }
           return;
         }
       }
       appendChild(target.parent, node);
+      if (node.nodeType === 3) {
+        const insertedIdx = target.parent.childNodes.indexOf(node);
+        if (insertedIdx !== -1) {
+          mergeAdjacentTextNodes(target.parent, insertedIdx);
+        }
+      }
       return;
     }
   }
 
   appendChild(currentParent, node);
+};
+
+const insertWithFosterParentingAndReconstruct = (
+  state: ParserState,
+  node: any,
+): void => {
+  const target = findFosterParentTarget(state);
+  if (!target) {
+    appendChild(getCurrentParent(state), node);
+    return;
+  }
+
+  const activeElements = getActiveFormattingElementsBeforeMarker(state);
+
+  if (activeElements.length === 0) {
+    if (target.before) {
+      const idx = target.parent.childNodes.indexOf(target.before);
+      if (idx !== -1) {
+        node.parentNode = target.parent;
+        target.parent.childNodes.splice(idx, 0, node);
+        if (node.nodeType === 3) {
+          mergeAdjacentTextNodes(target.parent, idx);
+        }
+        return;
+      }
+    }
+    appendChild(target.parent, node);
+    if (node.nodeType === 3) {
+      const insertedIdx = target.parent.childNodes.indexOf(node);
+      if (insertedIdx !== -1) {
+        mergeAdjacentTextNodes(target.parent, insertedIdx);
+      }
+    }
+    return;
+  }
+
+  const hasMarker = state.activeFormattingElements.includes(null);
+  const lastFormatEl = activeElements[activeElements.length - 1];
+
+  if (
+    !hasMarker &&
+    lastFormatEl.parentNode === target.parent &&
+    target.parent.childNodes.indexOf(lastFormatEl) <
+      target.parent.childNodes.indexOf(target.before)
+  ) {
+    appendChild(lastFormatEl, node);
+    return;
+  }
+
+  let currentNode = node;
+  for (let i = activeElements.length - 1; i >= 0; i--) {
+    const formatEl = activeElements[i];
+    const clone = cloneFormattingElement(formatEl);
+    appendChild(clone, currentNode);
+    currentNode = clone;
+  }
+
+  if (target.before) {
+    const idx = target.parent.childNodes.indexOf(target.before);
+    if (idx !== -1) {
+      currentNode.parentNode = target.parent;
+      target.parent.childNodes.splice(idx, 0, currentNode);
+      return;
+    }
+  }
+  appendChild(target.parent, currentNode);
+};
+
+const getActiveFormattingElementsBeforeMarker = (state: ParserState): any[] => {
+  const result: any[] = [];
+  for (let i = 0; i < state.activeFormattingElements.length; i++) {
+    const el = state.activeFormattingElements[i];
+    if (el === null) {
+      continue;
+    }
+    if (!isInStack(state.stack, el)) {
+      result.push(el);
+    }
+  }
+  return result;
 };
