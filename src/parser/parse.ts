@@ -21,6 +21,7 @@ import {
   VALID_TABLE_CHILDREN,
   VALID_TABLE_SECTION_CHILDREN,
   VALID_TR_CHILDREN,
+  BUTTON_SCOPE_TERMINATORS,
 } from "./constants";
 import {
   findFurthestBlock,
@@ -341,7 +342,7 @@ const parseTokenInInBodyMode = (state: ParserState, token: Token): void => {
       }
     }
 
-    handleAutoClosing(state, tagName);
+    const closedParagraph = handleAutoClosing(state, tagName);
 
     const inTableContext = isInTableContext(state);
     const isTableStructureElement =
@@ -362,7 +363,7 @@ const parseTokenInInBodyMode = (state: ParserState, token: Token): void => {
       if (tableParent) {
         popStackUntilTableContext(state);
       }
-    } else if (!parentIsTableContext) {
+    } else if (!parentIsTableContext && !closedParagraph) {
       reconstructActiveFormattingElements(state);
     }
 
@@ -421,7 +422,7 @@ const parseTokenInInBodyMode = (state: ParserState, token: Token): void => {
       }
 
       if (isFormattingElement) {
-        state.activeFormattingElements.push(element);
+        pushToActiveFormattingElements(state, element);
       }
     }
   } else if (token.type === TokenType.TAG_CLOSE) {
@@ -432,13 +433,17 @@ const parseTokenInInBodyMode = (state: ParserState, token: Token): void => {
       return;
     }
 
+    if (tagName === "p") {
+      closeParagraphElement(state);
+      return;
+    }
+
     const impliedEndTags = [
       "dd",
       "dt",
       "li",
       "option",
       "optgroup",
-      "p",
       "rb",
       "rp",
       "rt",
@@ -607,6 +612,60 @@ const replaceInActiveFormattingElements = (
   }
 };
 
+const pushToActiveFormattingElements = (
+  state: ParserState,
+  element: any,
+): void => {
+  const list = state.activeFormattingElements;
+  const tagName = element.tagName?.toLowerCase();
+
+  let count = 0;
+  let oldestMatchIndex = -1;
+
+  for (let i = list.length - 1; i >= 0; i--) {
+    const entry = list[i];
+    if (entry === null) {
+      break;
+    }
+
+    if (
+      entry.tagName?.toLowerCase() === tagName &&
+      attributesMatch(entry, element)
+    ) {
+      if (oldestMatchIndex === -1) {
+        oldestMatchIndex = i;
+      }
+      count++;
+      if (count >= 3) {
+        list.splice(oldestMatchIndex, 1);
+        break;
+      }
+      oldestMatchIndex = i;
+    }
+  }
+
+  list.push(element);
+};
+
+const attributesMatch = (el1: any, el2: any): boolean => {
+  const attrs1 = el1.attributes || {};
+  const attrs2 = el2.attributes || {};
+  const keys1 = Object.keys(attrs1);
+  const keys2 = Object.keys(attrs2);
+
+  if (keys1.length !== keys2.length) {
+    return false;
+  }
+
+  for (const key of keys1) {
+    if (attrs1[key] !== attrs2[key]) {
+      return false;
+    }
+  }
+
+  return true;
+};
+
 const parseText = (state: ParserState, token: Token): void => {
   const content = token.value;
 
@@ -656,18 +715,57 @@ const parseProcessingInstruction = (state: ParserState, token: Token): void => {
   appendChild(currentParent, piNode);
 };
 
-const handleAutoClosing = (state: ParserState, tagName: string): void => {
-  const autoCloseList = AUTO_CLOSE_RULES[tagName];
-  if (!autoCloseList) return;
+const closeParagraphElement = (state: ParserState): void => {
+  let pIndex = -1;
+  for (let i = state.stack.length - 1; i >= 0; i--) {
+    const element = state.stack[i];
+    const elementTag = element.tagName?.toLowerCase();
 
-  const currentElement = getCurrentElement(state);
-  if (
-    currentElement &&
-    currentElement.tagName &&
-    autoCloseList.includes(currentElement.tagName.toLowerCase())
-  ) {
+    if (elementTag === "p") {
+      pIndex = i;
+      break;
+    }
+
+    if (elementTag && BUTTON_SCOPE_TERMINATORS.has(elementTag)) {
+      return;
+    }
+  }
+
+  if (pIndex === -1) {
+    return;
+  }
+
+  while (state.stack.length > pIndex) {
     state.stack.pop();
   }
+};
+
+const handleAutoClosing = (state: ParserState, tagName: string): boolean => {
+  const autoCloseList = AUTO_CLOSE_RULES[tagName];
+  if (!autoCloseList) return false;
+
+  let targetIndex = -1;
+  for (let i = state.stack.length - 1; i >= 0; i--) {
+    const element = state.stack[i];
+    const elementTag = element.tagName?.toLowerCase();
+
+    if (elementTag && autoCloseList.includes(elementTag)) {
+      targetIndex = i;
+      break;
+    }
+
+    if (elementTag && BUTTON_SCOPE_TERMINATORS.has(elementTag)) {
+      return false;
+    }
+  }
+
+  if (targetIndex === -1) return false;
+
+  while (state.stack.length > targetIndex) {
+    state.stack.pop();
+  }
+
+  return true;
 };
 
 const getCurrentParent = (state: ParserState): any => {

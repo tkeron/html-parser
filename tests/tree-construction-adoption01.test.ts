@@ -31,7 +31,7 @@ describe("Tree Construction Adoption01 Tests", () => {
       }
     }
 
-    const passingTests = [1, 2, 3, 4, 5, 6, 7, 8, 9, 11, 12, 14, 16];
+    const passingTests = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 14, 16, 17];
     const testFn = passingTests.includes(index + 1) ? it : it.skip;
 
     testFn(`Adoption test ${index + 1}`, () => {

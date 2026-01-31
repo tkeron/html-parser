@@ -135,3 +135,15 @@ export const VALID_TR_CHILDREN = new Set([
   "template",
   "style",
 ]);
+
+export const BUTTON_SCOPE_TERMINATORS = new Set([
+  "applet",
+  "caption",
+  "html",
+  "table",
+  "td",
+  "th",
+  "marquee",
+  "object",
+  "template",
+]);
