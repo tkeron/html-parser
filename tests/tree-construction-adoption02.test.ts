@@ -9,7 +9,7 @@ describe("Tree Construction Adoption02 Tests", () => {
     "utf8",
   );
   const sections = content.split("#data\n").slice(1);
-  const passingTests = [1];
+  const passingTests = [1, 2];
 
   sections.forEach((section, index) => {
     const lines = section.trim().split("\n");

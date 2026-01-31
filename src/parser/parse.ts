@@ -23,7 +23,6 @@ import {
   VALID_TR_CHILDREN,
 } from "./constants";
 import {
-  findFormattingElementInStack,
   findFurthestBlock,
   getCommonAncestor,
   cloneFormattingElement,
@@ -333,6 +332,15 @@ const parseTokenInInBodyMode = (state: ParserState, token: Token): void => {
   if (token.type === TokenType.TAG_OPEN) {
     const tagName = token.value.toLowerCase();
 
+    if (tagName === "a") {
+      const existingA = state.activeFormattingElements.find(
+        (el) => el && el.tagName && el.tagName.toLowerCase() === "a",
+      );
+      if (existingA) {
+        runAdoptionAgencyAlgorithm(state, "a");
+      }
+    }
+
     handleAutoClosing(state, tagName);
 
     const inTableContext = isInTableContext(state);
@@ -479,76 +487,103 @@ const runAdoptionAgencyAlgorithm = (
   state: ParserState,
   tagName: string,
 ): void => {
-  const result = findFormattingElementInStack(state.stack, tagName);
+  const maxIterations = 8;
 
-  if (!result) {
-    return;
-  }
+  for (let iteration = 0; iteration < maxIterations; iteration++) {
+    const formattingElementIndex = state.activeFormattingElements.findIndex(
+      (el) =>
+        el && el.tagName && el.tagName.toLowerCase() === tagName.toLowerCase(),
+    );
 
-  const { element: formattingElement, index: formattingElementIndex } = result;
+    if (formattingElementIndex === -1) {
+      return;
+    }
 
-  const currentElement = getCurrentElement(state);
-  if (currentElement === formattingElement) {
-    state.stack.pop();
-    removeFromActiveFormattingElements(state, formattingElement);
-    return;
-  }
+    const formattingElement =
+      state.activeFormattingElements[formattingElementIndex];
+    const stackIndex = state.stack.indexOf(formattingElement);
 
-  const fbResult = findFurthestBlock(state.stack, formattingElementIndex);
+    if (stackIndex === -1) {
+      state.activeFormattingElements.splice(formattingElementIndex, 1);
+      return;
+    }
 
-  if (!fbResult) {
-    while (state.stack.length > formattingElementIndex) {
+    const currentElement = getCurrentElement(state);
+    if (currentElement === formattingElement) {
       state.stack.pop();
+      removeFromActiveFormattingElements(state, formattingElement);
+      return;
     }
+
+    const fbResult = findFurthestBlock(state.stack, stackIndex);
+
+    if (!fbResult) {
+      while (state.stack.length > stackIndex) {
+        state.stack.pop();
+      }
+      removeFromActiveFormattingElements(state, formattingElement);
+      return;
+    }
+
+    const { element: furthestBlock, index: furthestBlockIndex } = fbResult;
+    const commonAncestor = getCommonAncestor(state.stack, stackIndex);
+
+    if (!commonAncestor) {
+      return;
+    }
+
+    let lastNode = furthestBlock;
+    const clonedNodes: any[] = [];
+
+    for (let i = furthestBlockIndex - 1; i > stackIndex; i--) {
+      const node = state.stack[i];
+      const nodeClone = cloneFormattingElement(node);
+      clonedNodes.unshift(nodeClone);
+
+      replaceInActiveFormattingElements(state, node, nodeClone);
+
+      const nodeChildIdx = node.childNodes.indexOf(lastNode);
+      if (nodeChildIdx !== -1) {
+        node.childNodes.splice(nodeChildIdx, 1);
+      }
+
+      appendChild(nodeClone, lastNode);
+      lastNode = nodeClone;
+    }
+
+    const fbIdx = formattingElement.childNodes.indexOf(furthestBlock);
+    if (fbIdx !== -1) {
+      formattingElement.childNodes.splice(fbIdx, 1);
+      furthestBlock.parentNode = null;
+    }
+
+    appendChild(commonAncestor, lastNode);
+
+    const newFormattingElement = cloneFormattingElement(formattingElement);
+    reparentChildren(furthestBlock, newFormattingElement);
+    appendChild(furthestBlock, newFormattingElement);
+
     removeFromActiveFormattingElements(state, formattingElement);
-    return;
-  }
+    state.activeFormattingElements.splice(
+      formattingElementIndex,
+      0,
+      newFormattingElement,
+    );
 
-  const { element: furthestBlock, index: furthestBlockIndex } = fbResult;
-  const commonAncestor = getCommonAncestor(state.stack, formattingElementIndex);
+    const elementsAfterFurthestBlock = state.stack.slice(
+      furthestBlockIndex + 1,
+    );
 
-  if (!commonAncestor) {
-    return;
-  }
-
-  let lastNode = furthestBlock;
-  const clonedNodes: any[] = [];
-
-  for (let i = furthestBlockIndex - 1; i > formattingElementIndex; i--) {
-    const node = state.stack[i];
-    const nodeClone = cloneFormattingElement(node);
-    clonedNodes.unshift(nodeClone);
-
-    replaceInActiveFormattingElements(state, node, nodeClone);
-
-    const nodeChildIdx = node.childNodes.indexOf(lastNode);
-    if (nodeChildIdx !== -1) {
-      node.childNodes.splice(nodeChildIdx, 1);
+    state.stack.length = stackIndex;
+    for (const clonedNode of clonedNodes) {
+      state.stack.push(clonedNode);
     }
-
-    appendChild(nodeClone, lastNode);
-    lastNode = nodeClone;
+    state.stack.push(furthestBlock);
+    state.stack.push(newFormattingElement);
+    for (const element of elementsAfterFurthestBlock) {
+      state.stack.push(element);
+    }
   }
-
-  const fbIdx = formattingElement.childNodes.indexOf(furthestBlock);
-  if (fbIdx !== -1) {
-    formattingElement.childNodes.splice(fbIdx, 1);
-    furthestBlock.parentNode = null;
-  }
-
-  appendChild(commonAncestor, lastNode);
-
-  const newFormattingElement = cloneFormattingElement(formattingElement);
-  reparentChildren(furthestBlock, newFormattingElement);
-  appendChild(furthestBlock, newFormattingElement);
-
-  removeFromActiveFormattingElements(state, formattingElement);
-
-  state.stack.length = formattingElementIndex;
-  for (const clonedNode of clonedNodes) {
-    state.stack.push(clonedNode);
-  }
-  state.stack.push(furthestBlock);
 };
 
 const removeFromActiveFormattingElements = (
