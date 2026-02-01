@@ -1,6 +1,9 @@
 import { expect, it, describe } from "bun:test";
-import { parseHTML } from "../index";
-import { serializeToHtml5lib } from "./helpers/tree-adapter";
+import { parseHTML, parseHTMLFragment } from "../index";
+import {
+  serializeToHtml5lib,
+  serializeFragmentToHtml5lib,
+} from "./helpers/tree-adapter";
 import { readFileSync } from "fs";
 
 describe("Tree Construction Adoption01 Tests", () => {
@@ -15,10 +18,18 @@ describe("Tree Construction Adoption01 Tests", () => {
     let data = "";
     let document = "";
     let inDocument = false;
-    let inData = true; // Start with data since we split on #data\n
+    let inData = true;
+    let isFragmentTest = false;
+    let fragmentContext = "";
 
     for (const line of lines) {
-      if (line.startsWith("#document")) {
+      if (line.startsWith("#document-fragment")) {
+        isFragmentTest = true;
+        inDocument = false;
+        inData = false;
+      } else if (isFragmentTest && !fragmentContext && !line.startsWith("#")) {
+        fragmentContext = line.trim();
+      } else if (line.startsWith("#document")) {
         inDocument = true;
         inData = false;
       } else if (line.startsWith("#errors")) {
@@ -31,18 +42,21 @@ describe("Tree Construction Adoption01 Tests", () => {
       }
     }
 
-    const passingTests = [
-      1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17,
-    ];
-    const testFn = passingTests.includes(index + 1) ? it : it.skip;
-
-    testFn(`Adoption test ${index + 1}`, () => {
-      const doc = parseHTML(data);
-      const hasExplicitDoctype = data.toLowerCase().includes("<!doctype");
-      const serialized = serializeToHtml5lib(doc, {
-        skipImplicitDoctype: !hasExplicitDoctype,
+    if (isFragmentTest) {
+      it(`Adoption test ${index + 1} (fragment: ${fragmentContext})`, () => {
+        const nodes = parseHTMLFragment(data, fragmentContext);
+        const serialized = serializeFragmentToHtml5lib(nodes);
+        expect(serialized).toBe(document);
       });
-      expect(serialized).toBe(document);
-    });
+    } else {
+      it(`Adoption test ${index + 1}`, () => {
+        const doc = parseHTML(data);
+        const hasExplicitDoctype = data.toLowerCase().includes("<!doctype");
+        const serialized = serializeToHtml5lib(doc, {
+          skipImplicitDoctype: !hasExplicitDoctype,
+        });
+        expect(serialized).toBe(document);
+      });
+    }
   });
 });

@@ -9,8 +9,9 @@ A fast and lightweight HTML parser for Bun that converts HTML strings into DOM D
 - 🪶 **Lightweight**: Zero external dependencies
 - 🌐 **Standards Compliant**: Returns standard DOM Document objects
 - 🔧 **TypeScript Support**: Full TypeScript definitions included
-- ✅ **Well Tested**: Comprehensive test suite (5600+ tests passing)
+- ✅ **Well Tested**: Comprehensive test suite (5660+ tests passing)
 - 🎯 **HTML5 Spec**: Implements Adoption Agency Algorithm for proper formatting element handling
+- 🧩 **Fragment Parsing**: Parse HTML fragments with context element support
 
 ## Installation
 
@@ -75,6 +76,28 @@ Parses an HTML string and returns a DOM Document object.
 **Returns:**
 
 - `Document`: A standard DOM Document object with all the usual methods like `querySelector`, `getElementById`, etc.
+
+### `parseHTMLFragment(html: string, contextTagName: string): Node[]`
+
+Parses an HTML string as a fragment within a context element. Useful for parsing innerHTML-style content.
+
+**Parameters:**
+
+- `html` (string): The HTML string to parse
+- `contextTagName` (string): The tag name of the context element (e.g., `"div"`, `"body"`)
+
+**Returns:**
+
+- `Node[]`: An array of parsed nodes
+
+**Example:**
+
+```typescript
+import { parseHTMLFragment } from "@tkeron/html-parser";
+
+const nodes = parseHTMLFragment("<b>Hello</b> <i>World</i>", "div");
+console.log(nodes.length); // 3 (b element, text node, i element)
+```
 
 ## Development
 

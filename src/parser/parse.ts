@@ -1112,3 +1112,33 @@ const getActiveFormattingElementsBeforeMarker = (state: ParserState): any[] => {
   }
   return result;
 };
+
+export const parseFragment = (tokens: Token[], contextTagName: string): any => {
+  const root = createDocument();
+  const contextElement = createElement(contextTagName.toLowerCase(), {});
+  appendChild(root, contextElement);
+
+  const state: ParserState = {
+    tokens,
+    position: 0,
+    length: tokens.length,
+    stack: [root, contextElement],
+    root,
+    insertionMode: InsertionMode.InBody,
+    errors: [],
+    activeFormattingElements: [],
+  };
+
+  while (state.position < state.length) {
+    const token = getCurrentToken(state);
+
+    if (!token || token.type === TokenType.EOF) {
+      break;
+    }
+
+    parseToken(state, token);
+    advance(state);
+  }
+
+  return contextElement.childNodes;
+};

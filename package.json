@@ -1,6 +1,6 @@
 {
   "name": "@tkeron/html-parser",
-  "version": "1.4.1",
+  "version": "1.5.0",
   "description": "A fast and lightweight HTML parser for Bun",
   "main": "index.js",
   "module": "index.ts",

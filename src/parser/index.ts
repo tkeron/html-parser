@@ -1,4 +1,4 @@
-export { parse } from "./parse";
+export { parse, parseFragment } from "./parse";
 export { domToAST } from "./dom-to-ast";
 export type { ParserState, ParseError, InsertionMode, ASTNode } from "./types";
 export { ASTNodeType } from "./types";
