@@ -25,12 +25,12 @@ export function serializeToHtml5lib(
 
       let nsPrefix = "";
       if (ns === "http://www.w3.org/2000/svg") {
-        nsPrefix = " svg";
+        nsPrefix = "svg ";
       } else if (ns === "http://www.w3.org/1998/Math/MathML") {
-        nsPrefix = " math";
+        nsPrefix = "math ";
       }
 
-      lines.push(`${indent}<${tagName}${nsPrefix}>`);
+      lines.push(`${indent}<${nsPrefix}${tagName}>`);
 
       // Atributos en orden alfabético
       const attrs = Object.entries(node.attributes || {}).sort(([a], [b]) =>

@@ -374,6 +374,8 @@ const parseTokenInInBodyMode = (state: ParserState, token: Token): void => {
       namespaceURI = SVG_NAMESPACE;
     } else if (tagName === "math") {
       namespaceURI = MATHML_NAMESPACE;
+    } else {
+      namespaceURI = getCurrentNamespace(state);
     }
 
     const element = createElement(
@@ -428,7 +430,7 @@ const parseTokenInInBodyMode = (state: ParserState, token: Token): void => {
   } else if (token.type === TokenType.TAG_CLOSE) {
     const tagName = token.value.toLowerCase();
 
-    if (FORMATTING_ELEMENTS.has(tagName)) {
+    if (FORMATTING_ELEMENTS.has(tagName) && !isInForeignContent(state)) {
       runAdoptionAgencyAlgorithm(state, tagName);
       return;
     }
@@ -539,9 +541,31 @@ const runAdoptionAgencyAlgorithm = (
 
     let lastNode = furthestBlock;
     const clonedNodes: any[] = [];
+    const nodesToRemoveFromStack: any[] = [];
+    let innerLoopCounter = 0;
+    let nodeIndex = furthestBlockIndex;
 
-    for (let i = furthestBlockIndex - 1; i > stackIndex; i--) {
-      const node = state.stack[i];
+    while (true) {
+      innerLoopCounter++;
+      nodeIndex--;
+      const node = state.stack[nodeIndex];
+
+      if (node === formattingElement) {
+        break;
+      }
+
+      if (
+        innerLoopCounter > 3 &&
+        state.activeFormattingElements.includes(node)
+      ) {
+        removeFromActiveFormattingElements(state, node);
+      }
+
+      if (!state.activeFormattingElements.includes(node)) {
+        nodesToRemoveFromStack.push(node);
+        continue;
+      }
+
       const nodeClone = cloneFormattingElement(node);
       clonedNodes.unshift(nodeClone);
 
@@ -554,6 +578,13 @@ const runAdoptionAgencyAlgorithm = (
 
       appendChild(nodeClone, lastNode);
       lastNode = nodeClone;
+    }
+
+    for (const node of nodesToRemoveFromStack) {
+      const idx = state.stack.indexOf(node);
+      if (idx !== -1) {
+        state.stack.splice(idx, 1);
+      }
     }
 
     const fbIdx = formattingElement.childNodes.indexOf(furthestBlock);
@@ -879,6 +910,32 @@ const isInTableContext = (state: ParserState): boolean => {
     }
   }
   return false;
+};
+
+const isInForeignContent = (state: ParserState): boolean => {
+  for (let i = state.stack.length - 1; i >= 0; i--) {
+    const el = state.stack[i];
+    if (
+      el.namespaceURI === SVG_NAMESPACE ||
+      el.namespaceURI === MATHML_NAMESPACE
+    ) {
+      return true;
+    }
+    if (el.tagName && el.tagName.toLowerCase() === "html") {
+      return false;
+    }
+  }
+  return false;
+};
+
+const getCurrentNamespace = (state: ParserState): string | undefined => {
+  for (let i = state.stack.length - 1; i >= 0; i--) {
+    const el = state.stack[i];
+    if (el.namespaceURI) {
+      return el.namespaceURI;
+    }
+  }
+  return undefined;
 };
 
 const findTableContextParent = (state: ParserState): any | null => {
