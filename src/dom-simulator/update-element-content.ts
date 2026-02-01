@@ -48,9 +48,11 @@ export const updateElementContent = (element: any): void => {
     configurable: true,
   });
 
-  if (element.parentElement) {
-    element.parentElement._internalOuterHTML = undefined;
-    element.parentElement._internalInnerHTML = undefined;
-    element.parentElement._internalTextContent = undefined;
+  let ancestor = element.parentElement || element.parentNode;
+  while (ancestor) {
+    ancestor._internalOuterHTML = undefined;
+    ancestor._internalInnerHTML = undefined;
+    ancestor._internalTextContent = undefined;
+    ancestor = ancestor.parentElement || ancestor.parentNode;
   }
 };
