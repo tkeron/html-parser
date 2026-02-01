@@ -19,11 +19,11 @@ export const parseSelector = (selector: string): SelectorGroup[] => {
       remaining = remaining.slice(tagMatch[1].length);
     }
 
-    const idMatches = remaining.matchAll(/#([a-zA-Z0-9][a-zA-Z0-9_-]*)/g);
+    const idMatches = remaining.matchAll(/#([a-zA-Z0-9_-][a-zA-Z0-9_-]*)/g);
     for (const match of idMatches) {
       tokens.push({ type: "id", value: match[1] });
     }
-    remaining = remaining.replace(/#[a-zA-Z0-9][a-zA-Z0-9_-]*/g, "");
+    remaining = remaining.replace(/#[a-zA-Z0-9_-][a-zA-Z0-9_-]*/g, "");
 
     const classMatches = remaining.matchAll(/\.([a-zA-Z][a-zA-Z0-9_-]*)/g);
     for (const match of classMatches) {
