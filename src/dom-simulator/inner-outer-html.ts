@@ -173,7 +173,11 @@ export const getInnerHTML = (element: any): string => {
     if (child.nodeType === NodeType.ELEMENT_NODE) {
       innerHTML += child.outerHTML;
     } else if (child.nodeType === NodeType.TEXT_NODE) {
-      innerHTML += escapeTextContent(child.textContent || "");
+      const parentTag = element.tagName?.toLowerCase();
+      const isRawText = parentTag === "script" || parentTag === "style";
+      innerHTML += isRawText
+        ? child.textContent || ""
+        : escapeTextContent(child.textContent || "");
     } else if (child.nodeType === NodeType.COMMENT_NODE) {
       innerHTML += `<!--${child.data || ""}-->`;
     }

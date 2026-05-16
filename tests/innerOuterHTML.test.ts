@@ -459,3 +459,62 @@ describe("DOM Content - outerHTML setter", () => {
     });
   });
 });
+
+describe("Raw text elements - no escaping inside script/style", () => {
+  it("script innerHTML should not escape arrow functions (=> stays as =>)", () => {
+    const doc = parseHTML("<div></div>");
+    const div = doc.querySelector("div")!;
+    const script = doc.createElement("script");
+    script.textContent = "const fn = () => 1;";
+    div.appendChild(script);
+    expect(div.innerHTML).toBe("<script>const fn = () => 1;</script>");
+  });
+
+  it("script outerHTML should not escape > characters", () => {
+    const doc = parseHTML("<div></div>");
+    const div = doc.querySelector("div")!;
+    const script = doc.createElement("script");
+    script.textContent = "if (a > b) { return a; }";
+    div.appendChild(script);
+    expect(script.outerHTML).toBe("<script>if (a > b) { return a; }</script>");
+  });
+
+  it("style innerHTML should not escape > characters", () => {
+    const doc = parseHTML("<div></div>");
+    const div = doc.querySelector("div")!;
+    const style = doc.createElement("style");
+    style.textContent = "a > b { color: red; }";
+    div.appendChild(style);
+    expect(div.innerHTML).toBe("<style>a > b { color: red; }</style>");
+  });
+
+  it("script parsed from HTML keeps > unescaped in outerHTML", () => {
+    const doc = parseHTML("<script>const x = a > b ? 1 : 0;</script>");
+    const script = doc.querySelector("script")!;
+    expect(script.outerHTML).toBe("<script>const x = a > b ? 1 : 0;</script>");
+  });
+
+  it("style parsed from HTML keeps > unescaped in outerHTML", () => {
+    const doc = parseHTML("<style>div > span { display: none; }</style>");
+    const style = doc.querySelector("style")!;
+    expect(style.outerHTML).toBe("<style>div > span { display: none; }</style>");
+  });
+
+  it("regular text node outside script should still escape >", () => {
+    const doc = parseHTML("<div></div>");
+    const div = doc.querySelector("div")!;
+    div.textContent = "a > b";
+    expect(div.innerHTML).toBe("a &gt; b");
+  });
+
+  it("script innerHTML with multiple > does not escape any of them", () => {
+    const doc = parseHTML("<div></div>");
+    const div = doc.querySelector("div")!;
+    const script = doc.createElement("script");
+    script.textContent = "const r = a > b && b > c;";
+    div.appendChild(script);
+    expect(div.innerHTML).toContain("a > b");
+    expect(div.innerHTML).toContain("b > c");
+    expect(div.innerHTML).not.toContain("&gt;");
+  });
+});

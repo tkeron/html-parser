@@ -3,10 +3,15 @@ import { getTextContent } from "./get-text-content.js";
 import { escapeTextContent } from "./escape-text-content.js";
 
 export const updateElementContent = (element: any): void => {
+  const tagNameLower = element.tagName?.toLowerCase();
+  const isRawText = tagNameLower === "script" || tagNameLower === "style";
+
   const innerHTML = element.childNodes
     .map((child: any) => {
       if (child.nodeType === NodeType.TEXT_NODE) {
-        return escapeTextContent(child.textContent || "");
+        return isRawText
+          ? child.textContent || ""
+          : escapeTextContent(child.textContent || "");
       } else if (child.nodeType === NodeType.ELEMENT_NODE) {
         return child.outerHTML;
       } else if (child.nodeType === NodeType.COMMENT_NODE) {
@@ -26,7 +31,6 @@ export const updateElementContent = (element: any): void => {
   const attrs = Object.entries(element.attributes)
     .map(([k, v]) => ` ${k}="${v}"`)
     .join("");
-  const tagNameLower = element.tagName.toLowerCase();
   const isVoid = VOID_ELEMENTS.has(tagNameLower);
 
   const outerHTML = isVoid
